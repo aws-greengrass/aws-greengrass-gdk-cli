@@ -1,0 +1,31 @@
+{
+    "ggt" :{
+        "sub-commands":[
+            "component"
+        ]
+    },
+    "component" : {
+        "sub-commands":[
+            "init", "build", "publish"
+        ]
+    },
+
+    "init" :{
+        "arguments" :[
+            {
+                "name" : ["-l","--lang"],
+                "help":"Specify the language of the template.",
+                "choices":["python", "java"]
+            },
+            {
+                "name" : ["-t", "--template"],
+                "help":"Specify the name of the template you want to use.",
+                "required": "True"
+            }
+        ]
+    },
+    "build" :{
+    },
+    "publish" :{
+    }
+}

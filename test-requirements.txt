@@ -1,0 +1,8 @@
+jsonschema
+requests
+pyyaml
+pytest
+mock
+coverage
+boto3
+flake8
