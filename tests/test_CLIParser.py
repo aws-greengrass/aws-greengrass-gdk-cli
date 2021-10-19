@@ -1,8 +1,8 @@
 import pytest
 import argparse
-import ggtools.CLIParser as cli_parser
-import ggtools.common.consts as consts
-import ggtools.common.consts as consts
+import greengrassTools.CLIParser as cli_parser
+import greengrassTools.common.consts as consts
+import greengrassTools.common.consts as consts
 
 
 
@@ -83,6 +83,6 @@ def test_CLIParser_get_subcommands_from_model():
     cli_tool._get_subcommands_from_model(model)
 
 def test_model_file():
-    model = {'ggt': {'sub-commands': ['component']}, 'component': {'sub-commands': ['init', 'build', 'publish']}, 'init': {'arguments': [{'name': ['-l', '--lang'], 'help': 'Specify the language of the template.', 'choices': ['python', 'java']}, {'name': ['template'], 'help': 'Specify the name of the template you want to use.'}]}, 'build': {}, 'publish': {}}
+    model = {'greengrass-tools': {'sub-commands': ['component']}, 'component': {'sub-commands': ['init', 'build', 'publish']}, 'init': {'arguments': [{'name': ['-l', '--lang'], 'help': 'Specify the language of the template.', 'choices': ['python', 'java']}, {'name': ['template'], 'help': 'Specify the name of the template you want to use.'}]}, 'build': {}, 'publish': {}}
     return model
 

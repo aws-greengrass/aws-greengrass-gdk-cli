@@ -1,10 +1,10 @@
 
-import ggtools.common.model_actions as model_actions
-import ggtools.common.consts as consts
+import greengrassTools.common.model_actions as model_actions
+import greengrassTools.common.consts as consts
 
-def test_model_existence():
+def test_model_existence(mocker):
     """
-    Test for the existence of command model file even before building the cli tool.
+    Integ: Test for the existence of command model file even before building the cli tool.
     """
     command_model = model_actions.get_validated_model()
     assert type(command_model) == dict # Command model obtained should always be a dictionary
@@ -41,7 +41,7 @@ def test_is_valid_subcommand_model():
     Case 2: Invalid subcommand with no key 
     """
 
-    model={'ggt': {'sub-commands': ['component']}, 'component': {'sub-commands': ['init', 'build']}, 'init': {'arguments': [{'name': ['-l', '--lang'], 'help': 'language help', 'choices': ['p', 'j']}, {'name': ['template'], 'help': 'template help'}]}, 'build': {}}
+    model={'greengrass-tools': {'sub-commands': ['component']}, 'component': {'sub-commands': ['init', 'build']}, 'init': {'arguments': [{'name': ['-l', '--lang'], 'help': 'language help', 'choices': ['p', 'j']}, {'name': ['template'], 'help': 'template help'}]}, 'build': {}}
     valid_model_subcommands=['component']
     invalid_model_subcommands=['component','invalid-subcommand-that-is-not-present-as-key']
     
@@ -59,10 +59,10 @@ def test_is_valid_model():
     Case 3: Invalid model with incorrect arguments
     """
 
-    valid_model={'ggt': {'sub-commands': ['component']}, 'component': {'sub-commands': ['init', 'build']}, 'init': {'arguments': [{'name': ['-l', '--lang'], 'help': 'language help', 'choices': ['p', 'j']}, {'name': ['template'], 'help': 'template help'}]}, 'build': {}}
-    invalid_model_subcommands={'ggt': {'sub-commands': ['component','invalid-sub-command']}, 'component': {}}
-    invalid_model_args_without_name={'ggt': {'sub-commands': ['component'],'arguments':[{'names': ['-l', '--lang'], 'help': 'help'}]}, 'component': {}}
-    invalid_model_args_without_help={'ggt': {'sub-commands': ['component'],'arguments':[{'name': ['-l', '--lang'], 'helper': 'help'}]}, 'component': {}}
+    valid_model={'greengrass-tools': {'sub-commands': ['component']}, 'component': {'sub-commands': ['init', 'build']}, 'init': {'arguments': [{'name': ['-l', '--lang'], 'help': 'language help', 'choices': ['p', 'j']}, {'name': ['template'], 'help': 'template help'}]}, 'build': {}}
+    invalid_model_subcommands={'greengrass-tools': {'sub-commands': ['component','invalid-sub-command']}, 'component': {}}
+    invalid_model_args_without_name={'greengrass-tools': {'sub-commands': ['component'],'arguments':[{'names': ['-l', '--lang'], 'help': 'help'}]}, 'component': {}}
+    invalid_model_args_without_help={'greengrass-tools': {'sub-commands': ['component'],'arguments':[{'name': ['-l', '--lang'], 'helper': 'help'}]}, 'component': {}}
 
     ## Case 1
     assert model_actions.is_valid_model(valid_model, consts.cli_tool_name)

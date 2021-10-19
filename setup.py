@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 long_description = 'Greengrass CLI Tool for creating Greengrass components.'
 
 setup(
-		name ='ggt',
+		name ='greengrass-tools',
 		version ='1.0.0',
 		author ='AWS IoT Greengrass Labs',
 		author_email ='nukai@amazon.com',
@@ -18,7 +18,7 @@ setup(
 		packages = find_packages(),
 		entry_points ={
 			'console_scripts': [
-				'ggt = ggtools.CLIParser:main'
+				'greengrass-tools = greengrassTools.CLIParser:main'
 			]
 		},
 		classifiers =(
