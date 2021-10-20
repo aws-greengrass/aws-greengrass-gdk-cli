@@ -1,6 +1,8 @@
 *build/
+build
 *dist/
 *.egg-info
 *__pycache__
 *htmlcov/
 *.coverage
+*.iml

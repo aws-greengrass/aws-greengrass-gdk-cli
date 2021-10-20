@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "component": {
+            "type": "object",
+            "patternProperties": {
+                "^[A-Za-z0-9 \\\\-]*[A-Za-z0-9 \\\\-][A-Za-z0-9 \\\\-]*$" : {
+                    "type": "object",
+                    "properties" : {
+                        "author": {
+                            "type": "string"
+                        },
+                        "version": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+                        },
+                        "build" : {
+                            "type" : "object",
+                            "properties" : {
+                                "command": { "type" :  "string"}
+                            },
+                            "required": ["command"]
+                        },
+                        "publish" : {
+                            "type" : "object",
+                            "properties" : {
+
+                                "bucket_name": { "type" :  "string"}
+                            },
+                            "required": ["bucket_name"]
+                        }
+                    },
+                    "required": ["author","version","build", "publish"]
+                }
+            }
+        },
+        "tools-version": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+        }
+    },
+    "required": ["component", "tools-version"]
+}
