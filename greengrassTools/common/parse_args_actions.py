@@ -3,7 +3,7 @@ import greengrassTools.common.consts as consts
 
 def run_command(args_namespace):
     """ 
-    Based on the namespace, appropriate action is determined and called by its name.  
+    Performs appropriate action based on the namespace args.
 
     Parameters
     ----------
@@ -13,13 +13,14 @@ def run_command(args_namespace):
     -------
       None
     """
-    d_args = vars(args_namespace) # args as dictionary
+    d_args = vars(args_namespace) # namespace as dictionary
     method_name = get_method_from_command(d_args, consts.cli_tool_name, "") 
-    call_action_by_name(method_name, d_args)
+    if method_name:
+      call_action_by_name(method_name, d_args)
 
 def call_action_by_name(method_name, d_args):
     """
-    Method name determined from the namespace is modified to choose and call actual method by its name. 
+    Identifies the method for given method name based on namespace and executes the method 
 
     Since method names cannot have "-" and "greengrass-tools" contain a "-", we substitute 
     "greengrass-tools" with "greengrass_tools"
@@ -35,8 +36,11 @@ def call_action_by_name(method_name, d_args):
       None
     """
     method_name = method_name.replace(consts.cli_tool_name, consts.cli_tool_name_in_method_names)
-    method_to_call = getattr(command_methods, method_name)
-    method_to_call(d_args)
+    method_to_call = getattr(command_methods, method_name, None)
+    if method_to_call:
+      method_to_call(d_args)
+    else:
+      raise Exception("{} does not support the given command.".format(consts.cli_tool_name))
 
 def get_method_from_command(d_args, command, method_name):
     """
@@ -57,12 +61,13 @@ def get_method_from_command(d_args, command, method_name):
 
     Returns
     -------
-      method_name(string): Method name determined from the args namespace.
+      method_name(string): Method name determined from the args namespace. None if the command is invalid
     """
     method_name = "{}_{}".format(method_name,command)
-    if d_args[command] == None: 
-        return method_name
-    else:
-        return get_method_from_command(d_args, d_args[command], method_name)
+    if command and command in d_args:
+      if d_args[command] == None: 
+          return method_name
+      else:
+          return get_method_from_command(d_args, d_args[command], method_name)
 
 
