@@ -2,7 +2,7 @@ import json
 import jsonschema
 import greengrassTools.common.consts as consts
 import greengrassTools.common.utils as utils
-
+import greengrassTools.common.exceptions.error_messages as error_messages
 def get_configuration(file_name, component_name):
     """
      This method returns component configuration from the given file name.
@@ -31,6 +31,11 @@ def validate_configuration(data):
     :param data: Json configuration object
     :return:
     """
-    with open(utils.get_static_file_path(consts.config_schema_file), 'r') as schemaFile:
-        schema = json.loads(schemaFile.read())
-    jsonschema.validate(data, schema)
+    config_schema_file=utils.get_static_file_path(consts.config_schema_file)
+    if config_schema_file:
+        with open(config_schema_file, 'r') as schemaFile:
+            schema = json.loads(schemaFile.read())
+        jsonschema.validate(data, schema)
+    else:
+        raise Exception(error_messages.CONFIG_SCHEMA_FILE_NOT_EXISTS)
+    

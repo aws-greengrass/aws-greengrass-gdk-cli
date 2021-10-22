@@ -6,3 +6,4 @@ build
 *htmlcov/
 *.coverage
 *.iml
+*.DS_Store
