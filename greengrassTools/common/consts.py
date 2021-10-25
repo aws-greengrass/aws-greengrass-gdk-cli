@@ -18,4 +18,5 @@ arg_parameters = [
 
 config_schema_file = "config_schema.json"
 cli_model_file = "cli_model.json"
-templates_github_url="https://github.com/aws-greengrass/aws-greengrass-stream-manager-sdk-python/"
+## Replace it with main branch
+templates_list_url="https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-community-catalog/list-components/components/templates.json"

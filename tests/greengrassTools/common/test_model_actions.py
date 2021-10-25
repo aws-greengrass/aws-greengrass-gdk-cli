@@ -24,7 +24,7 @@ def test_get_validated_model_file_not_exists(mocker):
     assert mock_get_static_file_path.call_count == 1
   
 def test_get_validated_model_file_exists(mocker):
-    file_path = "path/to/open"
+    file_path = Path("path/to/open")
     mock_get_static_file_path = mocker.patch('greengrassTools.common.utils.get_static_file_path', return_value=file_path)
     mock_is_valid_model = mocker.patch('greengrassTools.common.model_actions.is_valid_model', return_value=True)
 

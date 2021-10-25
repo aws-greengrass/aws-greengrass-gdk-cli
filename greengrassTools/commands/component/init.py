@@ -1,5 +1,4 @@
-import urllib.request
-import ssl
+import requests
 import os
 import shutil
 import greengrassTools.common.utils as utils
@@ -7,7 +6,6 @@ import greengrassTools.common.model_actions as model_actions
 import greengrassTools.common.parse_args_actions as parse_args_actions
 import greengrassTools.common.consts as consts
 import greengrassTools.common.exceptions.error_messages as error_messages
-ssl._create_default_https_context = ssl._create_unverified_context
 
 def run(command_args):
     """ 
@@ -61,21 +59,29 @@ def init_with_template(template, language):
     -------
         None
     """
-    if template in get_available_templates_from_github(): # If template exists in the list? or just try to download and catch error
-        # Download from github as a zip. Unzip in the current directory and delete the zip. 
+    template_name = "{}-{}".format(template, language)
+    template_url = get_template_url(template_name)
+    zip_template_name = "{}.zip".format(template_name)
+    
+    print("Downloading the template '{}'...".format(template_name))
+    
+    download_request = requests.get(template_url, stream = True) 
+    if download_request.status_code != 200:
+        try:
+            download_request.raise_for_status()
+        except Exception as e:
+            print(e)
+        finally:
+            raise Exception(error_messages.INIT_FAILS_DURING_TEMPLATE_DOWNLOAD)
 
-        zip_template_name = "{}.zip".format(template)
-        template_url = get_template_url(template,language)
-        print("Downloading the template '{}'...".format(template))
-        urllib.request.urlretrieve(template_url, zip_template_name)
+    with open(zip_template_name, 'wb') as f:
+        f.write(download_request.content)
 
-        # unzip the template
-        shutil.unpack_archive(zip_template_name, current_directory)
+    # unzip the template
+    shutil.unpack_archive(zip_template_name, current_directory)
 
-        # Delete the downloaded zip template
-        os.remove(zip_template_name)
-    else:
-        raise Exception(error_messages.INIT_WITH_INVALID_TEMPLATE)
+    # Delete the downloaded zip template
+    os.remove(zip_template_name)
 
 def init_with_repository(repository):
     """    
@@ -83,7 +89,7 @@ def init_with_repository(repository):
     """
     print(" I init with repository")
 
-def get_template_url(template, language):
+def get_template_url(template_name):
     """    
     Forms the downloadable url of the template. 
 
@@ -91,21 +97,23 @@ def get_template_url(template, language):
 
     Parameters
     ----------
-        template(string): Template name provided in the args.
-        language(string): Language provided in the args
+        template_name(string): Template name concatenated with programming language provided in the args.
 
     Returns
     -------
        template_url(string): URL of the template which will be used for downloading. 
     """ 
-    template_url="{}archive/refs/tags/v1.1.0.zip".format(consts.templates_github_url)
-    return template_url
+    available_templates = get_available_templates_from_github()
+    if template_name in available_templates:
+        return available_templates[template_name]
+    else: 
+        raise Exception(error_messages.INIT_WITH_INVALID_TEMPLATE)
 
 def get_available_templates_from_github():
     """    
     Retrieves full list of greengrass component templates that can be used with the cli tool.
 
-    This functions list template releases from the greengrass component templates github repository.
+    This function lists the templates provided as a json file in the greengrass repository catalog.
 
     Parameters
     ----------
@@ -115,7 +123,21 @@ def get_available_templates_from_github():
     -------
        template_list(list): List of all the available templates in the greengrass component templates repo.
     """ 
-    template_list = ['HelloWorld-python', 'HelloWorld-java']
-    return template_list
-   
+    template_list_response=requests.get(consts.templates_list_url)
+    
+    if template_list_response.status_code != 200:
+        try:
+            template_list_response.raise_for_status()
+        except Exception as e:
+            print(e)
+        finally:
+            raise Exception(error_messages.INIT_FAILS_DURING_LISTING_TEMPLATES)
+
+    try: 
+        template_list = template_list_response.json()
+        return template_list
+    except Exception as e:
+        print(e)
+        return []
+ 
 current_directory=os.path.abspath(os.getcwd())
