@@ -21,11 +21,17 @@ def is_valid_model(cli_model, command):
   else:
     # Validate args
     if "arguments" in cli_model[command]:
-        for arg_name in cli_model[command]["arguments"]:
-            argument = cli_model[command]["arguments"][arg_name]
+        arguments = cli_model[command]["arguments"]
+        for arg_name in arguments:
+            argument = arguments[arg_name]
             if not is_valid_argument_model(argument):
                 return False
-                
+      # Validate arg groups
+        if "arg_groups" in cli_model[command]:
+            for arg_group in cli_model[command]["arg_groups"]:
+                if not is_valid_argument_group_model(arg_group, arguments):
+                    return False
+                          
     # Validate sub-commands
     if "sub-commands" in cli_model[command]:
         if not is_valid_subcommand_model(cli_model, cli_model[command]["sub-commands"]):
@@ -73,6 +79,33 @@ def is_valid_subcommand_model(cli_model, subcommands):
             return False
     return True
 
+def is_valid_argument_group_model(arg_group, arguments):
+  """ 
+  Validates CLI model at specified argument group level.    
+
+  With this validation, every argument group is mandated to have title, description and arguments that go as a group. 
+  
+  Parameters
+  ----------
+    arg_group(dict): A dictonary object which contains argument group at a command level.
+    arguments(dict): A dictonary object which contains all arguments at a command level.
+
+  Returns
+  -------
+    (bool): Returns True when the argument group is valid. Else False.
+  """
+
+  # Every argument group should have title, description and args that go in a group
+  if "title" not in arg_group or "description" not in arg_group or "args" not in arg_group:
+    return False
+
+  # Args of a group must be there in args of the command
+  for arg in arg_group["args"]:
+    if arg not in arguments:
+      return False
+
+  return True
+
 def get_validated_model():
     """ 
     This function loads the cli model json file from static location as a dict and validates it. 
@@ -86,12 +119,8 @@ def get_validated_model():
       cli_model(dict): Empty if the model is invalid otherwise returns cli model.
     """
     model_file = utils.get_static_file_path(consts.cli_model_file)
-    if model_file:
-      with open(model_file) as f:
-        cli_model = json.loads(f.read())
-        if is_valid_model(cli_model, consts.cli_tool_name):
-          return cli_model
-        raise Exception(error_messages.INVALID_CLI_MODEL)
-    raise Exception(error_messages.CLI_MODEL_FILE_NOT_EXISTS)
+    with open(model_file) as f:
+      cli_model = json.loads(f.read())
+      return cli_model
 
 
