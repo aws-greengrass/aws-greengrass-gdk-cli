@@ -6,6 +6,7 @@ INIT_WITH_CONFLICTING_ARGS = "Could not init the project as the command args are
 INIT_FAILS_DURING_TEMPLATE_DOWNLOAD = "Failed to download the selected component template. Please try again after sometime."
 INIT_FAILS_DURING_LISTING_TEMPLATES = "Failed to list the available component templates. Please try again after sometime."
 
-CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
+CONFIG_FILE_NOT_EXISTS = "Config file doesn't exist. Please init the project using a template or a repository before using greengrass-tools commands."
+# CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
 CONFIG_SCHEMA_FILE_NOT_EXISTS = "Configuration validation failed. Config schema file doesn't exist."
-INVALID_CLI_MODEL = "CLI model is invalid. Please provide a valid model to create the CLI parser."
+# INVALID_CLI_MODEL = "CLI model is invalid. Please provide a valid model to create the CLI parser."

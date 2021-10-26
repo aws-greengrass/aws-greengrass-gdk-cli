@@ -21,6 +21,10 @@ def get_static_file_path(file_name):
     else:
         return None
 
+def is_file_exists(file_path):
+    fp = Path(file_path).resolve()
+    return fp.is_file()
+
 def is_directory_empty(dir_path):
     """
     Checks if the given directory path is empty.

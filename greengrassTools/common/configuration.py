@@ -3,34 +3,49 @@ import jsonschema
 import greengrassTools.common.consts as consts
 import greengrassTools.common.utils as utils
 import greengrassTools.common.exceptions.error_messages as error_messages
-def get_configuration(file_name, component_name):
+from pathlib import Path
+
+def get_configuration():
     """
-     This method returns component configuration from the given file name.
-     If configuration in file, is not valid per defined schema it will throw ValidationError error.
-     If component configuration doesn't exists, then it will return None
-    :param file_name: file name for configuration file to read. This needs to be valid & absolute path.
-    :param component_name: name of the component
-    :return: Json object representing to component configuration
+    Load the configuration from the greengrass project config file as a json object.  
+
+    Throws ValidationError if the config file not valid as per schema. 
+
+    Parameters
+    ----------
+        None
+
+    Returns
+    -------
+       config_data(dict): Greengrass project configuration as a dictionary object if the config is valid. 
     """
-    with open(file_name, 'r') as config_file:
+    project_config_file = _get_project_config_file()
+    with open(project_config_file, 'r') as config_file:
         data = config_file.read()
     try:
-        validate_configuration(json.loads(data))
+        config_data = json.loads(data)
+        validate_configuration(config_data)
+        return config_data
     except jsonschema.exceptions.ValidationError as err:
-        print("Configuration file provide {0} is not in correct format, details of error {1}".format(file_name, err))
+        print("Configuration file provide {0} is not in correct format, details of error {1}".format(project_config_file, err))
         raise err
-    config_data = json.loads(data)
-    try:
-        return config_data["component"][component_name]
-    except:
-        return None
 
 def validate_configuration(data):
     """
-    This method validates the Json configuration object against json schema. It throws error if data is invalid.
-    :param data: Json configuration object
-    :return:
+    This method validates the greengrass project configuration object against json schema. 
+    
+    Raises an exception if the schema file doesn't exist. 
+    Throws ValidationError if configuration is invalid as per the schema.
+
+    Parameters
+    ----------
+        data(dict): A dictionary object containing the configuration from greengrass project config file.  
+
+    Returns
+    -------
+       None 
     """
+
     config_schema_file=utils.get_static_file_path(consts.config_schema_file)
     if config_schema_file:
         with open(config_schema_file, 'r') as schemaFile:
@@ -39,3 +54,23 @@ def validate_configuration(data):
     else:
         raise Exception(error_messages.CONFIG_SCHEMA_FILE_NOT_EXISTS)
     
+def _get_project_config_file():
+    """
+    Returns path of the config file present in the greengrass project directory. 
+    
+    Looks for certain config file in the current work directory of the command.  
+
+    Raises an exception if the config file is not present. 
+
+    Parameters
+    ----------
+        None
+
+    Returns
+    -------
+       config_file(pathlib.Path): Path of the config file. 
+    """
+    config_file = Path(consts.current_directory).joinpath(consts.cli_tool_config_file).resolve()
+    if not utils.is_file_exists(config_file):
+      raise Exception(error_messages.CONFIG_FILE_NOT_EXISTS)
+    return config_file
