@@ -1,6 +1,7 @@
 import requests
 import os
 import shutil
+import logging
 import greengrassTools.common.utils as utils
 import greengrassTools.common.parse_args_actions as parse_args_actions
 import greengrassTools.common.consts as consts
@@ -62,7 +63,7 @@ def init_with_template(template, language):
     template_url = get_template_url(template_name)
     zip_template_name = "{}.zip".format(template_name)
     
-    print("Downloading the template '{}'...".format(template_name))
+    logging.info("Downloading the template '{}'...".format(template_name))
     
     download_request = requests.get(template_url, stream = True) 
     if download_request.status_code != 200:

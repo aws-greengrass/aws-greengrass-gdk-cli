@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 import greengrassTools.common.parse_args_actions as parse_args_actions
 import greengrassTools.common.consts as consts
@@ -13,6 +14,7 @@ class CLIParser:
       self.parser=self.top_level_parser.add_parser(command, help='{} help'.format(command))
     else:
       self.parser=argparse.ArgumentParser(prog=consts.cli_tool_name)
+    self.parser.add_argument("-d", "--debug", help="Increase command output to debug level", action="store_true")
     self.subparsers=self.parser.add_subparsers(dest=command, help='{} help'.format(command))
     
   def create_parser(self, cli_model):
@@ -138,6 +140,10 @@ class CLIParser:
 def main():
   try: 
     args_namespace=cli_parser.parse_args()
+    if args_namespace.debug:
+      logging.basicConfig(level=logging.DEBUG, format=consts.log_format)
+    else:
+      logging.basicConfig(level=logging.INFO, format=consts.log_format)
     parse_args_actions.run_command(args_namespace)
   except Exception as e:
     print(e)

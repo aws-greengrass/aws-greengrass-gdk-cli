@@ -29,14 +29,14 @@
                     "-t",
                     "--template"
                 ],
-                "help": "Name of the template you want to use."
+                "help": "Name of the template to be used."
             },
             "repository": {
                 "name": [
                     "-r",
                     "--repository"
                 ],
-                "help": "Name of the repository you want to use."
+                "help": "Name of the repository to be used."
             }
         },
         "conflicting_arg_groups": [
@@ -55,14 +55,14 @@
                     "language",
                     "template"
                 ],
-                "description": "Init the project with a component template written in programming language of your choice."
+                "description": "Initialize the project with a component template written in specified programming language"
             },
             {
                 "title": "Greengrass repository catalog.",
                 "args": [
                     "repository"
                 ],
-                "description": "Init the project with a component from repository catalog."
+                "description": "Initialize the project with a component from Greengrass Repository Catalog"
             }
         ]
     },

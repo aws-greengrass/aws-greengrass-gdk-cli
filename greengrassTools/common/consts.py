@@ -21,4 +21,5 @@ cli_model_file = "cli_model.json"
 ## Replace it with main branch
 templates_list_url = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-community-catalog/list-components/components/templates.json"
 current_directory = os.path.abspath(os.getcwd())
+log_format = "%(asctime)s %(levelname)s %(message)s"
 
