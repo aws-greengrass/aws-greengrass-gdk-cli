@@ -7,7 +7,7 @@ from pathlib import Path
 
 def get_configuration():
     """
-    Load the configuration from the greengrass project config file as a json object.  
+    Loads the configuration from the greengrass project config file as a json object.  
 
     Throws ValidationError if the config file not valid as per schema. 
 
@@ -32,7 +32,7 @@ def get_configuration():
 
 def validate_configuration(data):
     """
-    This method validates the greengrass project configuration object against json schema. 
+    Validates the greengrass project configuration object against json schema. 
     
     Raises an exception if the schema file doesn't exist. 
     Throws ValidationError if configuration is invalid as per the schema.
@@ -70,7 +70,7 @@ def _get_project_config_file():
     -------
        config_file(pathlib.Path): Path of the config file. 
     """
-    config_file = Path(consts.current_directory).joinpath(consts.cli_tool_config_file).resolve()
+    config_file = Path(consts.current_directory).joinpath(consts.cli_project_config_file).resolve()
     if not utils.is_file_exists(config_file):
       raise Exception(error_messages.CONFIG_FILE_NOT_EXISTS)
     return config_file

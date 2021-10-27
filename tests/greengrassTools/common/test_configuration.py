@@ -45,7 +45,7 @@ def test_get_configuration_no_project_config_file(mocker):
 def test_get_project_config_file_exists(mocker):
     mock_is_file_exists= mocker.patch("greengrassTools.common.utils.is_file_exists", return_value=True)
 
-    assert config._get_project_config_file() == Path(consts.current_directory).joinpath(consts.cli_tool_config_file).resolve()
+    assert config._get_project_config_file() == Path(consts.current_directory).joinpath(consts.cli_project_config_file).resolve()
 
 def test_get_project_config_file_not_exists(mocker):
     mock_is_file_exists= mocker.patch("greengrassTools.common.utils.is_file_exists", return_value=False)

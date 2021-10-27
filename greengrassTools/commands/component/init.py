@@ -2,7 +2,6 @@ import requests
 import os
 import shutil
 import greengrassTools.common.utils as utils
-import greengrassTools.common.model_actions as model_actions
 import greengrassTools.common.parse_args_actions as parse_args_actions
 import greengrassTools.common.consts as consts
 import greengrassTools.common.exceptions.error_messages as error_messages
@@ -23,7 +22,7 @@ def run(command_args):
         None
     """
     # Check if directory is not empty
-    if not utils.is_directory_empty(current_directory):
+    if not utils.is_directory_empty(consts.current_directory):
         raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
 
     # Check if the command args are conflicting
@@ -78,7 +77,7 @@ def init_with_template(template, language):
         f.write(download_request.content)
 
     # unzip the template
-    shutil.unpack_archive(zip_template_name, current_directory)
+    shutil.unpack_archive(zip_template_name, consts.current_directory)
 
     # Delete the downloaded zip template
     os.remove(zip_template_name)
@@ -140,4 +139,3 @@ def get_available_templates_from_github():
         print(e)
         return []
  
-current_directory=os.path.abspath(os.getcwd())

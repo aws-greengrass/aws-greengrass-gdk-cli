@@ -2,7 +2,7 @@ import os
 
 cli_tool_name = "greengrass-tools"
 cli_tool_name_in_method_names = "greengrass_tools"
-cli_tool_config_file = "greengrass-tools-config.json"
+cli_project_config_file = "greengrass-tools-config.json"
 arg_parameters = [
     "name",
     "action",
