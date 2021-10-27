@@ -4,7 +4,6 @@ import greengrassTools.common.consts as consts
 import pytest
 from pathlib import Path
 from unittest.mock import patch,mock_open
-import greengrassTools.common.exceptions.error_messages as error_messages
 
 def test_get_validated_model_file_not_exists(mocker):
     mock_get_static_file_path = mocker.patch('greengrassTools.common.utils.get_static_file_path', return_value=None)

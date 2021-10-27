@@ -1,5 +1,6 @@
 from pathlib import Path
 import greengrassTools
+import shutil
 
 def get_static_file_path(file_name):
     """
@@ -42,3 +43,17 @@ def is_directory_empty(dir_path):
         return True
     else:    
         return False
+
+def clean_dir(dir):
+    """
+    Deletes the directory.
+    
+    Parameters
+    ----------
+        dir(Path): Path of the directory to remove. 
+
+    Returns
+    -------
+        None
+    """ 
+    shutil.rmtree(dir, ignore_errors=True, onerror=None)

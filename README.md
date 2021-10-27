@@ -3,6 +3,8 @@
 ```
 pip3 install jsonschema
 pip3 install requests
+pip3 install pyyaml
+pip3 install subprocess
 python3 setup.py install 
 python3 setup.py sdist bdist_wheel 
 pip3 install dist/greengrass_tools-1.0.0-py3-none-any.whl --force-reinstall 

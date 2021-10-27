@@ -1,8 +1,7 @@
-import greengrassTools.common.utils as utils
 import greengrassTools.commands.component.init as init
 import pytest
 import greengrassTools.common.exceptions.error_messages as error_messages
-import os
+from pathlib import Path
 from unittest.mock import patch,mock_open
 from urllib3.exceptions import HTTPError
 
@@ -192,7 +191,7 @@ def test_init_with_template_valid(mocker):
         mock_file.assert_called_once_with(template_name_zip, 'wb')
 
         mock_remove_template_zip.assert_called_with(template_name_zip)
-        mock_unzip_template_zip.assert_called_with(template_name_zip, os.getcwd())
+        mock_unzip_template_zip.assert_called_with(template_name_zip, Path('.').resolve())
 
 def test_init_with_template_invalid_url(mocker):
     # Raises an exception when the template url is not valid. 

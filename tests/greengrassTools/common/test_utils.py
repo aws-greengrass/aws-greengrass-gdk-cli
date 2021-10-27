@@ -59,4 +59,9 @@ def test_is_file_exists_not_a_file(mocker):
     assert not utils.is_file_exists(file_path)
     assert mock_is_file.call_count ==1
 
+def test_clean_build(mocker):
+    mock_rm = mocker.patch("shutil.rmtree")
+    path = Path().resolve()
+    utils.clean_dir(path)
+    mock_rm.call_count == 1
     
