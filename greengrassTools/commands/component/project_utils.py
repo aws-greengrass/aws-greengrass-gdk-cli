@@ -59,7 +59,7 @@ def get_supported_component_builds():
             return json.loads(supported_builds_file.read())
     return None
 
-def get_recipe_file(component_name):
+def get_recipe_file():
     """
     Finds recipe file based on component name and its extension. 
 
@@ -71,28 +71,24 @@ def get_recipe_file(component_name):
 
     Parameters
     ----------
-        dir(Path): Path of the directory to remove. 
+        None
 
     Returns
     -------
         recipe_file(Path): Path of the identified recipe file.
     """ 
     # Search for json files in current directory that contain component name and ends in .json.
-    json_files = list(Path(consts.current_directory).glob("{}*.{}".format(component_name,"json")))
-    if len(json_files) != 1:
-        print(error_messages.PROJECT_JSON_RECIPE_FILE_NOT_FOUND)
-    else:
-        return json_files[0].resolve()
+    json_file = list(Path(consts.current_directory).glob("recipe.json"))
+    yaml_file = list(Path(consts.current_directory).glob("recipe.yaml"))
 
-    # Search for yaml files in current directory that contain component name and ends in .yaml.
-    yaml_files = list(Path(consts.current_directory).glob("{}*.{}".format(component_name,"yaml")))
-    if len(yaml_files) != 1:
-        print(error_messages.PROJECT_YAML_RECIPE_FILE_NOT_FOUND)
-    else:
-        return yaml_files[0].resolve()   
+    if not json_file and not yaml_file:
+        raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
 
-    raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
+    if json_file and yaml_file:
+        raise Exception("""Build failed in default mode as no valid component recipe is identified.
+        Found both 'recipe.json' and 'recipe.yaml' in the given project.""")
 
+    return (json_file + yaml_file)[0].resolve()
 
 def parse_recipe_file(component_recipe_file):
     """ 
@@ -138,7 +134,7 @@ def get_project_config_values():
     gg_build_component_artifacts_dir = Path(gg_build_artifacts_dir).joinpath(component_name,component_version).resolve()
 
     # Get recipe file
-    component_recipe_file = get_recipe_file(component_name)
+    component_recipe_file = get_recipe_file()
 
     # Get parsed recipe file
     parsed_component_recipe = parse_recipe_file(component_recipe_file)
@@ -148,7 +144,6 @@ def get_project_config_values():
 
     # Create dictionary with all the above values
     vars={}
-    vars["project_config"] = project_config
     vars["component_name"] = component_name
     vars["component_config"] = component_config
     vars["component_version"] = component_version

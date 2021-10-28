@@ -4,21 +4,9 @@ import pytest
 import json
 from unittest.mock import patch,mock_open
 from unittest.mock import ANY
-import copy
+
 valid_project_config_file=Path(".").joinpath('tests/greengrassTools/static/build_command').joinpath('valid_project_config_build.json').resolve()
 json_values = {
-    "project_config": {
-        "component_name": {
-            "author": "abc",
-            "version": "1.0.0",
-            "build": {
-                "command": ["default"]
-            },
-            "publish": {
-                "bucket_name": "default"
-            }
-        }
-    },
     "component_name": "component_name",
     "component_config": {
         "author": "abc",
@@ -71,18 +59,9 @@ json_values = {
     
 with open(valid_project_config_file, 'r') as f:
     parsed_config_file = json.loads(f.read())
-# @pytest.fixture
-# def valid_json_recipe(mocker):
-#     # mock_json_recipe = mocker.patch("greengrassTools.commands.component.build")
-#     return Path(".").joinpath('tests/greengrassTools/static/build_command').joinpath('valid_component_recipe.json').resolve()
-
-# @pytest.fixture
-# def valid_project_config():
-#     return Path(".").joinpath('tests/greengrassTools/static/build_command').joinpath('valid_project_config_build.json').resolve()
-
 
 def test_create_recipe_file_json_valid(mocker):
-    # Tests if a new recipe file is created with updated values
+    # Tests if a new recipe file is created with updated values - json
     mock_get_parsed_config= mocker.patch("greengrassTools.commands.component.project_utils.get_project_config_values", return_value=json_values)
 
     import greengrassTools.commands.component.build as build
@@ -96,15 +75,28 @@ def test_create_recipe_file_json_valid(mocker):
         mock_json_dump.call_count ==1 
         assert not mock_yaml_dump.called
 
-def test_create_recipe_file_json_invalid(mocker):
-    # Tests if a new recipe file is created with updated values
-    mock_get_parsed_config= mocker.patch("greengrassTools.commands.component.project_utils.get_project_config_values", return_value=json_values)
+def test_create_recipe_file_yaml_valid(mocker):
+    # Tests if a new recipe file is created with updated values - yaml
+    # Tests if a new recipe file is created with updated values - json
     import greengrassTools.commands.component.build as build
-    # assert mock_get_parsed_config.call_count == 1
+    build.project_build_config["component_recipe_file"]  = Path('some-yaml.yaml').resolve()
+    file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(build.project_build_config["component_recipe_file"].resolve().name).resolve()
+    mock_json_dump = mocker.patch("json.dumps")
+    mock_yaml_dump = mocker.patch("yaml.dump")
+    with patch("builtins.open", mock_open()) as mock_file:
+        build.create_build_recipe_file()
+        mock_file.assert_called_once_with(file_name, 'w')
+        mock_json_dump.call_count ==1 
+        assert mock_yaml_dump.called
+
+def test_create_recipe_file_json_invalid(mocker):
+    # Raise exception for when creating recipe failed due to invalid json
+    import greengrassTools.commands.component.build as build
+    build.project_build_config["component_recipe_file"]  = Path('some-json.json').resolve()
     file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(json_values["component_recipe_file"].name).resolve()
     def throw_error(*args, **kwargs):
         if args[0] == json_values["parsed_component_recipe"]:
-            raise TypeError('I mock type error')
+            raise TypeError('I mock json error')
     mock_json_dump = mocker.patch("json.dumps", side_effect=throw_error)
     mock_yaml_dump = mocker.patch("yaml.dump")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -115,23 +107,23 @@ def test_create_recipe_file_json_invalid(mocker):
         mock_json_dump.call_count ==1 
         assert not mock_yaml_dump.called
 
-def test_create_recipe_file_json_invalid(mocker):
-    # Tests if a new recipe file is created with updated values
+def test_create_recipe_file_yaml_invalid(mocker):
+    # Raise exception for when creating recipe failed due to invalid yaml
     import greengrassTools.commands.component.build as build
-    # assert mock_get_parsed_config.call_count == 1
-    file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(json_values["component_recipe_file"].name).resolve()
+    build.project_build_config["component_recipe_file"]  = Path('some-yaml.yaml').resolve()
+    file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(build.project_build_config["component_recipe_file"].name).resolve()
     def throw_error(*args, **kwargs):
         if args[0] == json_values["parsed_component_recipe"]:
-            raise TypeError('I mock type error')
-    mock_json_dump = mocker.patch("json.dumps", side_effect=throw_error)
-    mock_yaml_dump = mocker.patch("yaml.dump")
+            raise TypeError('I mock yaml error')
+    mock_json_dump = mocker.patch("json.dumps")
+    mock_yaml_dump = mocker.patch("yaml.dump",side_effect=throw_error)
     with patch("builtins.open", mock_open()) as mock_file:
         with pytest.raises(Exception) as e:
             build.create_build_recipe_file()
         assert "Could not create a build recipe file for file" in e.value.args[0]
         mock_file.assert_called_once_with(file_name, 'w')
         mock_json_dump.call_count ==1 
-        assert not mock_yaml_dump.called
+        assert mock_yaml_dump.called
 
 def test_get_build_folder_by_build_system():
     import greengrassTools.commands.component.build as build
@@ -398,19 +390,6 @@ def test_default_build_component(mocker):
     assert mock_copy_artifacts_and_update_uris.assert_called_once
     assert mock_create_build_recipe_file.assert_called_once
 
-def test_default_build_component(mocker):
-    mock_get_project_build_info = mocker.patch("greengrassTools.commands.component.project_utils.get_project_build_info", return_value=(1,2))
-    mock_run_build_command = mocker.patch("greengrassTools.commands.component.build.run_build_command")
-    mock_copy_artifacts_and_update_uris = mocker.patch("greengrassTools.commands.component.build.copy_artifacts_and_update_uris")
-    mock_create_build_recipe_file = mocker.patch("greengrassTools.commands.component.build.create_build_recipe_file")
-    import greengrassTools.commands.component.build as build
-    build.default_build_component()
-    assert mock_get_project_build_info.assert_called_once
-    assert mock_run_build_command.assert_called_once
-    assert mock_copy_artifacts_and_update_uris.assert_called_once
-    assert mock_create_build_recipe_file.assert_called_once
-
-
 def test_default_build_component_error_get_project_build_info(mocker):
     mock_get_project_build_info = mocker.patch("greengrassTools.commands.component.project_utils.get_project_build_info", return_value=(1,2), side_effect=Error('some error'))
     mock_run_build_command = mocker.patch("greengrassTools.commands.component.build.run_build_command")
@@ -489,7 +468,6 @@ def test_build_run_non_default(mocker):
     import greengrassTools.commands.component.build as build
     
     modify_build = build.project_build_config
-    modify_build["project_config"]["component_name"]["build"]["command"]=["non-default"]
     modify_build["component_config"]["build"]["command"] =["non-default"]
     build.run({})
     assert mock_create_gg_build_directories.assert_called_once

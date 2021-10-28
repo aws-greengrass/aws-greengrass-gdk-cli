@@ -218,7 +218,8 @@ def copy_artifacts_and_update_uris(build_info):
     
     Parameters
     ----------
-        None
+        build_info(dict): A dictionary object that contains build related information specific to the build 
+        type identified by the project. 
 
     Returns
     -------

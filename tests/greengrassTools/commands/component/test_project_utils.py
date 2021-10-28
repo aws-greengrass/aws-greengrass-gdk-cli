@@ -23,71 +23,75 @@ with open(valid_yaml_recipe_file, 'r') as f:
 def test_get_recipe_file_not_exists():
     # Checks in the current directory for json or yaml files. Since none of them are present, this will raise an exception
     with pytest.raises(Exception) as e:
-        project_utils.get_recipe_file("component_name")
+        project_utils.get_recipe_file()
     assert e.value.args[0] == error_messages.PROJECT_RECIPE_FILE_NOT_FOUND
 
 def test_get_recipe_file_json_exists(mocker):
     # Recipe json file exists.
-    mock_json_file_path = Path()
-    component_name = "component_name"
+    mock_json_file_path = Path('recipe.json')
     def use_this_for_recipe(*args):
-        if args[0] == '{}*.{}'.format(component_name, "json"):
+        if args[0] == "recipe.json":
             return [mock_json_file_path]
-        elif args[0] == '{}*.{}'.format(component_name, "yaml"):
+        elif args[0] == "recipe.yaml":
             return []
 
     mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
-    recipe = project_utils.get_recipe_file(component_name)
+    recipe = project_utils.get_recipe_file()
 
-    assert mock_glob.call_count == 1
-    mock_glob.assert_called_with('{}*.{}'.format(component_name, "json"))
-
-    # Assert that yaml search is never run. 
-    with pytest.raises(AssertionError):
-        mock_glob.assert_called_with('{}*.{}'.format(component_name, "yaml"))
+    assert mock_glob.call_count == 2
+    mock_glob.assert_any_call("recipe.json")
+    mock_glob.assert_any_call("recipe.yaml")
+    assert recipe.name == "recipe.json"
 
 def test_get_recipe_file_yaml_exists(mocker):
     # Recipe json file not exists but yaml does.
-    mock_yaml_file_path = Path()
-    component_name = "component_name"
+    mock_yaml_file_path = Path('recipe.yaml')
     def use_this_for_recipe(*args):
-        if args[0] == '{}*.{}'.format(component_name, "json"):
+        if args[0] == "recipe.json":
             return []
-        elif args[0] == '{}*.{}'.format(component_name, "yaml"):
+        elif args[0] == "recipe.yaml":
             return [mock_yaml_file_path]
 
     mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
-    recipe = project_utils.get_recipe_file(component_name)
+    recipe = project_utils.get_recipe_file()
 
-    # Search for json files and then yaml files. 
+    # Search for json file and then yaml file. 
     assert mock_glob.call_count == 2 
     assert type(recipe) == type(mock_yaml_file_path)
-    mock_glob.assert_any_call('{}*.{}'.format(component_name, "json"))
-    mock_glob.assert_called_with('{}*.{}'.format(component_name, "yaml"))
+    mock_glob.assert_any_call("recipe.json")
+    mock_glob.assert_any_call("recipe.yaml")
+    assert recipe.name == "recipe.yaml"
 
-
-def test_get_recipe_file_multiple_yaml_exists(mocker):
-    # Recipe json file not exists but yaml does.
-    mock_yaml_file_path = Path()
-    component_name = "component_name"
+def test_get_recipe_file_yaml_none_exists(mocker):
+    # neither recipe.json not recipe.yaml exists
     def use_this_for_recipe(*args):
-        if args[0] == '{}*.{}'.format(component_name, "json"):
+        if args[0] == "recipe.json":
             return []
-        elif args[0] == '{}*.{}'.format(component_name, "yaml"):
-            return [mock_yaml_file_path, mock_yaml_file_path]
-
+        elif args[0] == "recipe.yaml":
+            return []
     mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
     with pytest.raises(Exception) as e:
-        project_utils.get_recipe_file("component_name")
+        project_utils.get_recipe_file()
     assert e.value.args[0] == error_messages.PROJECT_RECIPE_FILE_NOT_FOUND
-
-    # Search for json files and then yaml files. 
+    # Search for json file and then yaml file. 
     assert mock_glob.call_count == 2 
-    mock_glob.assert_any_call('{}*.{}'.format(component_name, "json"))
-    mock_glob.assert_called_with('{}*.{}'.format(component_name, "yaml"))
+    mock_glob.assert_any_call("recipe.json")
+    mock_glob.assert_any_call("recipe.yaml")
 
-
-    # TODO: Add test for multiple files, based on decision in group
+def test_get_recipe_file_yaml_both_exist(mocker):
+    # neither recipe.json not recipe.yaml exists
+    def use_this_for_recipe(*args):
+        if args[0] == "recipe.json":
+            return [Path('.')]
+        elif args[0] == "recipe.yaml":
+            return [Path('.')]
+    mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
+    with pytest.raises(Exception) as e:
+        project_utils.get_recipe_file()
+    assert "Found both 'recipe.json' and 'recipe.yaml' in the given project." in e.value.args[0]
+    assert mock_glob.call_count == 2 
+    mock_glob.assert_any_call("recipe.json")
+    mock_glob.assert_any_call("recipe.yaml")
 
 def test_parse_recipe_file_json(mocker):
     # Parse json file
@@ -135,7 +139,6 @@ def test_get_project_config_values(mocker):
     assert type(values) == dict
 
     # Assert all keys exist
-    assert "project_config" in values
     assert "component_name" in values
     assert "component_config" in values
     assert "component_version" in values
