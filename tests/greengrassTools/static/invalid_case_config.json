@@ -4,12 +4,12 @@
             "author": "abc",
             "version": "1.0.0",
             "Build": {
-                "command" : "default"
+                "command" : ["default"]
             },
             "publish": {
                 "bucket_name": "default"
             }
         }
     },
-    "tools-version": "1.0.0"
+    "tools_version": "1.0.0"
 }

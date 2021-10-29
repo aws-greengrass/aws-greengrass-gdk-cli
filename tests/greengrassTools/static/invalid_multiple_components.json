@@ -9,6 +9,16 @@
             "publish": {
                 "bucket_name": "default"
             }
+        },
+        "2": {
+            "author": "abc",
+            "version": "1.0.0",
+            "build": {
+                "command" : ["default"]
+            },
+            "publish": {
+                "bucket_name": "default"
+            }
         }
     },
     "tools_version": "1.0.0"
