@@ -1,0 +1,113 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "default": {},
+    "required": [
+        "pom.xml",
+        "gradlew",
+        ".py"
+    ],
+    "properties": {
+        "pom.xml": {
+            "type": "object",
+            "required": [
+                "build_system",
+                "build_command",
+                "build_folder"
+            ],
+            "properties": {
+                "build_system": {
+                    "type": "string"
+                },
+                "build_command": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                "build_folder": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "gradlew": {
+            "type": "object",
+            "default": {},
+            "required": [
+                "build_system",
+                "build_command",
+                "build_folder"
+            ],
+            "properties": {
+                "build_system": {
+                    "type": "string"
+                },
+                "build_command": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                "build_folder": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        ".py": {
+            "type": "object",
+            "default": {},
+            "required": [
+                "build_system",
+                "build_command",
+                "build_folder"
+            ],
+            "properties": {
+                "build_system": {
+                    "type": "string"
+                },
+                "build_command": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                "build_folder": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

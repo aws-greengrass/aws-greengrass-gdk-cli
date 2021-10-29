@@ -18,7 +18,7 @@
     },
     ".py": {
         "build_system": "zip",
-        "build_command": "zip",
+        "build_command": ["zip"],
         "build_folder":["zip-build"]
     }
 }
