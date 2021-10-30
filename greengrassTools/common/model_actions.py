@@ -1,7 +1,6 @@
 import json
 import greengrassTools.common.consts as consts
 import greengrassTools.common.utils as utils
-import greengrassTools.common.exceptions.error_messages as error_messages
 
 def is_valid_model(cli_model, command):
   """ 
@@ -19,6 +18,9 @@ def is_valid_model(cli_model, command):
   if command not in cli_model:
     return False
   else:
+    # Mandate "help" text for each command
+    if "help" not in cli_model[command]:
+      return False
     # Validate args
     if "arguments" in cli_model[command]:
         arguments = cli_model[command]["arguments"]

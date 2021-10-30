@@ -19,7 +19,7 @@ def test_get_configuration_invalid_config_file(mocker, file_name):
     mock__get_project_config_file=mocker.patch("greengrassTools.common.configuration._get_project_config_file", 
     return_value=Path(".").joinpath('tests/greengrassTools/static').joinpath(file_name).resolve())
 
-    with pytest.raises(jsonschema.exceptions.ValidationError) as err:
+    with pytest.raises(Exception) as err:
         config.get_configuration()
     assert mock__get_project_config_file.called
 
@@ -34,7 +34,7 @@ def test_validate_configuration_schema_not_exists(mocker):
     assert mock_get_static_file_path.call_count == 1   
 
 def test_get_configuration_no_project_config_file(mocker):  
-    mock_is_file_exists= mocker.patch("greengrassTools.common.utils.is_file_exists", return_value=False)
+    mock_file_exists= mocker.patch("greengrassTools.common.utils.file_exists", return_value=False)
     mock_validate_configuration = mocker.patch("greengrassTools.common.configuration.validate_configuration",return_value="data")
     with pytest.raises(Exception) as e_info:
         config.get_configuration()
@@ -43,12 +43,12 @@ def test_get_configuration_no_project_config_file(mocker):
     assert not mock_validate_configuration.called
 
 def test_get_project_config_file_exists(mocker):
-    mock_is_file_exists= mocker.patch("greengrassTools.common.utils.is_file_exists", return_value=True)
+    mock_file_exists= mocker.patch("greengrassTools.common.utils.file_exists", return_value=True)
 
-    assert config._get_project_config_file() == Path(consts.current_directory).joinpath(consts.cli_project_config_file).resolve()
+    assert config._get_project_config_file() == Path(utils.current_directory).joinpath(consts.cli_project_config_file).resolve()
 
 def test_get_project_config_file_not_exists(mocker):
-    mock_is_file_exists= mocker.patch("greengrassTools.common.utils.is_file_exists", return_value=False)
+    mock_file_exists= mocker.patch("greengrassTools.common.utils.file_exists", return_value=False)
 
     with pytest.raises(Exception) as e_info:
         config._get_project_config_file()

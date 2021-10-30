@@ -1,16 +1,24 @@
-
+import greengrassTools.common.consts as consts
 # COMMANDS
-INIT_NON_EMPTY_DIR_ERROR = "Could not init the project as the directory is not empty. Please init the project in an empty directory.\nTry `greengrass-tools component init --help`"
-INIT_WITH_INVALID_ARGS = "Could not init the project as the arguments passed are invalid. Please init the project with correct args.\nTry `greengrass-tools component init --help`"
-INIT_WITH_INVALID_TEMPLATE = "Could not init the project as no such template exists. Please init the project with correct args.\nTry `greengrass-tools component template list`"
-INIT_WITH_CONFLICTING_ARGS = "Could not init the project as the command args are conflicting. Please init the project with correct args.\nTry `greengrass-tools component init --help` "
+
+## INIT
+INIT_NON_EMPTY_DIR_ERROR = "Could not initialize the project as the directory is not empty. Please initialize the project in an empty directory.\nTry `greengrass-tools component init --help`"
+INIT_WITH_INVALID_ARGS = "Could not initialize the project as the arguments passed are invalid. Please initialize the project with correct args.\nTry `greengrass-tools component init --help`"
+INIT_WITH_INVALID_TEMPLATE = "Could not initialize the project as no such template exists. Please initialize the project with correct args.\nTry `greengrass-tools component list --template`"
+INIT_WITH_CONFLICTING_ARGS = "Could not initialize the project as the command args are conflicting. Please initialize the project with correct args.\nTry `greengrass-tools component init --help` "
+
+##BUILD
+BUILD_WITH_NO_VALID_RECIPE = "Building the component with 'default' configuration failed as no valid component recipe is found in the project directory."
+BUILD_WITH_DEFAULT_FAILED = "Failed to build the component with default configuration."
+BUILD_WITH_DEFAULT_COMMAND_FAILED = "Failed to run the build command with default configuration"
 
 # FILES 
-CONFIG_FILE_NOT_EXISTS = "Config file doesn't exist. Please init the project using a template or a repository before using greengrass-tools commands."
+CONFIG_FILE_NOT_EXISTS = "Config file doesn't exist. Please initialize the project using a template or a repository before using greengrass-tools commands."
 CONFIG_SCHEMA_FILE_NOT_EXISTS = "Configuration validation failed. Config schema file doesn't exist."
 PROJECT_RECIPE_FILE_NOT_FOUND = "No valid component recipe is found. Please include a valid recipe file of the component to build with default."
 PROJECT_JSON_RECIPE_FILE_NOT_FOUND = "No valid json recipes found for the component."
 PROJECT_YAML_RECIPE_FILE_NOT_FOUND = "No valid yaml recipes found for the component."
+PROJECT_CONFIG_FILE_INVALID="Invalid project configuration file. Please correct it to use it with {}".format(consts.cli_tool_name)
 
 # EXTERNAL 
 INIT_FAILS_DURING_TEMPLATE_DOWNLOAD = "Failed to download the selected component template. Please try again after sometime."

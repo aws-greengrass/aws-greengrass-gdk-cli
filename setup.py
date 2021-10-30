@@ -1,13 +1,25 @@
 from setuptools import setup, find_packages
+import codecs
+from pathlib import Path
 
-# with open('requirements.txt') as f:
-# 	requirements = f.readlines()
+def read(rel_path):
+    here = Path(__file__).parent.resolve()
+    with codecs.open(Path(here).joinpath(rel_path).resolve(), 'r') as fp:
+        return fp.read()
+
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
 
 long_description = 'Greengrass CLI Tool for creating Greengrass components.'
 
 setup(
 		name ='greengrass-tools',
-		version ='1.0.0',
+		version = get_version("greengrassTools/_version.py"),
 		author ='AWS IoT Greengrass Labs',
 		author_email ='nukai@amazon.com',
 		url ='',

@@ -1,3 +1,4 @@
+import logging
 import greengrassTools.common.configuration as config_actions
 import greengrassTools.common.consts as consts
 from pathlib import Path
@@ -5,7 +6,6 @@ import json
 import yaml
 import greengrassTools.common.exceptions.error_messages as error_messages
 import greengrassTools.common.utils as utils
-
 
 def get_project_build_info():
     """
@@ -29,16 +29,18 @@ def get_project_build_info():
     """
     # Get supported component build systems
     supported_builds = get_supported_component_builds()
+    logging.info("Identifying the build system of the component.")
     if supported_builds:
         for s_file in supported_builds:
-            b_files = list(Path(consts.current_directory).glob("*{}".format(s_file)))
+            b_files = list(Path(utils.current_directory).glob("*{}".format(s_file)))
             if len(b_files) != 1:
-                print("[DEBUG]: No valid files end in {}.".format(s_file))
+                logging.debug("No file names in the directory end in {}.".format(s_file))
                 # TODO: For python components, if there are multiple ".py" files in project directory,
                 # identify the build file based on other artifacts in the recipe? 
             else:
+                logging.debug("Found {} file in the project directory".format(s_file))
                 return b_files[0].resolve(), supported_builds[s_file]
-    raise Exception("""Could not use 'default' build as the component build system is not identified. Please provide custom build command in '{}' config file to build the component.""".format(consts.cli_project_config_file))
+    raise Exception("""Could not use 'default' build as the component build system is not identified. Please provide custom build command in '{}' under 'component'->'build'->'command'.""".format(consts.cli_project_config_file))
 
 
 def get_supported_component_builds():
@@ -56,6 +58,7 @@ def get_supported_component_builds():
     supported_component_builds_file = utils.get_static_file_path(consts.supported_component_builds_file)
     if supported_component_builds_file:
         with open(supported_component_builds_file, 'r') as supported_builds_file:
+            logging.debug("Identifying build systems supported by the CLI tool with default configuration.")
             return json.loads(supported_builds_file.read())
     return None
 
@@ -78,17 +81,20 @@ def get_recipe_file():
         recipe_file(Path): Path of the identified recipe file.
     """ 
     # Search for json files in current directory that contain component name and ends in .json.
-    json_file = list(Path(consts.current_directory).glob("recipe.json"))
-    yaml_file = list(Path(consts.current_directory).glob("recipe.yaml"))
+    logging.debug("Looking for recipe file in the project directory.")
+    json_file = list(Path(utils.current_directory).glob("recipe.json"))
+    yaml_file = list(Path(utils.current_directory).glob("recipe.yaml"))
 
     if not json_file and not yaml_file:
+        logging.error("Could not find 'recipe.json' and 'recipe.yaml' in the project directory.")
         raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
 
     if json_file and yaml_file:
-        raise Exception("""Build failed in default mode as no valid component recipe is identified.
-        Found both 'recipe.json' and 'recipe.yaml' in the given project.""")
-
-    return (json_file + yaml_file)[0].resolve()
+        logging.error("Found both 'recipe.json' and 'recipe.yaml' in the given project directory.")
+        raise Exception(error_messages.BUILD_WITH_NO_VALID_RECIPE)
+    recipe_file = (json_file + yaml_file)[0].resolve()
+    logging.info("Found component recipe file '{}' in the  project directory.".format(recipe_file.name))
+    return recipe_file
 
 def parse_recipe_file(component_recipe_file):
     """ 
@@ -98,12 +104,13 @@ def parse_recipe_file(component_recipe_file):
 
     Parameters
     ----------
-        None
+        component_recipe_file(pathlib.Path): Path of the component recipe file.
 
     Returns
     -------
       (dict): Returns a dict object with the component recipe file. 
     """   
+    logging.debug("Parsing the component recipe file '{}'.".format(component_recipe_file.name))
     with open(component_recipe_file, "r") as r_file:
         recipe=r_file.read()
         try:
@@ -114,10 +121,11 @@ def parse_recipe_file(component_recipe_file):
                 recipe_yaml=yaml.safe_load(recipe)
                 return recipe_yaml
         except Exception as e:
-            raise Exception("""Unable to parse the recipe file {}. Exception: {}""".format(component_recipe_file.name,e))
+            raise Exception("""Unable to parse the recipe file - {}.\n{}""".format(component_recipe_file.name,e))
 
 def get_project_config_values():
     # Get component configuration from the greengrass project config file.
+    logging.info("Getting project configuration from {}".format(consts.cli_project_config_file))
     project_config = config_actions.get_configuration()["component"]
 
     # Since there's only one key in the component configuration, use next() instead of looping in. 
@@ -128,7 +136,7 @@ def get_project_config_values():
     bucket_name = component_config["publish"]["bucket_name"]
 
     # Build directories
-    gg_build_directory = Path(consts.current_directory).joinpath("greengrass-build").resolve()
+    gg_build_directory = Path(utils.current_directory).joinpath(consts.greengrass_build_dir).resolve()
     gg_build_artifacts_dir = Path(gg_build_directory).joinpath("artifacts").resolve()
     gg_build_recipes_dir = Path(gg_build_directory).joinpath("recipes").resolve()
     gg_build_component_artifacts_dir = Path(gg_build_artifacts_dir).joinpath(component_name,component_version).resolve()

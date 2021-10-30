@@ -5,6 +5,8 @@ import json
 from unittest.mock import patch,mock_open
 from unittest.mock import ANY
 
+from greengrassTools.common.exceptions import error_messages
+
 valid_project_config_file=Path(".").joinpath('tests/greengrassTools/static/build_command').joinpath('valid_project_config_build.json').resolve()
 json_values = {
     "component_name": "component_name",
@@ -71,7 +73,7 @@ def test_create_recipe_file_json_valid(mocker):
     mock_yaml_dump = mocker.patch("yaml.dump")
     with patch("builtins.open", mock_open()) as mock_file:
         build.create_build_recipe_file()
-        mock_file.assert_called_once_with(file_name, 'w')
+        mock_file.assert_any_call(file_name, 'w')
         mock_json_dump.call_count ==1 
         assert not mock_yaml_dump.called
 
@@ -102,7 +104,7 @@ def test_create_recipe_file_json_invalid(mocker):
     with patch("builtins.open", mock_open()) as mock_file:
         with pytest.raises(Exception) as e:
             build.create_build_recipe_file()
-        assert "Could not create a build recipe file for file" in e.value.args[0]
+        assert "Failed to create build recipe file at" in e.value.args[0]
         mock_file.assert_called_once_with(file_name, 'w')
         mock_json_dump.call_count ==1 
         assert not mock_yaml_dump.called
@@ -120,7 +122,7 @@ def test_create_recipe_file_yaml_invalid(mocker):
     with patch("builtins.open", mock_open()) as mock_file:
         with pytest.raises(Exception) as e:
             build.create_build_recipe_file()
-        assert "Could not create a build recipe file for file" in e.value.args[0]
+        assert "Failed to create build recipe file at" in e.value.args[0]
         mock_file.assert_called_once_with(file_name, 'w')
         mock_json_dump.call_count ==1 
         assert mock_yaml_dump.called
@@ -158,7 +160,7 @@ def test_run_build_command_with_error_not_zip(mocker):
     import greengrassTools.commands.component.build as build
     with pytest.raises(Exception) as e:
         build.run_build_command(build_file, build_info)
-    assert "Failed to run the build command in default build mode." in e.value.args[0]
+    assert error_messages.BUILD_WITH_DEFAULT_COMMAND_FAILED in e.value.args[0]
     assert not mock_build_system_zip.called
     mock_subprocess_run.assert_called_with(build_info["build_command"])
 
@@ -169,7 +171,7 @@ def test_run_build_command_with_error_with_zip_build(mocker):
     import greengrassTools.commands.component.build as build
     with pytest.raises(Exception) as e:
         build.run_build_command(build_file, build_info)
-    assert "Failed to run the build command in default build mode." in e.value.args[0]
+    assert error_messages.BUILD_WITH_DEFAULT_COMMAND_FAILED in e.value.args[0]
     assert mock_build_system_zip.called
 
 def test_run_build_command_not_zip_build(mocker):
@@ -399,7 +401,7 @@ def test_default_build_component_error_get_project_build_info(mocker):
     with pytest.raises(Exception) as e:
         build.default_build_component()
 
-    assert "Failed to build the component in default mode" in e.value.args[0] 
+    assert error_messages.BUILD_WITH_DEFAULT_FAILED in e.value.args[0] 
     assert mock_get_project_build_info.assert_called_once
     assert not mock_run_build_command.called
     assert not mock_copy_artifacts_and_update_uris.called
@@ -414,7 +416,8 @@ def test_default_build_component_error_run_build_command(mocker):
     with pytest.raises(Exception) as e:
         build.default_build_component()
 
-    assert "Failed to build the component in default mode.\ncommand" in e.value.args[0] 
+    assert "\ncommand" in e.value.args[0] 
+    assert error_messages.BUILD_WITH_DEFAULT_FAILED in e.value.args[0]
     assert mock_get_project_build_info.assert_called_once
     assert mock_run_build_command.assert_called_once
     assert not mock_copy_artifacts_and_update_uris.called
@@ -429,7 +432,8 @@ def test_default_build_component_error_copy_artifacts_and_update_uris(mocker):
     with pytest.raises(Exception) as e:
         build.default_build_component()
 
-    assert "Failed to build the component in default mode.\ncopy" in e.value.args[0] 
+    assert "\ncopy" in e.value.args[0] 
+    assert error_messages.BUILD_WITH_DEFAULT_FAILED in e.value.args[0]
     assert mock_get_project_build_info.assert_called_once
     assert mock_run_build_command.assert_called_once
     assert mock_copy_artifacts_and_update_uris.assert_called_once
@@ -444,7 +448,8 @@ def test_default_build_component_error_create_build_recipe_file(mocker):
     with pytest.raises(Exception) as e:
         build.default_build_component()
 
-    assert "Failed to build the component in default mode.\nrecipe" in e.value.args[0] 
+    assert "\nrecipe" in e.value.args[0] 
+    assert error_messages.BUILD_WITH_DEFAULT_FAILED in e.value.args[0] 
     assert mock_get_project_build_info.assert_called_once
     assert mock_run_build_command.assert_called_once
     assert mock_copy_artifacts_and_update_uris.assert_called_once

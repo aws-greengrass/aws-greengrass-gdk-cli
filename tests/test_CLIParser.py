@@ -9,7 +9,7 @@ def test_CLIParser_initiation_top_level():
     parser=cli_parser.CLIParser(consts.cli_tool_name, None)
     assert not hasattr(parser, 'top_level_parser')
     assert parser.command == consts.cli_tool_name
-    assert type(parser.parser) ==  argparse.ArgumentParser
+    assert type(parser.parser) ==  cli_parser.ArgumentParser
     assert parser.subparsers.dest == consts.cli_tool_name
 
 def test_CLIParser_initiation_sub_level():
@@ -21,7 +21,7 @@ def test_CLIParser_initiation_sub_level():
     assert subparser.top_level_parser.dest ==  consts.cli_tool_name
     assert subparser.command != consts.cli_tool_name
     assert subparser.command == sub_command
-    assert type(subparser.parser) ==  argparse.ArgumentParser
+    assert type(subparser.parser) ==  cli_parser.ArgumentParser
     assert subparser.subparsers.dest == sub_command
 
 
@@ -29,8 +29,8 @@ def test_CLIParser_create_parser():
     # This test checks for the correctness of CLIParser that creates argument parser with commands and sub-commands. 
     # If CLIParser is initiated with the cli tool name, it has no top-level parser.
     cli_tool=cli_parser.CLIParser(consts.cli_tool_name, None)
-    parser=cli_tool.create_parser(test_model_file())
-    assert type(parser) ==  argparse.ArgumentParser
+    parser=cli_tool.create_parser()
+    assert type(parser) ==  cli_parser.ArgumentParser
 
 def test_CLIParser_get_arg_from_model():
     ## Check that only known params are passed in the form of names and kwargs as needed by parser.add_argument. 

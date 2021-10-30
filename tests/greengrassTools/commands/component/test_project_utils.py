@@ -88,7 +88,7 @@ def test_get_recipe_file_yaml_both_exist(mocker):
     mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
     with pytest.raises(Exception) as e:
         project_utils.get_recipe_file()
-    assert "Found both 'recipe.json' and 'recipe.yaml' in the given project." in e.value.args[0]
+    assert error_messages.BUILD_WITH_NO_VALID_RECIPE in e.value.args[0]
     assert mock_glob.call_count == 2 
     mock_glob.assert_any_call("recipe.json")
     mock_glob.assert_any_call("recipe.yaml")
@@ -113,7 +113,7 @@ def test_parse_recipe_file_yaml_invalid(mocker):
     spy_yaml = mocker.spy(yaml, "safe_load")
     with pytest.raises(Exception) as e:
         project_utils.parse_recipe_file(invalid_yaml_recipe_file)
-    assert "Unable to parse the recipe file invalid_component_recipe.yaml" in e.value.args[0]
+    assert "Unable to parse the recipe file - invalid_component_recipe.yaml" in e.value.args[0]
     spy_yaml.call_count == 0
     spy_json.call_count == 1
 
@@ -123,7 +123,7 @@ def test_parse_recipe_file_json_invalid(mocker):
     spy_yaml = mocker.spy(yaml, "safe_load")
     with pytest.raises(Exception) as e:
         project_utils.parse_recipe_file(invalid_json_recipe_file)
-    assert "Unable to parse the recipe file invalid_component_recipe.json" in e.value.args[0]
+    assert "Unable to parse the recipe file - invalid_component_recipe.json" in e.value.args[0]
     spy_yaml.call_count == 1
     spy_json.call_count == 0
 
@@ -158,7 +158,7 @@ def test_get_project_config_values_invalid_json_recipe(mocker):
     mock_get_parsed_config= mocker.patch("greengrassTools.common.configuration.get_configuration", return_value=parsed_config_file)
     with pytest.raises(Exception) as e:
         project_utils.get_project_config_values()
-    assert "Unable to parse the recipe file invalid_component_recipe.json" in e.value.args[0]
+    assert "Unable to parse the recipe file - invalid_component_recipe.json" in e.value.args[0]
 
     assert mock_get_recipe_file.call_count == 1
     assert mock_get_parsed_config.call_count == 1
@@ -169,7 +169,7 @@ def test_get_project_config_values_invalid_yaml_recipe(mocker):
     mock_get_parsed_config= mocker.patch("greengrassTools.common.configuration.get_configuration", return_value=parsed_config_file)
     with pytest.raises(Exception) as e:
         project_utils.get_project_config_values()
-    assert "Unable to parse the recipe file invalid_component_recipe.yaml" in e.value.args[0]
+    assert "Unable to parse the recipe file - invalid_component_recipe.yaml" in e.value.args[0]
 
     assert mock_get_recipe_file.call_count == 1
     assert mock_get_parsed_config.call_count == 1
@@ -246,7 +246,6 @@ def test_get_project_build_info_exists(mocker):
 
     mock_glob = mocker.patch("pathlib.Path.glob", return_value=[mock_build_file_path])
     path, build_info = project_utils.get_project_build_info()
-    print(build_info)
     assert path == mock_build_file_path
     assert build_info == mock_build_info["pom.xml"]
     assert mock_glob.called       

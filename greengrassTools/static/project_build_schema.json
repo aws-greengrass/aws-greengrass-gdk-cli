@@ -17,7 +17,8 @@
             ],
             "properties": {
                 "build_system": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["maven"]
                 },
                 "build_command": {
                     "type": "array",
@@ -51,7 +52,8 @@
             ],
             "properties": {
                 "build_system": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["gradle"]
                 },
                 "build_command": {
                     "type": "array",
@@ -85,7 +87,8 @@
             ],
             "properties": {
                 "build_system": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["zip"]
                 },
                 "build_command": {
                     "type": "array",

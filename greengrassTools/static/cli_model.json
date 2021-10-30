@@ -2,14 +2,16 @@
     "greengrass-tools": {
         "sub-commands": [
             "component"
-        ]
+        ],
+        "help": "Modify this text."
     },
     "component": {
         "sub-commands": [
             "init",
             "build",
             "publish"
-        ]
+        ],
+        "help": "Modify this text."
     },
     "init": {
         "arguments": {
@@ -64,8 +66,9 @@
                 ],
                 "description": "Initialize the project with a component from Greengrass Repository Catalog"
             }
-        ]
+        ],
+        "help":"Modify this text."
     },
-    "build": {},
-    "publish": {}
+    "build": {"help":"Modify this text."},
+    "publish": {"help":"Modify this text."}
 }

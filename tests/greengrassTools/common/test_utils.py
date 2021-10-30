@@ -3,7 +3,7 @@ import greengrassTools.common.utils as utils
 
 def test_get_static_file_path_exists(mocker):
 
-    mock_iterdir=mocker.patch("pathlib.Path.exists", return_value=True)
+    mock_iterdir=mocker.patch("pathlib.Path.is_file", return_value=True)
     file_name=""
 
     file_path = Path(".")
@@ -47,16 +47,16 @@ def test_is_directory_empty_with_non_empty_dir(mocker):
     assert mock_is_dir.call_count ==1
     assert mock_iterdir.call_count ==1
 
-def test_is_file_exists_valid(mocker):
+def test_file_exists_valid(mocker):
     mock_is_file=mocker.patch("pathlib.Path.is_file", return_value=True)
-    file_path=""
-    assert utils.is_file_exists(file_path)
+    file_path=Path('.')
+    assert utils.file_exists(file_path)
     assert mock_is_file.call_count ==1
 
-def test_is_file_exists_not_a_file(mocker):
+def test_file_exists_not_a_file(mocker):
     mock_is_file=mocker.patch("pathlib.Path.is_file", return_value=False)
-    file_path=""
-    assert not utils.is_file_exists(file_path)
+    file_path=Path('.')
+    assert not utils.file_exists(file_path)
     assert mock_is_file.call_count ==1
 
 def test_clean_build(mocker):

@@ -23,7 +23,7 @@ def run(command_args):
         None
     """
     # Check if directory is not empty
-    if not utils.is_directory_empty(consts.current_directory):
+    if not utils.is_directory_empty(utils.current_directory):
         raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
 
     # Check if the command args are conflicting
@@ -35,11 +35,13 @@ def run(command_args):
         template = command_args["template"]
         language = command_args["language"]
         if template and language:
+            logging.info("Initializing the project directory with a {} component template - '{}'.".format(language,template))
             init_with_template(template,language)
             return 
     elif "repository" in command_args:
         repository = command_args["repository"]
         if repository:
+            logging.info("Initializing the project directory with a component from repository catalog - '{}'.".format(repository))
             init_with_repository(repository)
             return
     raise Exception(error_messages.INIT_WITH_INVALID_ARGS)
@@ -63,25 +65,31 @@ def init_with_template(template, language):
     template_url = get_template_url(template_name)
     zip_template_name = "{}.zip".format(template_name)
     
-    logging.info("Downloading the template '{}'...".format(template_name))
+    logging.info("Fetching the template '{}' from GitHub.".format(template_name))
     
     download_request = requests.get(template_url, stream = True) 
     if download_request.status_code != 200:
         try:
             download_request.raise_for_status()
         except Exception as e:
-            print(e)
+            logging.error(e)
         finally:
             raise Exception(error_messages.INIT_FAILS_DURING_TEMPLATE_DOWNLOAD)
 
     with open(zip_template_name, 'wb') as f:
+        logging.debug("Downloading the template...")
         f.write(download_request.content)
+        logging.debug("Download complete.")
 
     # unzip the template
-    shutil.unpack_archive(zip_template_name, consts.current_directory)
+    logging.debug("Unzipping the downloaded template...")
+    shutil.unpack_archive(zip_template_name, utils.current_directory)
+    logging.debug("Unzip complete.")
 
     # Delete the downloaded zip template
+    logging.debug("Deleting the downloaded zip template.")
     os.remove(zip_template_name)
+    logging.debug("Delete complete.")
 
 def init_with_repository(repository):
     """    
@@ -105,8 +113,10 @@ def get_template_url(template_name):
     """ 
     available_templates = get_available_templates_from_github()
     if template_name in available_templates:
+        logging.debug("Component template '{}' is available on GitHub.".format(template_name)) 
         return available_templates[template_name]
-    else: 
+    else:
+        logging.error("Could not find the component template '{}' on GitHub.".format(template_name)) 
         raise Exception(error_messages.INIT_WITH_INVALID_TEMPLATE)
 
 def get_available_templates_from_github():
@@ -124,19 +134,21 @@ def get_available_templates_from_github():
        template_list(list): List of all the available templates in the greengrass component templates repo.
     """ 
     template_list_response=requests.get(consts.templates_list_url)
-    
+    logging.debug("Getting the list of available component templates from GitHub.")
     if template_list_response.status_code != 200:
         try:
             template_list_response.raise_for_status()
         except Exception as e:
-            print(e)
+            logging.error(e)
         finally:
             raise Exception(error_messages.INIT_FAILS_DURING_LISTING_TEMPLATES)
 
     try: 
+        # TODO: Integ test for checking if the github file is always a valid json file.
+        # TODO: GitHub Workflow of repository catalog should check for this. 
         template_list = template_list_response.json()
         return template_list
     except Exception as e:
-        print(e)
+        logging.error(e)
         return []
  

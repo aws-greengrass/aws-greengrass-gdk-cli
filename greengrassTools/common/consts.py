@@ -1,4 +1,3 @@
-from pathlib import Path
 
 # Names
 cli_tool_name = "greengrass-tools"
@@ -29,8 +28,6 @@ project_build_schema_file = "project_build_schema.json"
 templates_list_url = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-community-catalog/list-components/components/templates.json"
 repository_list_url = ""
 
-# Frequently used expressions
-current_directory = Path('.').resolve()
-log_format = "%(asctime)s %(levelname)s %(message)s"
+greengrass_build_dir = "greengrass-build"
 
 

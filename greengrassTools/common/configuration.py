@@ -1,4 +1,5 @@
 import json
+import logging
 import jsonschema
 import greengrassTools.common.consts as consts
 import greengrassTools.common.utils as utils
@@ -27,8 +28,8 @@ def get_configuration():
         validate_configuration(config_data)
         return config_data
     except jsonschema.exceptions.ValidationError as err:
-        print("Configuration file provide {0} is not in correct format, details of error {1}".format(project_config_file, err))
-        raise err
+        logging.error("Project configuration file is not in correct format.\n{} in '{}'".format(err.message, project_config_file.name))
+        raise Exception(error_messages.PROJECT_CONFIG_FILE_INVALID)
 
 def validate_configuration(data):
     """
@@ -70,7 +71,7 @@ def _get_project_config_file():
     -------
        config_file(pathlib.Path): Path of the config file. 
     """
-    config_file = Path(consts.current_directory).joinpath(consts.cli_project_config_file).resolve()
-    if not utils.is_file_exists(config_file):
+    config_file = Path(utils.current_directory).joinpath(consts.cli_project_config_file).resolve()
+    if not utils.file_exists(config_file):
       raise Exception(error_messages.CONFIG_FILE_NOT_EXISTS)
     return config_file

@@ -5,22 +5,6 @@ import greengrassTools.common.consts as consts
 import greengrassTools.CLIParser
 import argparse
 
-def test_run_command_with_valid_namespace(mocker):
-    ## Integ test that appropriate action is called only once with valid command namespace.
-    args_namespace = argparse.Namespace(component='init', init=None, lang='python', template='name', **{'greengrass-tools': 'component'})
-    spy_component_build = mocker.spy(methods, "_greengrass_tools_component_build")
-    spy_call_action_by_name = mocker.spy(actions, "call_action_by_name")
-    spy_get_method_from_command = mocker.spy(actions, "get_method_from_command")
-    mock_component_init=mocker.patch(
-        "greengrassTools.commands.methods._greengrass_tools_component_init",
-        return_value=None
-    )
-    actions.run_command(args_namespace)
-    assert mock_component_init.call_count == 1
-    assert spy_component_build.call_count == 0
-    assert spy_call_action_by_name.call_count == 1
-    assert spy_get_method_from_command.call_count == 3 # Recursively called for three times
-
 def test_run_command_with_mocks(mocker):
     ## Test that appropriate action is called only once with valid command namespace.
     args_namespace = argparse.Namespace(component='init', init=None, lang='python', template='name', **{'greengrass-tools': 'component'})
@@ -213,21 +197,21 @@ def test_check_command_args_with_conflicting_args(mocker):
     assert not actions.check_command_args_with_conflicting_args({},conflicting_arg_groups)
     assert mock_list_of_command_args.call_count==1
 
-    mock_list_of_command_args1=mocker.patch(
+    mock_list_of_command_args1_conflicting=mocker.patch(
     "greengrassTools.common.parse_args_actions._list_of_command_args",
     return_value =['language', 'repository'])
 
     conflicting_arg_groups={'language': {'language', 'template'}, 'template': {'language', 'template','repository'}, 'repository': {'repository', 'template'}}
     assert actions.check_command_args_with_conflicting_args({},conflicting_arg_groups)
-    assert mock_list_of_command_args1.call_count==1
+    assert mock_list_of_command_args1_conflicting.call_count==1
 
-    mock_list_of_command_args2=mocker.patch(
+    mock_list_of_command_args2_mix_of_both=mocker.patch(
     "greengrassTools.common.parse_args_actions._list_of_command_args",
     return_value =['template','language','repository'])
 
     conflicting_arg_groups={'language': {'language', 'template'}, 'template': {'language', 'template','repository'}, 'repository': {'repository', 'template'}}
     assert actions.check_command_args_with_conflicting_args({},conflicting_arg_groups)
-    assert mock_list_of_command_args2.call_count==1
+    assert mock_list_of_command_args2_mix_of_both.call_count==1
 
 def test_conflicting_args_with_conflict(mocker):
     # Test conflicting args of command with its namespace args.
@@ -243,7 +227,7 @@ def test_conflicting_args_with_conflict(mocker):
 
     command_args = {"component":'init', 'init': None,'language':'python', 'template':'HelloWorld-python', 'repository':None, 'greengrass-tools': 'component'}
     cli_model = { "init" :{"conflicting_arg_groups":[["language","template"],["repository"],["project"],["interactive"]]}}
-    mocker.patch.object(greengrassTools.CLIParser,'cli_model', cli_model )
+    mocker.patch.object(greengrassTools.CLIParser.cli_tool,'cli_model', cli_model )
  
     assert actions.conflicting_arg_groups(command_args, "init")
     assert mock_dic_of_conflicting_args.call_count==1
@@ -263,7 +247,7 @@ def test_conflicting_args_with_no_conflict(mocker):
 
     command_args = {"component":'init', 'init': None,'language':'python', 'template':'HelloWorld-python', 'repository':None, 'greengrass-tools': 'component'}
     cli_model = { "init" :{"conflicting_arg_groups":[["language","template"],["repository"],["project"],["interactive"]]}}
-    mocker.patch.object(greengrassTools.CLIParser,'cli_model', cli_model )
+    mocker.patch.object(greengrassTools.CLIParser.cli_tool,'cli_model', cli_model )
  
     assert not actions.conflicting_arg_groups(command_args, "init")
     assert mock_dic_of_conflicting_args.call_count==1
