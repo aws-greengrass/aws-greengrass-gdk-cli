@@ -10,19 +10,12 @@ from greengrassTools.common.exceptions import error_messages
 valid_project_config_file=Path(".").joinpath('tests/greengrassTools/static/build_command').joinpath('valid_project_config_build.json').resolve()
 json_values = {
     "component_name": "component_name",
-    "component_config": {
-        "author": "abc",
-        "version": "1.0.0",
-        "build": {
-            "command": ["default"]
-        },
-        "publish": {
-            "bucket_name": "default"
-        }
+    "component_build_config":{
+        "command": ["default"]
     },
     "component_version": "1.0.0",
     "component_author": "abc",
-    "bucket_name": "default",
+    "bucket": "default",
     "gg_build_directory": PosixPath("/Users/nukai/workplace/gdk/src/GDK-CLI-Internal/greengrass-build"),
     "gg_build_artifacts_dir": PosixPath("/Users/nukai/workplace/gdk/src/GDK-CLI-Internal/greengrass-build/artifacts"),
     "gg_build_recipes_dir": PosixPath("/Users/nukai/workplace/gdk/src/GDK-CLI-Internal/greengrass-build/recipes"),
@@ -81,8 +74,8 @@ def test_create_recipe_file_yaml_valid(mocker):
     # Tests if a new recipe file is created with updated values - yaml
     # Tests if a new recipe file is created with updated values - json
     import greengrassTools.commands.component.build as build
-    build.project_build_config["component_recipe_file"]  = Path('some-yaml.yaml').resolve()
-    file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(build.project_build_config["component_recipe_file"].resolve().name).resolve()
+    build.project_config["component_recipe_file"]  = Path('some-yaml.yaml').resolve()
+    file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(build.project_config["component_recipe_file"].resolve().name).resolve()
     mock_json_dump = mocker.patch("json.dumps")
     mock_yaml_dump = mocker.patch("yaml.dump")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -94,7 +87,7 @@ def test_create_recipe_file_yaml_valid(mocker):
 def test_create_recipe_file_json_invalid(mocker):
     # Raise exception for when creating recipe failed due to invalid json
     import greengrassTools.commands.component.build as build
-    build.project_build_config["component_recipe_file"]  = Path('some-json.json').resolve()
+    build.project_config["component_recipe_file"]  = Path('some-json.json').resolve()
     file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(json_values["component_recipe_file"].name).resolve()
     def throw_error(*args, **kwargs):
         if args[0] == json_values["parsed_component_recipe"]:
@@ -112,8 +105,8 @@ def test_create_recipe_file_json_invalid(mocker):
 def test_create_recipe_file_yaml_invalid(mocker):
     # Raise exception for when creating recipe failed due to invalid yaml
     import greengrassTools.commands.component.build as build
-    build.project_build_config["component_recipe_file"]  = Path('some-yaml.yaml').resolve()
-    file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(build.project_build_config["component_recipe_file"].name).resolve()
+    build.project_config["component_recipe_file"]  = Path('some-yaml.yaml').resolve()
+    file_name = Path(json_values["gg_build_recipes_dir"]).joinpath(build.project_config["component_recipe_file"].name).resolve()
     def throw_error(*args, **kwargs):
         if args[0] == json_values["parsed_component_recipe"]:
             raise TypeError('I mock yaml error')
@@ -472,8 +465,8 @@ def test_build_run_non_default(mocker):
     mock_subprocess_run = mocker.patch("subprocess.run")
     import greengrassTools.commands.component.build as build
     
-    modify_build = build.project_build_config
-    modify_build["component_config"]["build"]["command"] =["non-default"]
+    modify_build = build.project_config
+    modify_build["component_build_config"]["command"] =["non-default"]
     build.run({})
     assert mock_create_gg_build_directories.assert_called_once
     assert not mock_default_build_component.called
@@ -494,7 +487,7 @@ def test_copy_artifacts_and_update_uris_no_manifest_in_recipe(mocker):
     mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
     
     build_info = {"build_system":"zip", "build_command":[""]}
-    modify_build = build.project_build_config
+    modify_build = build.project_config
     modify_build["parsed_component_recipe"]= {
         "RecipeFormatVersion": "2020-01-25",
         "ComponentName": "com.example.HelloWorld",
@@ -526,7 +519,7 @@ def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
     mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
     
     build_info = {"build_system":"zip", "build_command":[""]}
-    modify_build = build.project_build_config
+    modify_build = build.project_config
     modify_build["parsed_component_recipe"]= {
         "RecipeFormatVersion": "2020-01-25",
         "ComponentName": "com.example.HelloWorld",
@@ -568,7 +561,7 @@ def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
     mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
     
     build_info = {"build_system":"zip", "build_command":[""]}
-    modify_build = build.project_build_config
+    modify_build = build.project_config
     modify_build["parsed_component_recipe"]= {
         "RecipeFormatVersion": "2020-01-25",
         "ComponentName": "com.example.HelloWorld",

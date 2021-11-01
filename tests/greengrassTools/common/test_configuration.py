@@ -7,7 +7,7 @@ import greengrassTools.common.utils as utils
 import greengrassTools.common.consts as consts
 
 def test_get_configuration_valid_component_config_found(mocker):
-    expected_config = {"component" :{"1": {"author": "abc","version": "1.0.0","build": {"command" : ["default"]},"publish": {"bucket_name": "default"}}},"tools_version": "1.0.0"}
+    expected_config = {"component" :{"1": {"author": "abc","version": "1.0.0","build": {"command" : ["default"]},"publish": {"bucket": "default","region": "some-region"}}},"tools_version": "1.0.0"}
 
     mock__get_project_config_file=mocker.patch("greengrassTools.common.configuration._get_project_config_file", 
     return_value=Path(".").joinpath('tests/greengrassTools/static').joinpath('config.json'))

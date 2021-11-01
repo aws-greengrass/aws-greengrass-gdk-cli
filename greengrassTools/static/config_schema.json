@@ -5,8 +5,9 @@
         "component": {
             "type": "object",
             "maxProperties": 1,
+            "minProperties": 1,
             "patternProperties": {
-                "^[A-Za-z0-9 \\\\-]*[A-Za-z0-9 \\\\-][A-Za-z0-9 \\\\-]*$" : {
+                "[a-zA-Z0-9-_.]+" : {
                     "type": "object",
                     "properties" : {
                         "author": {
@@ -14,7 +15,10 @@
                         },
                         "version": {
                             "type": "string",
-                            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+                            "oneOf": [
+                                {"pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"},
+                                {"enum": ["LATEST"]}
+                            ]
                         },
                         "build" : {
                             "type" : "object",
@@ -26,10 +30,10 @@
                         "publish" : {
                             "type" : "object",
                             "properties" : {
-
-                                "bucket_name": { "type" :  "string"}
+                                "bucket": { "type" :  "string"},
+                                "region": { "type" :  "string"}
                             },
-                            "required": ["bucket_name"]
+                            "required": ["bucket", "region"]
                         }
                     },
                     "required": ["author","version","build", "publish"]

@@ -126,23 +126,6 @@ def test_is_valid_argument_group_invalid_group():
     assert not model_actions.is_valid_argument_group_model(t_arg_group, t_args)
 
     ## Invalid argument group model without args
-    t_arg_group = {"title": "Greengrass component templates.","description": "description"}
-    t_args = {"language": {"name": ["-l","--language"],"help": "help","choices": ["p","j"]}, "template": {"name": ["-t","--template"],"help": "help"}, "repository": {"name": ["-r","--repository"],"help": "help"}}
-    assert not model_actions.is_valid_argument_group_model(t_arg_group, t_args)
-
-    ## Invalid argument group model without description
-    t_arg_group = {"title": "Greengrass component templates.","args": ["language","template"]}
-    t_args = {"language": {"name": ["-l","--language"],"help": "help","choices": ["p","j"]}, "template": {"name": ["-t","--template"],"help": "help"}, "repository": {"name": ["-r","--repository"],"help": "help"}}
-    assert not model_actions.is_valid_argument_group_model(t_arg_group, t_args)
-
-
-def test_is_valid_argument_group_invalid_group():
-    ## Invalid argument group model without title
-    t_arg_group = {"args": ["language","template"],"description": "description"}
-    t_args = {"language": {"name": ["-l","--language"],"help": "help","choices": ["p","j"]}, "template": {"name": ["-t","--template"],"help": "help"}, "repository": {"name": ["-r","--repository"],"help": "help"}}
-    assert not model_actions.is_valid_argument_group_model(t_arg_group, t_args)
-
-    ## Invalid argument group model without args
     t_arg_group = {"title": "title","description": "description"}
     t_args = {"language": {"name": ["-l","--language"],"help": "help","choices": ["p","j"]}, "template": {"name": ["-t","--template"],"help": "help"}, "repository": {"name": ["-r","--repository"],"help": "help"}}
     assert not model_actions.is_valid_argument_group_model(t_arg_group, t_args)

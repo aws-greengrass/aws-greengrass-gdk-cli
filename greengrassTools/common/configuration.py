@@ -44,13 +44,14 @@ def validate_configuration(data):
 
     Returns
     -------
-       None 
+      None
     """
 
     config_schema_file=utils.get_static_file_path(consts.config_schema_file)
     if config_schema_file:
         with open(config_schema_file, 'r') as schemaFile:
             schema = json.loads(schemaFile.read())
+        logging.debug("Validating the configuration file.")
         jsonschema.validate(data, schema)
     else:
         raise Exception(error_messages.CONFIG_SCHEMA_FILE_NOT_EXISTS)

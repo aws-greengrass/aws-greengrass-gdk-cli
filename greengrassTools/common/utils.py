@@ -37,7 +37,31 @@ def file_exists(file_path):
     """
     logging.debug("Checking if the file '{}' exists.".format(file_path.resolve()))
     fp = Path(file_path).resolve()
-    return fp.is_file()
+    # Compatible with < py 3.8
+    try: 
+        return fp.is_file()
+    except Exception as e:
+        return False
+
+def dir_exists(dir_path):
+    """
+    Checks if the given path exists and is a directory.
+
+    Parameters
+    ----------
+        dir_path(Path): File path to check.
+
+    Returns
+    -------
+        (bool): True if the directory exists. False if the given path doesn't exist or is not a directory. 
+    """
+    logging.debug("Checking if the directory '{}' exists.".format(dir_path.resolve()))
+    dp = Path(dir_path).resolve()
+     # Compatible with < py 3.8
+    try: 
+        return dp.is_dir()
+    except Exception as e:
+        return False
 
 def is_directory_empty(directory_path):
     """

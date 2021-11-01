@@ -28,10 +28,10 @@ def run(command_args):
     -------
         None
     """
-    component_build_config = project_build_config["component_config"]["build"]
+    component_build_config = project_config["component_build_config"]
     build_command = component_build_config["command"]
 
-    logging.info("Building the component '{}' with the given project configuration.".format(project_build_config["component_name"]))
+    logging.info("Building the component '{}' with the given project configuration.".format(project_config["component_name"]))
     # Create build directories
     create_gg_build_directories()
 
@@ -59,12 +59,12 @@ def create_gg_build_directories():
         None
     """ 
     # Clean build directory if it exists already.
-    utils.clean_dir(project_build_config["gg_build_directory"])
+    utils.clean_dir(project_config["gg_build_directory"])
     
     logging.debug("Creating '{}' directory with artifacts and recipes.".format(consts.greengrass_build_dir))
     # Create build artifacts and recipe directories
-    Path.mkdir(project_build_config["gg_build_recipes_dir"],parents=True,exist_ok=True)
-    Path.mkdir(project_build_config["gg_build_component_artifacts_dir"],parents=True,exist_ok=True)
+    Path.mkdir(project_config["gg_build_recipes_dir"],parents=True,exist_ok=True)
+    Path.mkdir(project_config["gg_build_component_artifacts_dir"],parents=True,exist_ok=True)
 
 def default_build_component():
     """ 
@@ -189,7 +189,7 @@ def _ignore_files_during_zip(path,names):
         ignore_list(list): List of files or directories to ignore during zip. 
     """
     # TODO: Identify individual files in recipe that are not same as zip and exclude them during zip. 
-    ignore_list = [consts.cli_project_config_file, consts.greengrass_build_dir, project_build_config["component_recipe_file"].name]
+    ignore_list = [consts.cli_project_config_file, consts.greengrass_build_dir, project_config["component_recipe_file"].name]
     logging.debug("Exclude the following files while zipping the component .\n{}".format(', '.join(ignore_list)))
     return ignore_list
 
@@ -230,10 +230,9 @@ def copy_artifacts_and_update_uris(build_info):
     # TODO: Case insenstive recipe keys? 
     logging.info("Copying over the build artifacts to the greengrass component artifacts build folder.")
     logging.info("Updating artifact URIs in the recipe.")
-    parsed_component_recipe = project_build_config["parsed_component_recipe"]
-    gg_build_component_artifacts_dir = project_build_config["gg_build_component_artifacts_dir"]
-    artifact_uri = project_build_config["artifact_uri"]
-
+    parsed_component_recipe = project_config["parsed_component_recipe"]
+    gg_build_component_artifacts_dir = project_config["gg_build_component_artifacts_dir"]
+    artifact_uri = "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
     if "Manifests" not in parsed_component_recipe:
         logging.debug("No 'Manifests' key in the recipe.")
         return 
@@ -274,16 +273,16 @@ def create_build_recipe_file():
         None
     """
     logging.debug("Updating component recipe with the 'component' configuration provided in '{}'.".format(consts.cli_project_config_file))
-    parsed_component_recipe = project_build_config["parsed_component_recipe"]
-    component_recipe_file_name = project_build_config["component_recipe_file"].name
-    parsed_component_recipe["ComponentName"] = project_build_config["component_name"]
-    parsed_component_recipe["ComponentVersion"] = project_build_config["component_version"]
-    parsed_component_recipe["ComponentPublisher"] = project_build_config["component_author"]
-    gg_build_recipe_file = Path(project_build_config["gg_build_recipes_dir"]).joinpath(component_recipe_file_name).resolve()
+    parsed_component_recipe = project_config["parsed_component_recipe"]
+    component_recipe_file_name = project_config["component_recipe_file"].name
+    parsed_component_recipe["ComponentName"] = project_config["component_name"]
+    parsed_component_recipe["ComponentVersion"] = project_config["component_version"]
+    parsed_component_recipe["ComponentPublisher"] = project_config["component_author"]
+    gg_build_recipe_file = Path(project_config["gg_build_recipes_dir"]).joinpath(component_recipe_file_name).resolve()
 
     with open(gg_build_recipe_file, 'w') as recipe_file:
         try:
-            logging.info("Creating component recipe in '{}'.".format(project_build_config["gg_build_recipes_dir"]))
+            logging.info("Creating component recipe in '{}'.".format(project_config["gg_build_recipes_dir"]))
             if component_recipe_file_name.endswith(".json"):
                 recipe_file.write(json.dumps(parsed_component_recipe, indent=4))
             else:
@@ -291,4 +290,4 @@ def create_build_recipe_file():
         except Exception as e:
             raise Exception("""Failed to create build recipe file at '{}'.\n{}""".format(gg_build_recipe_file,e))
 
-project_build_config = project_utils.get_project_config_values()
+project_config = project_utils.get_project_config_values()

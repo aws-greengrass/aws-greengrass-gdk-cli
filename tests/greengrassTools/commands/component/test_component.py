@@ -15,6 +15,8 @@ def test_component_build(mocker):
     mock_component_build.assert_called_with(d_args)
 
 def test_component_publish(mocker):
+    mocker.patch("greengrassTools.commands.component.project_utils.get_service_clients", return_value=None)
+    mocker.patch("greengrassTools.commands.component.project_utils.get_project_config_values", return_value={"region":"None"})
     mock_component_publish = mocker.patch("greengrassTools.commands.component.publish.run", return_value=None)
     d_args={"init":None}
     component.publish(d_args)

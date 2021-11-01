@@ -140,17 +140,16 @@ def test_get_project_config_values(mocker):
 
     # Assert all keys exist
     assert "component_name" in values
-    assert "component_config" in values
+    assert "component_build_config" in values
     assert "component_version" in values
     assert "component_author" in values
-    assert "bucket_name" in values
+    assert "bucket" in values
     assert "gg_build_directory" in values
     assert "gg_build_artifacts_dir" in values
     assert "gg_build_recipes_dir" in values
     assert "gg_build_component_artifacts_dir" in values
     assert "component_recipe_file" in values
     assert "parsed_component_recipe" in values
-    assert "artifact_uri" in values
 
 def test_get_project_config_values_invalid_json_recipe(mocker):
     # Check if an exception is thrown for invalid recipe and valid config files.
@@ -248,4 +247,26 @@ def test_get_project_build_info_exists(mocker):
     path, build_info = project_utils.get_project_build_info()
     assert path == mock_build_file_path
     assert build_info == mock_build_info["pom.xml"]
-    assert mock_glob.called       
+    assert mock_glob.called   
+
+def test_component_version_build_specific_version(mocker):
+    mock_get_recipe_file= mocker.patch("greengrassTools.commands.component.project_utils.get_recipe_file", return_value = valid_json_recipe_file)
+    mock_get_parsed_json_recipe_file= mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=parsed_json_recipe_file)
+    mock_get_parsed_config= mocker.patch("greengrassTools.common.configuration.get_configuration", return_value=parsed_config_file)
+    values = project_utils.get_project_config_values()  
+    assert values["component_version"] == "1.0.0"
+    assert mock_get_recipe_file.call_count ==1
+    assert mock_get_parsed_json_recipe_file.call_count ==1
+    assert mock_get_parsed_config.call_count ==1 
+
+def test_service_clients_with_s3_region(mocker):
+    mock_boto3_client= mocker.patch("boto3.client", return_value=None)
+    project_utils.create_s3_client("region")
+    assert mock_boto3_client.call_count ==1 
+    mock_boto3_client.assert_called_once_with("s3",region_name="region")
+
+def test_service_clients_with_greengrassv2_region(mocker):
+    mock_boto3_client= mocker.patch("boto3.client", return_value=None)
+    project_utils.create_greengrass_client("region")
+    assert mock_boto3_client.call_count ==1 
+    mock_boto3_client.assert_called_once_with("greengrassv2",region_name="region")

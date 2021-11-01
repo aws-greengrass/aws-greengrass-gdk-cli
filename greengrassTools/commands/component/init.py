@@ -62,11 +62,11 @@ def init_with_template(template, language):
         None
     """
     template_name = "{}-{}".format(template, language)
-    template_url = get_template_url(template_name)
     zip_template_name = "{}.zip".format(template_name)
     
     logging.info("Fetching the template '{}' from GitHub.".format(template_name))
     
+    template_url = get_template_url(template_name)
     download_request = requests.get(template_url, stream = True) 
     if download_request.status_code != 200:
         try:

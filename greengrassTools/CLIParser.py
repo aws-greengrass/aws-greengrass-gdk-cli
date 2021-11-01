@@ -187,7 +187,7 @@ class CLIParser():
     self.parser.add_argument("-v",'--version', action='version', version="{} {}".format(consts.cli_tool_name,_version.__version__))
 
 def main():
-  try: 
+  try:
     args_namespace=cli_parser.parse_args()
     parse_args_actions.run_command(args_namespace)
   except Exception as e:

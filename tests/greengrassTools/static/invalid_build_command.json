@@ -7,7 +7,8 @@
                 "command" : "default"
             },
             "publish": {
-                "bucket_name": "default"
+                "bucket": "default",
+                "region":"region"
             }
         }
     },

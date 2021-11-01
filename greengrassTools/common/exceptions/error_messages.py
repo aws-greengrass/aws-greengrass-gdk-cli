@@ -12,6 +12,9 @@ BUILD_WITH_NO_VALID_RECIPE = "Building the component with 'default' configuratio
 BUILD_WITH_DEFAULT_FAILED = "Failed to build the component with default configuration."
 BUILD_WITH_DEFAULT_COMMAND_FAILED = "Failed to run the build command with default configuration"
 
+## PUBLISH
+PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."
+
 # FILES 
 CONFIG_FILE_NOT_EXISTS = "Config file doesn't exist. Please initialize the project using a template or a repository before using greengrass-tools commands."
 CONFIG_SCHEMA_FILE_NOT_EXISTS = "Configuration validation failed. Config schema file doesn't exist."

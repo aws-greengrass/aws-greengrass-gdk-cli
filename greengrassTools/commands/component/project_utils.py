@@ -6,6 +6,7 @@ import json
 import yaml
 import greengrassTools.common.exceptions.error_messages as error_messages
 import greengrassTools.common.utils as utils
+import boto3
 
 def get_project_build_info():
     """
@@ -133,7 +134,9 @@ def get_project_config_values():
     component_config = project_config[component_name]
     component_version = component_config["version"]
     component_author = component_config["author"]
-    bucket_name = component_config["publish"]["bucket_name"]
+    component_build_config = component_config["build"]
+    bucket = component_config["publish"]["bucket"]
+    region = component_config["publish"]["region"]
 
     # Build directories
     gg_build_directory = Path(utils.current_directory).joinpath(consts.greengrass_build_dir).resolve()
@@ -147,21 +150,37 @@ def get_project_config_values():
     # Get parsed recipe file
     parsed_component_recipe = parse_recipe_file(component_recipe_file)
 
-    # Artifact URI
-    artifact_uri = f"s3://{bucket_name}/{component_name}/{component_version}"
-
     # Create dictionary with all the above values
     vars={}
     vars["component_name"] = component_name
-    vars["component_config"] = component_config
     vars["component_version"] = component_version
     vars["component_author"] = component_author
-    vars["bucket_name"] = bucket_name
+    vars["component_build_config"] = component_build_config
+    vars["bucket"] = bucket
+    vars["region"] = region
     vars["gg_build_directory"] = gg_build_directory
     vars["gg_build_artifacts_dir"] = gg_build_artifacts_dir
     vars["gg_build_recipes_dir"] = gg_build_recipes_dir
     vars["gg_build_component_artifacts_dir"] = gg_build_component_artifacts_dir
     vars["component_recipe_file"] = component_recipe_file
     vars["parsed_component_recipe"] = parsed_component_recipe
-    vars["artifact_uri"] = artifact_uri
     return vars
+
+def get_service_clients(region):
+    service_clients={}
+    service_clients["s3_client"] = create_s3_client(region)
+    service_clients["sts_client"] = create_sts_client(region)
+    service_clients["greengrass_client"] = create_greengrass_client(region)
+    return service_clients
+    
+def create_s3_client(region=None):
+    logging.debug("Creating s3 client")
+    return boto3.client("s3", region_name=region)
+
+def create_sts_client(region=None):
+    logging.debug("Creating sts client")
+    return boto3.client("sts", region_name=region)
+
+def create_greengrass_client(region=None):
+    logging.debug("Creating greengrassv2 client")
+    return boto3.client("greengrassv2", region_name=region)
