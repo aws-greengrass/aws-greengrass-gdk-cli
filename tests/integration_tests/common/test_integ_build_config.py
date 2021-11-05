@@ -5,7 +5,7 @@ import jsonschema
 
 def test_builds_config_with_schema():
     ## Integ test for the existence of command model file even before building the cli tool.
-    builds_file=utils.get_static_file_path(consts.supported_component_builds_file)
+    builds_file=utils.get_static_file_path(consts.project_build_system_file)
     project_build_schema=utils.get_static_file_path(consts.project_build_schema_file)
     assert project_build_schema.exists()
     assert builds_file.exists()

@@ -8,42 +8,6 @@ import greengrassTools.common.exceptions.error_messages as error_messages
 import greengrassTools.common.utils as utils
 import boto3
 
-def get_project_build_info():
-    """
-    Identifies the build system of the component based on the supported component build file and the files
-    in the component project itself. 
-
-    Raises an exception if the build system of the project is not identified. 
-
-    Assuming that each component project corresponds to single build system, this method checks if any of 
-    the build identifier files like pom.xml, gradlew, *.py are present in the component project. 
-
-    Parameters
-    ----------
-        None
-
-    Returns
-    -------
-        build_file(Path): Path of the config file which determines the build system of the project. 
-        build_info(dict): A dictionary object that contains build related information specific to the build 
-        type identified by the project. 
-    """
-    # Get supported component build systems
-    supported_builds = get_supported_component_builds()
-    logging.info("Identifying the build system of the component.")
-    if supported_builds:
-        for s_file in supported_builds:
-            b_files = list(Path(utils.current_directory).glob("*{}".format(s_file)))
-            if len(b_files) != 1:
-                logging.debug("No file names in the directory end in {}.".format(s_file))
-                # TODO: For python components, if there are multiple ".py" files in project directory,
-                # identify the build file based on other artifacts in the recipe? 
-            else:
-                logging.debug("Found {} file in the project directory".format(s_file))
-                return b_files[0].resolve(), supported_builds[s_file]
-    raise Exception("""Could not use 'default' build as the component build system is not identified. Please provide custom build command in '{}' under 'component'->'build'->'command'.""".format(consts.cli_project_config_file))
-
-
 def get_supported_component_builds():
     """ 
     Reads a json file from static location that contains information related to supported component build systems.
@@ -56,7 +20,7 @@ def get_supported_component_builds():
     -------
       (dict): Returns a dict object with supported component builds information. 
     """
-    supported_component_builds_file = utils.get_static_file_path(consts.supported_component_builds_file)
+    supported_component_builds_file = utils.get_static_file_path(consts.project_build_system_file)
     if supported_component_builds_file:
         with open(supported_component_builds_file, 'r') as supported_builds_file:
             logging.debug("Identifying build systems supported by the CLI tool with default configuration.")

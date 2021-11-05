@@ -211,44 +211,7 @@ def test_get_supported_component_builds_exists(mocker):
         mock_file.assert_called_once_with(mock_file_path, 'r')
         assert mock_file_not_exists.called
         assert mock_json_loads.called
-
-def test_get_project_build_info_supported_json_not_exists(mocker):
-    build_info = None
-    mock_supported_build_info= mocker.patch("greengrassTools.commands.component.project_utils.get_supported_component_builds",return_value = build_info)
-    with pytest.raises(Exception) as e:
-        project_utils.get_project_build_info()
-    assert "Could not use 'default' build as the component build system is not identified." in e.value.args[0]
-    assert mock_supported_build_info.called
-
-def test_get_project_build_info_not_exists(mocker):
-    # Supported build file not exists
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[])
-    with pytest.raises(Exception) as e:
-        project_utils.get_project_build_info()
-    assert "Could not use 'default' build as the component build system is not identified." in e.value.args[0]
-        
-def test_get_project_build_info_exists(mocker):
-    # Supported build file exists
-    mock_build_info = {
-        "pom.xml": {
-            "build_system": "maven",
-            "build_command": [
-                "mvn",
-                "clean",
-                "package"
-            ],
-            "build_folder":["target"]
-        }
-    }
-    mock_build_file_path = Path('pom.xml').resolve()
-    mock_supported_build_info= mocker.patch("greengrassTools.commands.component.project_utils.get_supported_component_builds",return_value = mock_build_info)
-
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[mock_build_file_path])
-    path, build_info = project_utils.get_project_build_info()
-    assert path == mock_build_file_path
-    assert build_info == mock_build_info["pom.xml"]
-    assert mock_glob.called   
-
+  
 def test_component_version_build_specific_version(mocker):
     mock_get_recipe_file= mocker.patch("greengrassTools.commands.component.project_utils.get_recipe_file", return_value = valid_json_recipe_file)
     mock_get_parsed_json_recipe_file= mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=parsed_json_recipe_file)

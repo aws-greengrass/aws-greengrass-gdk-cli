@@ -10,7 +10,7 @@ INIT_WITH_INVALID_REPOSITORY = "Could not initialize the project as no such comp
 INIT_WITH_INVALID_COMPONENT = "Could not initialize the project as no such component {{}} exists. Please initialize the project with correct args. \nTry `greengrass-tools component list --{{}}`"
 ##BUILD
 BUILD_WITH_NO_VALID_RECIPE = "Building the component with 'default' configuration failed as no valid component recipe is found in the project directory."
-BUILD_WITH_DEFAULT_FAILED = "Failed to build the component with default configuration."
+BUILD_FAILED = "Failed to build the component with the given project configuration."
 BUILD_WITH_DEFAULT_COMMAND_FAILED = "Failed to run the build command with default configuration"
 
 ## PUBLISH

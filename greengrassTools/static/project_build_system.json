@@ -1,6 +1,5 @@
 {
-    "pom.xml": {
-        "build_system": "maven",
+    "maven": {
         "build_command": [
             "mvn",
             "clean",
@@ -8,16 +7,14 @@
         ],
         "build_folder":["target"]
     },
-    "gradlew": {
-        "build_system": "gradle",
+    "gradle": {
         "build_command": [
             "gradle",
             "build"
         ],
         "build_folder":["build","lib"]
     },
-    ".py": {
-        "build_system": "zip",
+    "zip": {
         "build_command": ["zip"],
         "build_folder":["zip-build"]
     }

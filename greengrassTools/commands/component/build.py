@@ -29,20 +29,22 @@ def run(command_args):
         None
     """
     component_build_config = project_config["component_build_config"]
-    build_command = component_build_config["command"]
+    build_system = component_build_config["build_system"]
 
     logging.info("Building the component '{}' with the given project configuration.".format(project_config["component_name"]))
     # Create build directories
     create_gg_build_directories()
 
-    if len(build_command) == 1 and build_command[0].lower() == "default":
-        logging.info("Using default build configuration to build the component.")
-        default_build_component()
-    else:
+    if build_system == "custom":
         # Run custom command as is. 
+        custom_build_command = component_build_config["custom_build_command"]
         logging.info("Using custom build configuration to build the component.")
-        logging.info("Running the following command\n{}".format(build_command))
-        sp.run(build_command)
+        logging.info("Running the following command\n{}".format(custom_build_command))
+        sp.run(custom_build_command)
+    else:
+        logging.info(f"Using '{build_system}' build system to build the component.")
+        default_build_component()
+
 
 def create_gg_build_directories():
     """
@@ -68,10 +70,7 @@ def create_gg_build_directories():
 
 def default_build_component():
     """ 
-    Builds the component artifacts and recipes in default mode if the build system of the component is supported. 
-
-    The build system of the component project is identified based on the keys of the supported builds config file.
-    If the build system is supported, build commands are run to build the component artifacts. 
+    Builds the component artifacts and recipes based on the build system specfied in the project configuration. 
 
     Based on the artifacts specified in the recipe, the built component artifacts are copied over to greengrass
     component artifacts build folder and the artifact uris in the recipe are updated to reflect the same. 
@@ -87,53 +86,49 @@ def default_build_component():
     -------
         None
     """
-    try:
-        # Identify build info from project
-        build_file, build_info = project_utils.get_project_build_info()
-
-        # Build the project with identified the build system
-        run_build_command(build_file, build_info)
+    try: 
+        # Build the project with specified build system
+        run_build_command()
 
         # From the recipe, copy necessary artifacts (depends on build system) to the build folder . 
-        copy_artifacts_and_update_uris(build_info)
+        copy_artifacts_and_update_uris()
 
         # Update recipe file with component configuration from project config file.
         create_build_recipe_file() 
     except Exception as e:
-        raise Exception("""{}\n{}""".format(error_messages.BUILD_WITH_DEFAULT_FAILED, e))
+        raise Exception("""{}\n{}""".format(error_messages.BUILD_FAILED, e))
  
-def run_build_command(build_file, build_info):
+def run_build_command():
     """
-    Runs the build command based on the component project build info.
+    Runs the build command based on the configuration in 'project_build_system.json' file and component project build 
+    configuration.
 
     For any build system other than 'zip', the build command obtained as a list from the 
-    supported_component_builds.json is passed to the subprocess run command as it is. 
+    project_build_system.json is passed to the subprocess run command as it is. 
     
     Parameters
     ----------
-        build_file(Path): Path of the config file which determines the build system of the project. 
-        build_info(dict): A dictionary object that contains build related information specific to the build 
-        type identified by the project. 
+        None
 
     Returns
     -------
         None
     """ 
     try:
-        build_system = build_info["build_system"]
-        build_command = build_info["build_command"]
-        logging.warning("""This component is identified as using '{}' build system. If this is incorrect, please exit and specify custom build command in the '{}'.""".format(build_system,consts.cli_project_config_file))
+        build_system = project_config["component_build_config"]["build_system"]
+        build_command = supported_build_sytems[build_system]["build_command"]
+        logging.warning(f"This component is identified as using '{build_system}' build system. If this is incorrect, please exit and specify custom build command in the '{consts.cli_project_config_file}'.")
 
         if build_system == "zip":
             logging.info("Zipping source code files of the component.")
-            _build_system_zip(build_file, build_info)
+            _build_system_zip()
         else:
             logging.info("Running the build command '{}'".format(' '.join(build_command)))
             sp.run(build_command)
     except Exception as e:
-        raise Exception("""{}\n{}""".format(error_messages.BUILD_WITH_DEFAULT_COMMAND_FAILED,e))
+        raise Exception(f"Error building the component with the given build system.\n{e}")
 
-def _build_system_zip(build_file, build_info):
+def _build_system_zip():
     """
     Builds the component as a zip file. 
 
@@ -144,23 +139,21 @@ def _build_system_zip(build_file, build_info):
 
     Parameters
     ----------
-        build_file(Path): Path of the config file which determines the build system of the project. 
-        build_info(dict): A dictionary object that contains build related information specific to the build 
-        type identified by the project. 
+        None
 
     Returns
     -------
         None 
     """
     try:
-        zip_build = _get_build_folder_by_build_system(build_info)
+        zip_build = _get_build_folder_by_build_system()
         utils.clean_dir(zip_build)
 
         logging.debug("Copying over component files to the '{}' folder.".format(zip_build.name))
         shutil.copytree(utils.current_directory, zip_build, dirs_exist_ok=True, ignore=_ignore_files_during_zip)
 
         # Get build file name without extension. This will be used as name of the archive. 
-        archive_file = build_file.name.split(".py")[0]
+        archive_file = utils.current_directory.name
         logging.debug("Creating an archive named '{}.zip' in '{}' folder with the files in '{}' folder.".format(archive_file,zip_build.name,zip_build.name))
         archive_file_name = Path(zip_build).joinpath(archive_file).resolve()
         shutil.make_archive(
@@ -190,27 +183,26 @@ def _ignore_files_during_zip(path,names):
     """
     # TODO: Identify individual files in recipe that are not same as zip and exclude them during zip. 
     ignore_list = [consts.cli_project_config_file, consts.greengrass_build_dir, project_config["component_recipe_file"].name]
-    logging.debug("Exclude the following files while zipping the component .\n{}".format(', '.join(ignore_list)))
     return ignore_list
 
-def _get_build_folder_by_build_system(build_info):
+def _get_build_folder_by_build_system():
     """
     Returns build folder name specific to the build system. This folder contains component artifacts after the build 
     is complete. 
 
     Parameters
     ----------
-        build_info(dict): A dictionary object that contains build related information specific to the build 
-        type identified by the project. 
+        None
 
     Returns
     -------
         build_folder(Path): Path to the build folder created by component build system. 
     """
-    build_folder = build_info["build_folder"]
+    build_system = project_config["component_build_config"]["build_system"]
+    build_folder = supported_build_sytems[build_system]["build_folder"]
     return Path(utils.current_directory).joinpath(*build_folder).resolve()
 
-def copy_artifacts_and_update_uris(build_info):
+def copy_artifacts_and_update_uris():
     """
     Copies over the build artifacts to the greengrass artifacts build folder and update URIs in the recipe.
 
@@ -220,8 +212,7 @@ def copy_artifacts_and_update_uris(build_info):
     
     Parameters
     ----------
-        build_info(dict): A dictionary object that contains build related information specific to the build 
-        type identified by the project. 
+        None
 
     Returns
     -------
@@ -236,7 +227,8 @@ def copy_artifacts_and_update_uris(build_info):
     if "Manifests" not in parsed_component_recipe:
         logging.debug("No 'Manifests' key in the recipe.")
         return 
-    build_folder = _get_build_folder_by_build_system(build_info)
+    
+    build_folder = _get_build_folder_by_build_system()
     build_folder_iterator_list = list(build_folder.iterdir())
     manifests = parsed_component_recipe["Manifests"]
     for manifest in manifests:
@@ -291,3 +283,5 @@ def create_build_recipe_file():
             raise Exception("""Failed to create build recipe file at '{}'.\n{}""".format(gg_build_recipe_file,e))
 
 project_config = project_utils.get_project_config_values()
+
+supported_build_sytems = project_utils.get_supported_component_builds()

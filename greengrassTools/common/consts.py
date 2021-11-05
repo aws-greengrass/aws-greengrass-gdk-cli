@@ -20,7 +20,7 @@ arg_parameters = [
 cli_project_config_file = "greengrass-tools-config.json"
 config_schema_file = "config_schema.json"
 cli_model_file = "cli_model.json"
-supported_component_builds_file = "supported_component_builds.json"
+project_build_system_file = "project_build_system.json"
 project_build_schema_file = "project_build_schema.json"
 
 # URLS

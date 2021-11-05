@@ -3,23 +3,18 @@
     "type": "object",
     "default": {},
     "required": [
-        "pom.xml",
-        "gradlew",
-        ".py"
+        "maven",
+        "gradle",
+        "zip"
     ],
     "properties": {
-        "pom.xml": {
+        "maven": {
             "type": "object",
             "required": [
-                "build_system",
                 "build_command",
                 "build_folder"
             ],
             "properties": {
-                "build_system": {
-                    "type": "string",
-                    "enum": ["maven"]
-                },
                 "build_command": {
                     "type": "array",
                     "items": {
@@ -42,19 +37,14 @@
                 }
             }
         },
-        "gradlew": {
+        "gradle": {
             "type": "object",
             "default": {},
             "required": [
-                "build_system",
                 "build_command",
                 "build_folder"
             ],
             "properties": {
-                "build_system": {
-                    "type": "string",
-                    "enum": ["gradle"]
-                },
                 "build_command": {
                     "type": "array",
                     "items": {
@@ -77,19 +67,14 @@
                 }
             }
         },
-        ".py": {
+        "zip": {
             "type": "object",
             "default": {},
             "required": [
-                "build_system",
                 "build_command",
                 "build_folder"
             ],
             "properties": {
-                "build_system": {
-                    "type": "string",
-                    "enum": ["zip"]
-                },
                 "build_command": {
                     "type": "array",
                     "items": {
