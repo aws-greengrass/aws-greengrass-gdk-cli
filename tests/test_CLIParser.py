@@ -2,6 +2,7 @@ import pytest
 import argparse
 import greengrassTools.CLIParser as cli_parser
 import greengrassTools.common.consts as consts
+from urllib3.exceptions import HTTPError
 
 def test_CLIParser_initiation_top_level():
     # This test checks for the correctness of CLIParser that creates argument parser with commands and sub-commands. 
@@ -140,3 +141,19 @@ def test_model_file():
 
     return model
 
+def test_main(mocker):
+    args_namespace = argparse.Namespace(component='init', init=None, lang='python', template='name', **{'greengrass-tools': 'component'})
+    mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
+    mock_run_command = mocker.patch("greengrassTools.common.parse_args_actions.run_command", return_value=None)
+    cli_parser.main()
+    mock_cli_parser.assert_any_call()
+    mock_run_command.assert_any_call(args_namespace)
+
+def test_main_exception(mocker):
+    args_namespace = argparse.Namespace(component='init', init=None, lang='python', template='name', **{'greengrass-tools': 'component'})
+    mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
+    mock_run_command = mocker.patch("greengrassTools.common.parse_args_actions.run_command", return_value=None, side_effect=HTTPError('some'))
+    with pytest.raises(SystemExit) as e:
+        cli_parser.main()
+    mock_cli_parser.assert_any_call()
+    mock_run_command.assert_any_call(args_namespace)
