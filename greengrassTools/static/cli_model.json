@@ -9,7 +9,8 @@
         "sub-commands": [
             "init",
             "build",
-            "publish"
+            "publish",
+            "list"
         ],
         "help": "Modify this text."
     },
@@ -67,8 +68,39 @@
                 "description": "Initialize the project with a component from Greengrass Repository Catalog"
             }
         ],
-        "help":"Modify this text."
+        "help": "Modify this text."
     },
-    "build": {"help":"Modify this text."},
-    "publish": {"help":"Modify this text."}
+    "build": {
+        "help": "Modify this text."
+    },
+    "publish": {
+        "help": "Modify this text."
+    },
+    "list": {
+        "help": "Modify this text.",
+        "arguments": {
+            "template": {
+                "name": [
+                    "-t",
+                    "--template"
+                ],
+                "help": "List all the available component templates.",
+                "action": "store_true"
+            },
+            "repository": {
+                "name": [
+                    "-r",
+                    "--repository"
+                ],
+                "help": "List all the available component repositories.",
+                "action": "store_true"
+            }
+        },
+        "conflicting_arg_groups": [
+            [
+                "template",
+                "repository"
+            ]
+        ]
+    }
 }

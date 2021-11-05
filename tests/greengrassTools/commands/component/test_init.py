@@ -172,8 +172,36 @@ def test_init_run_with_invalid_args(mocker):
 def test_init_with_template_valid(mocker):
     template = "template"
     language = "language"
+    mock_download_and_clean=mocker.patch("greengrassTools.commands.component.init.download_and_clean",return_value=None)
+    init.init_with_template(template,language)
+    mock_download_and_clean.assert_any_call("template-language","template")
+
+def test_init_with_template_exception(mocker):
+    template = "template"
+    language = "language"
+    mock_download_and_clean=mocker.patch("greengrassTools.commands.component.init.download_and_clean",side_effect=HTTPError("Some error"))
+    with pytest.raises(Exception) as e:
+        init.init_with_template(template,language)
+    assert "Could not initialize the project with component template" in e.value.args[0]
+    mock_download_and_clean.assert_any_call("template-language","template")
+
+def test_init_with_repository_valid(mocker):
+    repository = "repository_name"
+    mock_download_and_clean=mocker.patch("greengrassTools.commands.component.init.download_and_clean",return_value=None)
+    init.init_with_repository(repository)
+    mock_download_and_clean.assert_any_call(repository,"repository")
+
+def test_init_with_repository_exception(mocker):
+    repository = "repository_name"
+    mock_download_and_clean=mocker.patch("greengrassTools.commands.component.init.download_and_clean",side_effect=HTTPError("Some error"))
+    with pytest.raises(Exception) as e:
+        init.init_with_repository(repository)
+    assert "Could not initialize the project with component repository" in e.value.args[0]
+    mock_download_and_clean.assert_any_call(repository,"repository")
+
+def test_download_and_clean_valid(mocker):
     template_name_zip = "template-language.zip"
-    mock_get_available_templates=mocker.patch("greengrassTools.commands.component.init.get_available_templates_from_github",
+    mock_get_available_templates=mocker.patch("greengrassTools.commands.component.list.get_component_list_from_github",
     return_value={"template-language":"template-url"})
 
     mock_response = mocker.Mock(status_code=200)
@@ -183,7 +211,7 @@ def test_init_with_template_valid(mocker):
     mock_remove_template_zip=mocker.patch("os.remove", return_value=None)  
     file_path = "path/to/open" 
     with patch("builtins.open", mock_open()) as mock_file:
-        init.init_with_template(template,language)
+        init.download_and_clean("template-language", "template")
         assert mock_remove_template_zip.call_count == 1
         assert mock_unzip_template_zip.call_count == 1
         assert mock_template_download.call_count == 1
@@ -197,7 +225,7 @@ def test_init_with_template_invalid_url(mocker):
     # Raises an exception when the template url is not valid. 
     template = "template"
     language = "language"
-    mock_get_available_templates=mocker.patch("greengrassTools.commands.component.init.get_available_templates_from_github",
+    mock_get_available_templates=mocker.patch("greengrassTools.commands.component.list.get_component_list_from_github",
     return_value={"template-language":"template-url"})
     mock_response = mocker.Mock(status_code=404, raise_for_status = mocker.Mock(side_effect=HTTPError('some error')))
     mock_template_download=mocker.patch("requests.get",return_value=mock_response)
@@ -209,66 +237,45 @@ def test_init_with_template_invalid_url(mocker):
     
     with patch("builtins.open", mock_open()) as mock_file:
         with pytest.raises(Exception) as e:
-            init.init_with_template(template,language)
+            init.download_and_clean("template-language", "template")
 
-        assert e.value.args[0]== error_messages.INIT_FAILS_DURING_TEMPLATE_DOWNLOAD
+        assert "Failed to download the selected component" in e.value.args[0]
         assert mock_remove_template_zip.call_count == 0
         assert mock_unzip_template_zip.call_count == 0
         assert mock_template_download.call_count == 1
         assert mock_get_available_templates.call_count == 1
         assert not mock_file.called
 
-def test_init_with_template_not_available(mocker):
-    # Check if an exception is raised when the template is not available
-    template = "template"
-    language = "language"
+def test_get_download_url_valid_template(mocker):
+    template="template-language"
+    mock_get_component_list_from_github=mocker.patch("greengrassTools.commands.component.list.get_component_list_from_github",
+    return_value={"template-language":"template-url"})
+    url = init.get_download_url(template,"template")
+    assert url =="template-url"
+    assert mock_get_component_list_from_github.called
 
-    mock_get_available_templates=mocker.patch("greengrassTools.commands.component.init.get_available_templates_from_github",
-    return_value=[])
-    mock_template_download=mocker.patch("requests.get",
-    return_value=None)
-    mock_unzip_template_zip=mocker.patch("shutil.unpack_archive",
-    return_value=None)
-    mock_remove_template_zip=mocker.patch("os.remove",
-    return_value=None)   
+def test_get_download_url_valid_repository(mocker):
+    repository="repository_name"
+    mock_get_component_list_from_github=mocker.patch("greengrassTools.commands.component.list.get_component_list_from_github",
+    return_value={"repository_name":"repository-url"})
+    url = init.get_download_url(repository,"repository")
+    assert url =="repository-url"
+    assert mock_get_component_list_from_github.called
 
+def test_get_download_url_invalid_template(mocker):
+    template="template-language"
+    mock_get_component_list_from_github=mocker.patch("greengrassTools.commands.component.list.get_component_list_from_github",
+    return_value={"repository_name":"repository-url"})
     with pytest.raises(Exception) as e:
-        init.init_with_template(template,language)
+        url = init.get_download_url(template,"template")
+    assert e.value.args[0] == "Could not find the component template 'template-language' on GitHub."
+    assert mock_get_component_list_from_github.called
 
-    assert e.value.args[0]== error_messages.INIT_WITH_INVALID_TEMPLATE
-
-    assert mock_remove_template_zip.call_count == 0
-    assert mock_unzip_template_zip.call_count == 0
-    assert mock_template_download.call_count == 0
-    assert mock_get_available_templates.call_count == 1
-    
-    
-def test_get_available_templates_from_github_valid_json(mocker):
-    res_json ={"template-name":"template-list"}
-    mock_response = mocker.Mock(status_code=200, json=lambda: res_json)
-    mock_template_list=mocker.patch("requests.get",return_value=mock_response)   
-
-    templates_list = init.get_available_templates_from_github()
-    assert templates_list == res_json
-    assert mock_template_list.call_count ==1 
-
-def test_get_available_templates_from_github_invalid_json(mocker):
-    res_json ={"template-name":"template-list"}
-    mock_response = mocker.Mock(status_code=200, json=res_json)
-    mock_template_list=mocker.patch("requests.get",return_value=mock_response)   
-
-    templates_list = init.get_available_templates_from_github()
-    assert templates_list == []
-    assert mock_template_list.call_count ==1
-
-def test_get_available_templates_from_github_invalid_url(mocker):
-    res_json ={}
-    mock_response = mocker.Mock(status_code=404, raise_for_status = mocker.Mock(side_effect=HTTPError('some error')))
-    mock_template_list=mocker.patch("requests.get",return_value=mock_response)  
-
+def test_get_download_url_invalid_repository(mocker):
+    repository="repository_name"
+    mock_get_component_list_from_github=mocker.patch("greengrassTools.commands.component.list.get_component_list_from_github",
+    return_value={"template-language":"template-url"})
     with pytest.raises(Exception) as e:
-        init.get_available_templates_from_github()
-        
-    assert e.value.args[0]== error_messages.INIT_FAILS_DURING_LISTING_TEMPLATES
-    assert mock_template_list.call_count ==1 
-    
+        url = init.get_download_url(repository,"repository")
+    assert e.value.args[0] == "Could not find the component repository 'repository_name' on GitHub."
+    assert mock_get_component_list_from_github.called

@@ -6,6 +6,7 @@ import greengrassTools.common.utils as utils
 import greengrassTools.common.parse_args_actions as parse_args_actions
 import greengrassTools.common.consts as consts
 import greengrassTools.common.exceptions.error_messages as error_messages
+import greengrassTools.commands.component.list as list
 
 def run(command_args):
     """ 
@@ -47,108 +48,57 @@ def run(command_args):
     raise Exception(error_messages.INIT_WITH_INVALID_ARGS)
 
 def init_with_template(template, language):
-    """    
-    Initializes the directory with a greengrass component template in choosen programming language. 
+    try:
+        template_name = "{}-{}".format(template, language)
+        logging.info("Fetching the component template '{}' from GitHub.".format(template_name))
+        download_and_clean(template_name, "template")
+    except Exception as e:
+        raise Exception("Could not initialize the project with component template '{}'.\n{}".format(template,e))
 
-    This function downloads specified component template by language from github. Raises an exception 
-    if the template doesn't exist in that language.
-    
-    Parameters
-    ----------
-        template(string): A template name that is used to pull the template by the choosen language.
+def init_with_repository(repository):
+    try:
+        logging.info("Fetching the component repository '{}' from GitHub.".format(repository))
+        download_and_clean(repository, "repository")
+    except Exception as e:
+        raise Exception("Could not initialize the project with component repository '{}'.\n{}".format(repository,e))
 
-    Returns
-    -------
-        None
-    """
-    template_name = "{}-{}".format(template, language)
-    zip_template_name = "{}.zip".format(template_name)
-    
-    logging.info("Fetching the template '{}' from GitHub.".format(template_name))
-    
-    template_url = get_template_url(template_name)
-    download_request = requests.get(template_url, stream = True) 
+def download_and_clean(comp_name, comp_type):
+    comp_url = get_download_url(comp_name, comp_type) 
+
+    download_request = requests.get(comp_url, stream = True) 
     if download_request.status_code != 200:
         try:
             download_request.raise_for_status()
         except Exception as e:
             logging.error(e)
+            raise e
         finally:
-            raise Exception(error_messages.INIT_FAILS_DURING_TEMPLATE_DOWNLOAD)
+            raise Exception(error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(comp_type))
 
-    with open(zip_template_name, 'wb') as f:
-        logging.debug("Downloading the template...")
+    zip_comp_name = "{}.zip".format(comp_name)
+    with open(zip_comp_name, 'wb') as f:
+        logging.debug("Downloading the component {}...".format(comp_type))
         f.write(download_request.content)
         logging.debug("Download complete.")
 
     # unzip the template
-    logging.debug("Unzipping the downloaded template...")
-    shutil.unpack_archive(zip_template_name, utils.current_directory)
+    logging.debug("Unzipping the downloaded component {}...".format(comp_type))
+    shutil.unpack_archive(zip_comp_name, utils.current_directory)
     logging.debug("Unzip complete.")
 
     # Delete the downloaded zip template
-    logging.debug("Deleting the downloaded zip template.")
-    os.remove(zip_template_name)
+    logging.debug("Deleting the downloaded zip component {}.".format(comp_type))
+    os.remove(zip_comp_name)
     logging.debug("Delete complete.")
 
-def init_with_repository(repository):
-    """    
-    Initializes the directory with a component from greengrass repository catalog. 
-    """
-    print(" I init with repository")
-
-def get_template_url(template_name):
-    """    
-    Forms the downloadable url of the template. 
-
-    This functions builds the url by using the greengrass components github repo and its releases.
-
-    Parameters
-    ----------
-        template_name(string): Template name concatenated with programming language provided in the args.
-
-    Returns
-    -------
-       template_url(string): URL of the template which will be used for downloading. 
-    """ 
-    available_templates = get_available_templates_from_github()
-    if template_name in available_templates:
-        logging.debug("Component template '{}' is available on GitHub.".format(template_name)) 
-        return available_templates[template_name]
+def get_download_url(comp_name, comp_type):
+    if comp_type == "template":
+        url = consts.templates_list_url
+    elif comp_type == "repository":
+        url = consts.repository_list_url
+    available_components = list.get_component_list_from_github(url)
+    if comp_name in available_components:
+        logging.debug("Component {} '{}' is available on GitHub.".format(comp_type,comp_name)) 
+        return available_components[comp_name]
     else:
-        logging.error("Could not find the component template '{}' on GitHub.".format(template_name)) 
-        raise Exception(error_messages.INIT_WITH_INVALID_TEMPLATE)
-
-def get_available_templates_from_github():
-    """    
-    Retrieves full list of greengrass component templates that can be used with the cli tool.
-
-    This function lists the templates provided as a json file in the greengrass repository catalog.
-
-    Parameters
-    ----------
-        None
-
-    Returns
-    -------
-       template_list(list): List of all the available templates in the greengrass component templates repo.
-    """ 
-    template_list_response=requests.get(consts.templates_list_url)
-    logging.debug("Getting the list of available component templates from GitHub.")
-    if template_list_response.status_code != 200:
-        try:
-            template_list_response.raise_for_status()
-        except Exception as e:
-            logging.error(e)
-        finally:
-            raise Exception(error_messages.INIT_FAILS_DURING_LISTING_TEMPLATES)
-
-    try: 
-        # TODO: Integ test for checking if the github file is always a valid json file.
-        # TODO: GitHub Workflow of repository catalog should check for this. 
-        template_list = template_list_response.json()
-        return template_list
-    except Exception as e:
-        logging.error(e)
-        return []
- 
+        raise Exception("Could not find the component {} '{}' on GitHub.".format(comp_type,comp_name)) 

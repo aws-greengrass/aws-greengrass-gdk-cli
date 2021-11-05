@@ -6,7 +6,8 @@ INIT_NON_EMPTY_DIR_ERROR = "Could not initialize the project as the directory is
 INIT_WITH_INVALID_ARGS = "Could not initialize the project as the arguments passed are invalid. Please initialize the project with correct args.\nTry `greengrass-tools component init --help`"
 INIT_WITH_INVALID_TEMPLATE = "Could not initialize the project as no such template exists. Please initialize the project with correct args.\nTry `greengrass-tools component list --template`"
 INIT_WITH_CONFLICTING_ARGS = "Could not initialize the project as the command args are conflicting. Please initialize the project with correct args.\nTry `greengrass-tools component init --help` "
-
+INIT_WITH_INVALID_REPOSITORY = "Could not initialize the project as no such component respository exists. Please initialize the project with correct args.\nTry `greengrass-tools component list --repository`"
+INIT_WITH_INVALID_COMPONENT = "Could not initialize the project as no such component {{}} exists. Please initialize the project with correct args. \nTry `greengrass-tools component list --{{}}`"
 ##BUILD
 BUILD_WITH_NO_VALID_RECIPE = "Building the component with 'default' configuration failed as no valid component recipe is found in the project directory."
 BUILD_WITH_DEFAULT_FAILED = "Failed to build the component with default configuration."
@@ -26,6 +27,9 @@ PROJECT_CONFIG_FILE_INVALID="Invalid project configuration file. Please correct 
 # EXTERNAL 
 INIT_FAILS_DURING_TEMPLATE_DOWNLOAD = "Failed to download the selected component template. Please try again after sometime."
 INIT_FAILS_DURING_LISTING_TEMPLATES = "Failed to list the available component templates. Please try again after sometime."
+INIT_FAILS_DURING_LISTING_REPOSITORIES = "Failed to list the available component repositories. Please try again after sometime."
+LISTING_COMPONENTS_FAILED = "Failed to list the available components from GitHub. Please try again after sometime."
+INIT_FAILS_DURING_COMPONENT_DOWNLOAD = "Failed to download the selected component {{}}. Please try again after sometime."
 
 # TOOL - INTERNAL
 # CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."

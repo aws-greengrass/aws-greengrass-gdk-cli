@@ -21,3 +21,10 @@ def test_greengrass_tools_component_publish(mocker):
     return_value=None)
     methods._greengrass_tools_component_publish({})
     assert mock_component_publish.call_count == 1
+
+def test_greengrass_tools_component_list(mocker):
+    mock_component_list = mocker.patch(
+        "greengrassTools.commands.component.component.list", 
+        return_value=None)
+    methods._greengrass_tools_component_list({})
+    assert mock_component_list.call_count == 1

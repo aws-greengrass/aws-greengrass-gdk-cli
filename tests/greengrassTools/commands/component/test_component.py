@@ -22,3 +22,10 @@ def test_component_publish(mocker):
     component.publish(d_args)
     assert mock_component_publish.call_count == 1
     mock_component_publish.assert_called_with(d_args)
+
+def test_component_list(mocker):
+    mock_component_list= mocker.patch("greengrassTools.commands.component.list.run", return_value=None)
+    d_args={"list":None}
+    component.list(d_args)
+    assert mock_component_list.call_count == 1
+    mock_component_list.assert_called_with(d_args)
