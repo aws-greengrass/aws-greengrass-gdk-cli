@@ -7,7 +7,7 @@ import greengrassTools.common.utils as utils
 import greengrassTools.common.consts as consts
 
 def test_get_configuration_valid_component_config_found(mocker):
-    expected_config = {"component" :{"1": {"author": "abc","version": "1.0.0","build": {"command" : ["default"]},"publish": {"bucket": "default","region": "some-region"}}},"tools_version": "1.0.0"}
+    expected_config = {"component" :{"1": {"author": "abc","version": "1.0.0","build": {"build_system" : "zip"},"publish": {"bucket": "default","region": "some-region"}}},"tools_version": "1.0.0"}
 
     mock__get_project_config_file=mocker.patch("greengrassTools.common.configuration._get_project_config_file", 
     return_value=Path(".").joinpath('tests/greengrassTools/static').joinpath('config.json'))
@@ -22,6 +22,15 @@ def test_get_configuration_invalid_config_file(mocker, file_name):
     with pytest.raises(Exception) as err:
         config.get_configuration()
     assert mock__get_project_config_file.called
+
+@pytest.mark.parametrize("file_name", ["valid_build_command.json"])
+def test_get_configuration_config_file(mocker, file_name):
+    mock__get_project_config_file=mocker.patch("greengrassTools.common.configuration._get_project_config_file", 
+    return_value=Path(".").joinpath('tests/greengrassTools/static').joinpath(file_name).resolve())
+
+    config.get_configuration()
+    assert mock__get_project_config_file.called 
+
 
 def test_validate_configuration_schema_not_exists(mocker):
     mock_get_static_file_path = mocker.patch('greengrassTools.common.utils.get_static_file_path', return_value=None)

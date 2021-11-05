@@ -7,36 +7,88 @@
             "maxProperties": 1,
             "minProperties": 1,
             "patternProperties": {
-                "[a-zA-Z0-9-_.]+" : {
+                "[a-zA-Z0-9-_.]+": {
                     "type": "object",
-                    "properties" : {
+                    "properties": {
                         "author": {
                             "type": "string"
                         },
                         "version": {
                             "type": "string",
                             "oneOf": [
-                                {"pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"},
-                                {"enum": ["LATEST"]}
+                                {
+                                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+                                },
+                                {
+                                    "enum": [
+                                        "LATEST"
+                                    ]
+                                }
                             ]
                         },
-                        "build" : {
-                            "type" : "object",
-                            "properties" : {
-                                "command": { "type" :  "array", "minItems":1}
+                        "build": {
+                            "type": "object",
+                            "properties": {
+                                "custom_build_command": {
+                                    "type": "array",
+                                    "minItems": 1
+                                },
+                                "build_system": {
+                                    "type": "string",
+                                    "enum": [
+                                        "zip",
+                                        "maven",
+                                        "gradle",
+                                        "custom"
+                                    ]
+                                }
                             },
-                            "required": ["command"]
+                            "required": [
+                                "build_system"
+                            ],
+                            "dependentRequired": {
+                                "custom_build_command": [
+                                    "build_system"
+                                ]
+                            },
+                            "if": {
+                                "properties": {
+                                    "build_system": {
+                                        "const": "custom"
+                                    }
+                                }
+                            },
+                            "then": {
+                                "properties": {
+                                    "custom_build_command": {}
+                                },
+                                "required": [
+                                    "custom_build_command"
+                                ]
+                            }
                         },
-                        "publish" : {
-                            "type" : "object",
-                            "properties" : {
-                                "bucket": { "type" :  "string"},
-                                "region": { "type" :  "string"}
+                        "publish": {
+                            "type": "object",
+                            "properties": {
+                                "bucket": {
+                                    "type": "string"
+                                },
+                                "region": {
+                                    "type": "string"
+                                }
                             },
-                            "required": ["bucket", "region"]
+                            "required": [
+                                "bucket",
+                                "region"
+                            ]
                         }
                     },
-                    "required": ["author","version","build", "publish"]
+                    "required": [
+                        "author",
+                        "version",
+                        "build",
+                        "publish"
+                    ]
                 }
             }
         },
@@ -45,5 +97,8 @@
             "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
         }
     },
-    "required": ["component", "tools_version"]
+    "required": [
+        "component",
+        "tools_version"
+    ]
 }

@@ -4,7 +4,8 @@
             "author": "abc",
             "version": "1.0.0",
             "build": {
-                "build_system": "zip"
+                "build_system": "custom",
+                "custom_build_command":["custom"]
             },
             "publish": {
                 "bucket": "default",
