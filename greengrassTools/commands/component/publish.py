@@ -268,7 +268,7 @@ def update_and_create_recipe_file(component_name, component_version):
         if parsed_component_recipe["ComponentName"] != component_name:
             logging.error("Component '{}' is not build.".format(parsed_component_recipe["ComponentName"]))
             raise Exception("""Failed to publish the component '{}' as it is not build.\nBuild the component `greengrass-tools component build` before publishing it.""".format(parsed_component_recipe["ComponentName"]))        
-    gg_build_component_artifacts_list = list(project_config["gg_build_component_artifacts_dir"].iterdir())
+    gg_build_component_artifacts = project_config["gg_build_component_artifacts_dir"]
     bucket = project_config["bucket"]
     artifact_uri = f"s3://{bucket}/{component_name}/{component_version}"
 
@@ -286,10 +286,12 @@ def update_and_create_recipe_file(component_name, component_version):
             artifact_file = Path(artifact["URI"]).resolve().name
             
             # For artifact in build component artifacts folder, update its URI
-            for b_file in gg_build_component_artifacts_list:
-                if artifact_file == b_file.name:
-                    logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
-                    artifact["URI"] = f"{artifact_uri}/{artifact_file}"
+            build_artifact_files = list(gg_build_component_artifacts.glob(artifact_file))
+            if len(build_artifact_files) == 1:
+                logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
+                artifact["URI"] = f"{artifact_uri}/{artifact_file}"
+            else:
+                raise Exception(f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder '{gg_build_component_artifacts}'.")
 
     # Update the version of the component in the recipe
     parsed_component_recipe["ComponentVersion"] = component_version

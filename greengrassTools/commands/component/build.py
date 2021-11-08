@@ -234,7 +234,6 @@ def copy_artifacts_and_update_uris():
         return 
     
     build_folder = _get_build_folder_by_build_system()
-    build_folder_iterator_list = list(build_folder.iterdir())
     manifests = parsed_component_recipe["Manifests"]
     for manifest in manifests:
         if "Artifacts" not in manifest:
@@ -246,14 +245,16 @@ def copy_artifacts_and_update_uris():
                 logging.debug("No 'URI' found in the recipe artifacts.")
                 continue
             artifact_file = Path(artifact["URI"]).resolve().name
-            
-            # If artifact in specific build folder, copy it to artifacts build folder
-            for b_file in build_folder_iterator_list:
-                if artifact_file == b_file.name:
-                    logging.debug("Copying file '{}' from '{}' to '{}'.".format(artifact_file, build_folder, gg_build_component_artifacts_dir ))
-                    shutil.copy(b_file, gg_build_component_artifacts_dir)
-                    logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
-                    artifact["URI"] = f"{artifact_uri}/{artifact_file}"
+
+            # If the artifact is present in build system specific build folder, copy it to greengrass artifacts build folder
+            build_files = list(build_folder.glob(artifact_file))
+            if len(build_files) == 1:
+                logging.debug("Copying file '{}' from '{}' to '{}'.".format(artifact_file, build_folder, gg_build_component_artifacts_dir ))
+                shutil.copy(build_files[0], gg_build_component_artifacts_dir)
+                logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
+                artifact["URI"] = f"{artifact_uri}/{artifact_file}"
+            else:
+                raise Exception(f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder '{build_folder}'.")
 
 def create_build_recipe_file():
     """

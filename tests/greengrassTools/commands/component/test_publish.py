@@ -136,25 +136,23 @@ def test_create_recipe_file_yaml_invalid(mocker):
 
 def test_update_and_create_recipe_file_no_manifests(mocker):
     mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value={})
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=[])
     mock_create_publish_recipe = mocker.patch("greengrassTools.commands.component.publish.create_publish_recipe_file", return_value = None)
     
     component_name = "component_name"
     component_version="1.0.0"
     publish.update_and_create_recipe_file(component_name, component_version)
-    assert mock_iter_dir.call_count ==1
     assert not mock_create_publish_recipe.called # No 'Manifests' in recipe
 
 def test_update_and_create_recipe_file_manifests_build(mocker):
     mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=json_values["parsed_component_recipe"])
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=[Path('hello_world.py')]) 
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=[Path('hello_world.py')]) 
     mock_create_publish_recipe = mocker.patch("greengrassTools.commands.component.publish.create_publish_recipe_file", return_value = None)
     
     component_name = "com.example.HelloWorld"
     component_version="1.0.0"
     publish.update_and_create_recipe_file(component_name, component_version)
     publish_component_recipe = json_values["parsed_component_recipe"]
-    assert mock_iter_dir.call_count ==1
+    assert mock_glob.call_count ==1
     assert mock_create_publish_recipe.call_count == 1 
     mock_create_publish_recipe.assert_any_call(component_name, component_version, publish_component_recipe)
     assert publish_component_recipe["ComponentVersion"] == component_version
@@ -162,7 +160,6 @@ def test_update_and_create_recipe_file_manifests_build(mocker):
 
 def test_update_and_create_recipe_file_manifests_not_build(mocker):
     mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=json_values["parsed_component_recipe"])
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=[Path('hello_world.py')]) 
     mock_create_publish_recipe = mocker.patch("greengrassTools.commands.component.publish.create_publish_recipe_file", return_value = None)
     
     component_name = "component_name"
@@ -171,22 +168,35 @@ def test_update_and_create_recipe_file_manifests_not_build(mocker):
     with pytest.raises(Exception) as e:
         publish.update_and_create_recipe_file(component_name, component_version)
     assert "as it is not build.\nBuild the component `greengrass-tools component build` before publishing it." in e.value.args[0]    
-    assert mock_iter_dir.call_count ==0
     assert mock_create_publish_recipe.call_count == 0 
 
 def test_update_and_create_recipe_file_uri_not_matches(mocker):
     mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=json_values["parsed_component_recipe"])
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=[Path('hello.py')]) 
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=[Path('hello_world.py')]) 
     mock_create_publish_recipe = mocker.patch("greengrassTools.commands.component.publish.create_publish_recipe_file", return_value = None)
     
     component_name = "com.example.HelloWorld"
     component_version="1.0.0"
     publish.update_and_create_recipe_file(component_name, component_version)
     publish_component_recipe = json_values["parsed_component_recipe"]
-    assert mock_iter_dir.call_count ==1
+    assert mock_glob.call_count ==1
     assert mock_create_publish_recipe.call_count == 1 
     mock_create_publish_recipe.assert_any_call(component_name, component_version, publish_component_recipe)
     assert publish_component_recipe["ComponentVersion"] == component_version
+
+
+def test_update_and_create_recipe_file_artifact_file_not_exists(mocker):
+    mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=json_values["parsed_component_recipe"])
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=[]) 
+    mock_create_publish_recipe = mocker.patch("greengrassTools.commands.component.publish.create_publish_recipe_file", return_value = None)
+    
+    component_name = "com.example.HelloWorld"
+    component_version="1.0.0"
+    with pytest.raises(Exception) as e:
+        publish.update_and_create_recipe_file(component_name, component_version)
+    assert "Could not find the artifact file specified in the recipe 'hello_world.py' inside the build folder" in e.value.args[0]      
+    assert mock_glob.call_count ==1
+    assert not mock_create_publish_recipe.called
 
 def test_update_and_create_recipe_file_no_artifacts(mocker):
     no_artifacts_key = {
@@ -212,13 +222,11 @@ def test_update_and_create_recipe_file_no_artifacts(mocker):
         ]
     }
     mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=no_artifacts_key)
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=[Path('hello.py')]) 
     mock_create_publish_recipe = mocker.patch("greengrassTools.commands.component.publish.create_publish_recipe_file", return_value = None)
     
     component_name = "com.example.HelloWorld"
     component_version="1.0.0"
     publish.update_and_create_recipe_file(component_name, component_version)
-    assert mock_iter_dir.call_count ==1
     assert mock_create_publish_recipe.call_count == 1 
     mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_key)
     assert no_artifacts_key["ComponentVersion"] == component_version
@@ -253,13 +261,11 @@ def test_update_and_create_recipe_file_no_artifacts_uri(mocker):
         ]
     }
     mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=no_artifacts_uri_key)
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=[Path('hello.py')]) 
     mock_create_publish_recipe = mocker.patch("greengrassTools.commands.component.publish.create_publish_recipe_file", return_value = None)
     
     component_name = "com.example.HelloWorld"
     component_version="1.0.0"
     publish.update_and_create_recipe_file(component_name, component_version)
-    assert mock_iter_dir.call_count ==1
     assert mock_create_publish_recipe.call_count == 1 
     mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_uri_key)
     assert no_artifacts_uri_key["ComponentVersion"] == component_version

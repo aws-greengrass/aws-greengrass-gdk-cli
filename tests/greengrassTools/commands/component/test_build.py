@@ -49,7 +49,6 @@ json_values = {
             }
         ]
     },
-    "artifact_uri": "s3://default/component_name/1.0.0"
 }
 
     
@@ -311,11 +310,13 @@ def test_copy_artifacts_and_update_uris_valid(mocker):
     zip_build_path= Path('zip-build').resolve()
     mock_build_info = mocker.patch("greengrassTools.commands.component.build._get_build_folder_by_build_system", 
     return_value=zip_build_path)
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=[])
+    mock_shutil_copy = mocker.patch('shutil.copy')
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=[Path('.').joinpath('hello_world.py')])
     import greengrassTools.commands.component.build as build
     build.copy_artifacts_and_update_uris()
     assert mock_build_info.assert_called_once
-    assert mock_iter_dir.assert_called_once
+    assert mock_glob.assert_called_once
+    assert mock_shutil_copy.called
 
 def test_copy_artifacts_and_update_uris_recipe_uri_matches(mocker):
     # Copy only if the uri in recipe matches the artifact in build folder
@@ -325,12 +326,12 @@ def test_copy_artifacts_and_update_uris_recipe_uri_matches(mocker):
     return_value=zip_build_path)
     mock_iter_dir_list=[Path('hello_world.py').resolve()]
     mock_shutil_copy = mocker.patch('shutil.copy')
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=mock_iter_dir_list)
     import greengrassTools.commands.component.build as build
     build.copy_artifacts_and_update_uris()
     assert mock_shutil_copy.called
     assert mock_build_info.assert_called_once
-    assert mock_iter_dir.assert_called_once
+    assert mock_glob.assert_called_once
     mock_shutil_copy.assert_called_with(Path('hello_world.py').resolve(), json_values["gg_build_component_artifacts_dir"])
 
 def test_copy_artifacts_and_update_uris_recipe_uri_not_matches(mocker):
@@ -339,15 +340,17 @@ def test_copy_artifacts_and_update_uris_recipe_uri_not_matches(mocker):
     zip_build_path= Path('zip-build').resolve()
     mock_build_info = mocker.patch("greengrassTools.commands.component.build._get_build_folder_by_build_system", 
     return_value=zip_build_path)
-    mock_iter_dir_list=[Path('this-recipe-uri-not-exists.sh').resolve()]
     mock_shutil_copy = mocker.patch('shutil.copy')
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=[])
     import greengrassTools.commands.component.build as build
     build_info = {"build_system":"zip", "build_command":[""]}
-    build.copy_artifacts_and_update_uris()
+    with pytest.raises(Exception) as e:
+        build.copy_artifacts_and_update_uris()
+
+    assert "Could not find the artifact file specified in the recipe 'hello_world.py' inside the build folder" in e.value.args[0] 
     assert not mock_shutil_copy.called
     assert mock_build_info.assert_called_once
-    assert mock_iter_dir.assert_called_once
+    assert mock_glob.assert_called_once
 
 def test_default_build_component(mocker):
     mock_run_build_command = mocker.patch("greengrassTools.commands.component.build.run_build_command")
@@ -436,7 +439,7 @@ def test_copy_artifacts_and_update_uris_no_manifest_in_recipe(mocker):
     return_value=zip_build_path)
     mock_iter_dir_list=[Path('this-recipe-uri-not-exists.sh').resolve()]
     mock_shutil_copy = mocker.patch('shutil.copy')
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
+    mock_glob = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
     
     build_info = {"build_system":"zip", "build_command":[""]}
     modify_build = build.project_config
@@ -456,7 +459,7 @@ def test_copy_artifacts_and_update_uris_no_manifest_in_recipe(mocker):
     build.copy_artifacts_and_update_uris()
     assert not mock_shutil_copy.called
     assert not mock_build_info.called
-    assert not mock_iter_dir.called
+    assert not mock_glob.called
 
 
 def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
@@ -466,9 +469,9 @@ def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
     zip_build_path= Path('zip-build').resolve()
     mock_build_info = mocker.patch("greengrassTools.commands.component.build._get_build_folder_by_build_system", 
     return_value=zip_build_path)
-    mock_iter_dir_list=[Path('this-recipe-uri-not-exists.sh').resolve()]
+    mock_iter_dir_list=Path('this-recipe-uri-not-exists.sh').resolve()
     mock_shutil_copy = mocker.patch('shutil.copy')
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=mock_iter_dir_list)
     
     build_info = {"build_system":"zip", "build_command":[""]}
     modify_build = build.project_config
@@ -498,7 +501,7 @@ def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
     build.copy_artifacts_and_update_uris()
     assert not mock_shutil_copy.called
     assert mock_build_info.called
-    assert mock_iter_dir.called
+    assert not mock_glob.called
 
 def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
     # Nothing to copy if manifest file doesnt exist
@@ -508,9 +511,9 @@ def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
     zip_build_path= Path('zip-build').resolve()
     mock_build_info = mocker.patch("greengrassTools.commands.component.build._get_build_folder_by_build_system", 
     return_value=zip_build_path)
-    mock_iter_dir_list=[Path('this-recipe-uri-not-exists.sh').resolve()]
+    mock_iter_dir_list=Path('this-recipe-uri-not-exists.sh').resolve()
     mock_shutil_copy = mocker.patch('shutil.copy')
-    mock_iter_dir = mocker.patch('pathlib.Path.iterdir', return_value=mock_iter_dir_list)
+    mock_glob = mocker.patch('pathlib.Path.glob', return_value=mock_iter_dir_list)
     
     build_info = {"build_system":"zip", "build_command":[""]}
     modify_build = build.project_config
@@ -545,4 +548,4 @@ def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
     build.copy_artifacts_and_update_uris()
     assert not mock_shutil_copy.called
     assert mock_build_info.called
-    assert mock_iter_dir.called
+    assert not mock_glob.called
