@@ -11,7 +11,7 @@ json_values = {
         "author": "abc",
         "version": "1.0.0",
         "build": {
-            "command": ["default"]
+            "build_system": "zip"
         },
         "publish": {
             "bucket": "default"
@@ -56,7 +56,6 @@ json_values = {
     "artifact_uri": "s3://default/component_name/1.0.0"
 }
 
-# mock_method = mock.patch("greengrassTools.commands.component.project_utils.get_project_config_values", return_value=json_values).start()
 with mock.patch("greengrassTools.commands.component.project_utils.get_project_config_values", return_value=json_values) as mock_method:
     mock_client = mock.patch("boto3.client", return_value=None)
     mock.patch("greengrassTools.commands.component.project_utils.get_service_clients", return_value={})
@@ -219,7 +218,6 @@ def test_update_and_create_recipe_file_no_artifacts(mocker):
     component_name = "com.example.HelloWorld"
     component_version="1.0.0"
     publish.update_and_create_recipe_file(component_name, component_version)
-    # publish_component_recipe = json_values["parsed_component_recipe"]
     assert mock_iter_dir.call_count ==1
     assert mock_create_publish_recipe.call_count == 1 
     mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_key)
@@ -261,7 +259,6 @@ def test_update_and_create_recipe_file_no_artifacts_uri(mocker):
     component_name = "com.example.HelloWorld"
     component_version="1.0.0"
     publish.update_and_create_recipe_file(component_name, component_version)
-    # publish_component_recipe = json_values["parsed_component_recipe"]
     assert mock_iter_dir.call_count ==1
     assert mock_create_publish_recipe.call_count == 1 
     mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_uri_key)
@@ -302,43 +299,36 @@ def test_get_component_version_from_config_exception(mocker):
 
 
 def test_get_next_version_component_not_exists(mocker): 
+    publish.project_config["account_number"] = "1234"
     mock_get_latest_component_version = mocker.patch("greengrassTools.commands.component.publish.get_latest_component_version", return_value=None)
-    mock_get_account_number = mocker.patch("greengrassTools.commands.component.publish.get_account_number", return_value=1234)
     version = publish.get_next_version()
     assert version == "1.0.0" # Fallback version
     assert mock_get_latest_component_version.call_count == 1
-    assert mock_get_account_number.call_count == 1
-    mock_get_latest_component_version.assert_any_call("component_name","default",1234)
+    mock_get_latest_component_version.assert_any_call("component_name","default","1234")
 
 def test_get_next_version_component_already_exists(mocker): 
     mock_get_latest_component_version = mocker.patch("greengrassTools.commands.component.publish.get_latest_component_version", return_value="1.0.6")
-    mock_get_account_number = mocker.patch("greengrassTools.commands.component.publish.get_account_number", return_value=1234)
 
     version = publish.get_next_version()
     assert version == "1.0.7"
     assert mock_get_latest_component_version.call_count == 1
-    assert mock_get_account_number.call_count == 1
 
 def test_get_next_version_component_already_exists_semver(mocker): 
     mock_get_latest_component_version = mocker.patch("greengrassTools.commands.component.publish.get_latest_component_version", return_value="1.0.6-x-y-z")
-    mock_get_account_number = mocker.patch("greengrassTools.commands.component.publish.get_account_number", return_value=1234)
-
     version = publish.get_next_version()
     assert version == "1.0.7"
     assert mock_get_latest_component_version.call_count == 1
-    assert mock_get_account_number.call_count == 1
 
 def test_get_next_version_component_exception(mocker): 
-
-    mock_get_account_number = mocker.patch("greengrassTools.commands.component.publish.get_account_number", return_value=1234)
+    publish.project_config["account_number"] = "1234"
     mock_get_latest_component_version = mocker.patch("greengrassTools.commands.component.publish.get_latest_component_version",side_effect=HTTPError('some error'))
     with pytest.raises(Exception) as e:
         publish.get_next_version()
     assert mock_get_latest_component_version.call_count == 1
-    assert mock_get_account_number.call_count == 1
     assert e.value.args[0] == 'Failed to calculate the next version of the component during publish.\nsome error'
 
 def test_get_latest_component_version(mocker):
+    publish.project_config["account_number"] = "1234"
     mock_client = mocker.patch("boto3.client", return_value=None)
     publish.service_clients = {"greengrass_client":mock_client}
     response = {
@@ -350,7 +340,7 @@ def test_get_latest_component_version(mocker):
         }]
     }
     mock_get_latest_component_version = mocker.patch("boto3.client.list_component_versions", return_value=response)
-    li = publish.get_latest_component_version("c_name", "region", 1234)
+    li = publish.get_latest_component_version("c_name", "region", "1234")
     assert mock_get_latest_component_version.call_count ==1
     assert li == "1.0.4"
 
@@ -358,7 +348,7 @@ def test_get_latest_component_version_no_components(mocker):
     mock_client = mocker.patch("boto3.client", return_value=None)
     publish.service_clients = {"greengrass_client":mock_client}
     mock_get_latest_component_version = mocker.patch("boto3.client.list_component_versions", return_value={"componentVersions":[]})
-    li = publish.get_latest_component_version("c_name", "region", 1234)
+    li = publish.get_latest_component_version("c_name", "region", "1234")
     assert mock_get_latest_component_version.call_count ==1
     assert not li
 
@@ -368,7 +358,7 @@ def test_get_latest_component_version_exception(mocker):
     publish.service_clients = {"greengrass_client":mock_client}
     mock_get_latest_component_version = mocker.patch("boto3.client.list_component_versions", side_effect=HTTPError("listing error"))
     with pytest.raises(Exception) as e:
-        publish.get_latest_component_version("c_name", "region", 1234)
+        publish.get_latest_component_version("c_name", "region", "1234")
     assert mock_get_latest_component_version.call_count ==1
     assert e.value.args[0] == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during publish.\nlisting error"
 
@@ -521,11 +511,15 @@ def test_upload_artifacts_exception(mocker):
     mock_upload_file.assert_any_call(str(Path('hello.py').resolve()),json_values["bucket"] ,s3_file_path)
 
 def test_publish_run(mocker):
+    mock_get_account_num= mocker.patch("greengrassTools.commands.component.publish.get_account_number", return_value="1234")
     mock_get_component_version_from_config= mocker.patch("greengrassTools.commands.component.publish.get_component_version_from_config", return_value=None)
     mock_upload_artifacts_s3= mocker.patch("greengrassTools.commands.component.publish.upload_artifacts_s3", return_value=None)
     mock_update_and_create_recipe_file= mocker.patch("greengrassTools.commands.component.publish.update_and_create_recipe_file", return_value=None)
     mock_create_gg_component= mocker.patch("greengrassTools.commands.component.publish.create_gg_component", return_value=None)
     publish.run({})
+    assert publish.project_config["account_number"] == "1234"
+    assert publish.project_config["bucket"] == "default-us-east-1-1234"
+    assert mock_get_account_num.call_count == 1
     assert mock_get_component_version_from_config.call_count == 1
     assert mock_upload_artifacts_s3.call_count == 1
     assert mock_update_and_create_recipe_file.call_count == 1
@@ -533,13 +527,18 @@ def test_publish_run(mocker):
 
 
 def test_publish_run_exception(mocker):
+    mock_get_account_num= mocker.patch("greengrassTools.commands.component.publish.get_account_number", return_value="1234")
     mock_get_component_version_from_config= mocker.patch("greengrassTools.commands.component.publish.get_component_version_from_config", return_value=None,side_effect=HTTPError("some error"))
     mock_upload_artifacts_s3= mocker.patch("greengrassTools.commands.component.publish.upload_artifacts_s3", return_value=None)
     mock_update_and_create_recipe_file= mocker.patch("greengrassTools.commands.component.publish.update_and_create_recipe_file", return_value=None)
     mock_create_gg_component= mocker.patch("greengrassTools.commands.component.publish.create_gg_component", return_value=None)
+    publish.project_config["bucket"] = "default"
     with pytest.raises(Exception) as e:
         publish.run({})
+    assert publish.project_config["account_number"] == "1234"
+    assert publish.project_config["bucket"] == "default-us-east-1-1234"
     assert e.value.args[0] == "{}\n{}".format(error_messages.PUBLISH_FAILED,"some error")
+    assert mock_get_account_num.call_count ==1
     assert mock_get_component_version_from_config.call_count == 1
     assert mock_upload_artifacts_s3.call_count == 0
     assert mock_update_and_create_recipe_file.call_count == 0

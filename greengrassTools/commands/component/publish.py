@@ -9,6 +9,9 @@ from botocore.exceptions import ClientError
 
 def run(args):
     try:
+        project_config["account_number"] = get_account_number()
+        project_config["bucket"] = "{}-{}-{}".format(project_config["bucket"],project_config["region"], project_config["account_number"])
+
         component_name = project_config["component_name"]
         logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
         component_version = get_component_version_from_config()
@@ -154,7 +157,7 @@ def get_next_version():
     try:
         c_name = project_config["component_name"]
         region = project_config["region"]
-        account_num = get_account_number()
+        account_num = project_config["account_number"]
         c_latest_version = get_latest_component_version(c_name,region, account_num)
         if not c_latest_version:
             logging.info("No private version of the component '{}' exist in the account. Using '{}' as the next version to create.".format(c_name, fallback_version))

@@ -182,7 +182,12 @@ def _ignore_files_during_zip(path,names):
         ignore_list(list): List of files or directories to ignore during zip. 
     """
     # TODO: Identify individual files in recipe that are not same as zip and exclude them during zip. 
-    ignore_list = [consts.cli_project_config_file, consts.greengrass_build_dir, project_config["component_recipe_file"].name]
+    # Do not include
+    ## 1. project config file -> greengrass-tools-config.json
+    ## 2. greengrass-build directory
+    ## 3. recipe file 
+    ## 4. tests folder
+    ignore_list = [consts.cli_project_config_file, consts.greengrass_build_dir, project_config["component_recipe_file"].name, "test*"]
     return ignore_list
 
 def _get_build_folder_by_build_system():
