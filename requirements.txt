@@ -1,0 +1,4 @@
+boto3
+jsonschema
+PyYAML
+requests

@@ -2,6 +2,9 @@ from setuptools import setup, find_packages
 import codecs
 from pathlib import Path
 
+with open("requirements.txt", "r", encoding="utf-8") as f:
+    requirements = f.read()
+
 def read(rel_path):
     here = Path(__file__).parent.resolve()
     with codecs.open(Path(here).joinpath(rel_path).resolve(), 'r') as fp:
@@ -21,8 +24,8 @@ setup(
 		name ='greengrass-tools',
 		version = get_version("greengrassTools/_version.py"),
 		author ='AWS IoT Greengrass Labs',
-		author_email ='nukai@amazon.com',
-		url ='',
+		author_email = '',
+		url = '',
 		description ='Greengrass CLI Tool for creating Greengrass components',
 		long_description = long_description,
 		long_description_content_type ="text/markdown",
@@ -38,6 +41,7 @@ setup(
 			"License :: OSI Approved :: MIT License",
 			"Operating System :: OS Independent",
 		),
+		install_requires=[requirements],
 		keywords ='aws iot greengrass cli component',
 		zip_safe = False,
 		include_package_data = True
