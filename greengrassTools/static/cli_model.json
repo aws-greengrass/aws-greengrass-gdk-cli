@@ -25,7 +25,8 @@
                 "choices": [
                     "python",
                     "java"
-                ]
+                ],
+                "type" : "str.lower"
             },
             "template": {
                 "name": [

@@ -7,6 +7,11 @@ def test_main_parse_args_init(mocker):
     parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-d"]))
     assert mock_component_init.called
 
+def test_main_parse_args_case_insenstive_language(mocker):
+    mocker.patch("greengrassTools.commands.component.component.init", return_value = None)
+    x = CLIParser.cli_parser.parse_args(["component", "init", "-l","PYTHON","-d"])
+    assert x.language == "python"
+
 def test_main_parse_args_build(mocker):
     mock_component_build = mocker.patch("greengrassTools.commands.component.component.build", return_value = None)
     parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build", "-d"]))

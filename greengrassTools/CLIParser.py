@@ -166,6 +166,8 @@ class CLIParser():
     for param in consts.arg_parameters:
       if param in argument and param!="name":
         modified_arg[param]=argument[param]
+      if param in argument and param =="type":
+        modified_arg[param]=eval(argument[param])
     return argument["name"],modified_arg 
 
   def _add_common_args_for_all_commands(self):
