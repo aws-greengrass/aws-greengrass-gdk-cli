@@ -1,6 +1,6 @@
 # This workflow executes CI jobs
 
-name: Archive
+name: CI
 on:
   push:
     branches:
