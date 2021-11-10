@@ -1,0 +1,15 @@
+{
+    "Component" :{
+        "1": {
+            "author": "abc",
+            "version": "1.0.0",
+            "Build": {
+                "command" : "default"
+            },
+            "publish": {
+                "bucket_name": "default"
+            }
+        }
+    },
+    "tools-version": "1.0.0"
+}

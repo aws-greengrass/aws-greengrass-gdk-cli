@@ -1,0 +1,14 @@
+{
+    "component" :{
+        "1": {
+            "author": "abc",
+            "version": "1.0.0",
+            "build": {
+                "command" : "default"
+            },
+            "publish": {
+            }
+        }
+    },
+    "tools-version": "1.0.0"
+}

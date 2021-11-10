@@ -1,6 +1,7 @@
-import os
 import json
-import greengrassTools
+
+import greengrassTools.common.consts as consts
+import greengrassTools.common.utils as utils
 
 
 def is_valid_model(cli_model, command):
@@ -27,9 +28,7 @@ def is_valid_model(cli_model, command):
 
         # Validate sub-commands
         if "sub-commands" in cli_model[command]:
-            if not is_valid_subcommand_model(
-                cli_model, cli_model[command]["sub-commands"]
-            ):
+            if not is_valid_subcommand_model(cli_model, cli_model[command]["sub-commands"]):
                 return False
     return True
 
@@ -89,12 +88,9 @@ def get_validated_model():
     -------
       cli_model(dict): Empty if the model is invalid otherwise returns cli model.
     """
-    cli_model_file = os.path.join(
-        os.path.dirname(greengrassTools.__file__), "static", "cli_model.json"
-    )
-    with open(cli_model_file) as f:
+    with open(utils.get_static_file_path(consts.cli_model_file)) as f:
         cli_model = json.loads(f.read())
-    if is_valid_model(cli_model, greengrassTools.common.consts.cli_tool_name):
+    if is_valid_model(cli_model, consts.cli_tool_name):
         return cli_model
     else:
         return {}
