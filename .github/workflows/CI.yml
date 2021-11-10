@@ -5,8 +5,8 @@ on:
   push:
     branches:
       - main
-    pull_request:
-      branches: '*'
+  pull_request:
+    branches: '*'
 
 
   # Allows you to run this workflow manually from the Actions tab
