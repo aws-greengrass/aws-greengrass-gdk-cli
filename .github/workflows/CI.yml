@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.6]
         config:
           - os: windows-latest
     steps:
@@ -37,12 +37,15 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
+      - name: Testing CLI (Runs both unit and integration tests)
+        run: |
+          coverage run --source=greengrassTools -m pytest -v -s tests && coverage report --show-missing --fail-under=70      
+        
   build-on-non-windows:
     runs-on: ${{ matrix.config.os }}
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.6]
         config:
           - os: ubuntu-latest
           - os: macos-latest
@@ -63,3 +66,6 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Testing CLI (Runs both unit and integration tests)
+        run: |
+          coverage run --source=greengrassTools -m pytest -v -s tests && coverage report --show-missing --fail-under=70      

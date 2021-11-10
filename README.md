@@ -1,17 +1,24 @@
-## My Project
 
-TODO: Fill this README out!
+## Build the tool
+```
+python3 setup.py install 
+python3 setup.py sdist bdist_wheel 
+pip3 install dist/greengrass_tools-1.0.0-py3-none-any.whl --force-reinstall 
+```
 
-Be sure to:
+After installing greengrass-tools, run commands like
+```
+greengrass-tools --help
+greengrass-tools component --help
+greengrass-tools component init --help
+```
 
-* Change the title in this README
-* Edit your repository description on GitHub
+## Testing
 
-## Security
+```
+pip3 install pytest coverage
+```
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+From the root folder, run
 
-## License
-
-This project is licensed under the Apache-2.0 License.
-
+```coverage run --source=greengrassTools -m pytest -v -s tests && coverage report --show-missing```

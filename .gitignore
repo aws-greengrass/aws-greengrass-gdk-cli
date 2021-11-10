@@ -2,3 +2,10 @@
 **.DS_STORE
 **.DS_Store
 *.iml
+*build/
+*dist/
+*.egg-info
+*__pycache__
+*htmlcov/
+*.coverage
+*.vscode
