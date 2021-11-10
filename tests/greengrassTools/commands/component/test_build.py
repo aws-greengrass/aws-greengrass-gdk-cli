@@ -4,7 +4,7 @@ import pytest
 import json
 from unittest.mock import patch,mock_open
 from unittest.mock import ANY
-from build.lib.greengrassTools.common import utils
+import greengrassTools.common.utils as utils
 
 from greengrassTools.common.exceptions import error_messages
 

@@ -6,3 +6,4 @@ mock
 coverage
 boto3
 flake8
+pytest-mock
