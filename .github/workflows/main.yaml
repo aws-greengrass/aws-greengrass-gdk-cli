@@ -29,7 +29,7 @@ jobs:
           if ( Test-Path test-requirements.txt ) { pip install -r test-requirements.txt; }
       - name: Test with pytest
         run: |
-          coverage run --source=ggtools -m pytest -v -s tests && coverage report --show-missing
+          coverage run --source=greengrassTools -m pytest -v -s tests && coverage report --show-missing
           
   build-non-windows:
     runs-on: ${{ matrix.config.os }} 
@@ -53,4 +53,4 @@ jobs:
           if [ -f test-requirements.txt ]; then pip install -r test-requirements.txt; fi
       - name: Test with pytest
         run: |
-          coverage run --source=ggtools -m pytest -v -s tests && coverage report --show-missing
+          coverage run --source=greengrassTools -m pytest -v -s tests && coverage report --show-missing

@@ -1,0 +1,107 @@
+{
+    "greengrass-tools": {
+        "sub-commands": [
+            "component"
+        ],
+        "help": "Modify this text."
+    },
+    "component": {
+        "sub-commands": [
+            "init",
+            "build",
+            "publish",
+            "list"
+        ],
+        "help": "Modify this text."
+    },
+    "init": {
+        "arguments": {
+            "language": {
+                "name": [
+                    "-l",
+                    "--language"
+                ],
+                "help": "Programming language of the template.",
+                "choices": [
+                    "python",
+                    "java"
+                ],
+                "type" : "str.lower"
+            },
+            "template": {
+                "name": [
+                    "-t",
+                    "--template"
+                ],
+                "help": "Name of the template to be used."
+            },
+            "repository": {
+                "name": [
+                    "-r",
+                    "--repository"
+                ],
+                "help": "Name of the repository to be used."
+            }
+        },
+        "conflicting_arg_groups": [
+            [
+                "language",
+                "template"
+            ],
+            [
+                "repository"
+            ]
+        ],
+        "arg_groups": [
+            {
+                "title": "Greengrass component templates.",
+                "args": [
+                    "language",
+                    "template"
+                ],
+                "description": "Initialize the project with a component template written in specified programming language"
+            },
+            {
+                "title": "Greengrass repository catalog.",
+                "args": [
+                    "repository"
+                ],
+                "description": "Initialize the project with a component from Greengrass Repository Catalog"
+            }
+        ],
+        "help": "Modify this text."
+    },
+    "build": {
+        "help": "Modify this text."
+    },
+    "publish": {
+        "help": "Modify this text."
+    },
+    "list": {
+        "help": "Modify this text.",
+        "arguments": {
+            "template": {
+                "name": [
+                    "-t",
+                    "--template"
+                ],
+                "help": "List all the available component templates.",
+                "action": "store_true"
+            },
+            "repository": {
+                "name": [
+                    "-r",
+                    "--repository"
+                ],
+                "help": "List all the available component repositories.",
+                "action": "store_true"
+            }
+        },
+        "conflicting_arg_groups": [
+            [
+                "template",
+                "repository"
+            ]
+        ]
+    }
+}
