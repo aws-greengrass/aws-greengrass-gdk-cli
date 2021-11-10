@@ -15,3 +15,6 @@ arg_parameters = [
     "metavar",
     "dest",
 ]
+
+config_schema_file = "config_schema.json"
+cli_model_file = "cli_model.json"
