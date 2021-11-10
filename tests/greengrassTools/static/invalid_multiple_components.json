@@ -1,0 +1,27 @@
+{
+    "component" :{
+        "1": {
+            "author": "abc",
+            "version": "1.0.0",
+            "build": {
+                "build_system" : "default"
+            },
+            "publish": {
+                "bucket": "default",
+                "region":"region"
+            }
+        },
+        "2": {
+            "author": "abc",
+            "version": "1.0.0",
+            "build": {
+                "build_system" : "default"
+            },
+            "publish": {
+                "bucket": "default",
+                "region":"region"
+            }
+        }
+    },
+    "tools_version": "1.0.0"
+}

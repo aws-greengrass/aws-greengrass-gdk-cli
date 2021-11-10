@@ -1,50 +1,40 @@
 import pytest
 import argparse
-import ggtools.CLIParser as cli_parser
-import ggtools.common.consts as consts
-import ggtools.common.consts as consts
+import greengrassTools.CLIParser as cli_parser
+import greengrassTools.common.consts as consts
+from urllib3.exceptions import HTTPError
 
-
-
-def test_CLIParser_initiation():
-    """
-    This test checks for the correctness of CLIParser that creates argument parser with commands and sub-commands. 
-    """
-    
+def test_CLIParser_initiation_top_level():
+    # This test checks for the correctness of CLIParser that creates argument parser with commands and sub-commands. 
     # If CLIParser is initiated with the cli tool name, it has no top-level parser.
     parser=cli_parser.CLIParser(consts.cli_tool_name, None)
     assert not hasattr(parser, 'top_level_parser')
     assert parser.command == consts.cli_tool_name
-    assert type(parser.parser) ==  argparse.ArgumentParser
+    assert type(parser.parser) ==  cli_parser.ArgumentParser
     assert parser.subparsers.dest == consts.cli_tool_name
 
+def test_CLIParser_initiation_sub_level():
     # If CLIParser is initiated with the sub-command, it has a top-level parser. Here, it is cli tool name
+    parser=cli_parser.CLIParser(consts.cli_tool_name, None)
     sub_command = 'component'
     subparser=cli_parser.CLIParser(sub_command, parser.subparsers)
     assert hasattr(subparser, 'top_level_parser')
     assert subparser.top_level_parser.dest ==  consts.cli_tool_name
     assert subparser.command != consts.cli_tool_name
     assert subparser.command == sub_command
-    assert type(subparser.parser) ==  argparse.ArgumentParser
+    assert type(subparser.parser) ==  cli_parser.ArgumentParser
     assert subparser.subparsers.dest == sub_command
 
 
 def test_CLIParser_create_parser():
-    """
-    This test checks for the correctness of CLIParser that creates argument parser with commands and sub-commands. 
-    """
-    
+    # This test checks for the correctness of CLIParser that creates argument parser with commands and sub-commands. 
     # If CLIParser is initiated with the cli tool name, it has no top-level parser.
     cli_tool=cli_parser.CLIParser(consts.cli_tool_name, None)
-    parser=cli_tool.create_parser(test_model_file())
-    assert type(parser) ==  argparse.ArgumentParser
+    parser=cli_tool.create_parser()
+    assert type(parser) ==  cli_parser.ArgumentParser
 
 def test_CLIParser_get_arg_from_model():
-    """
-    Case 1: Check that only known params are passed in the form of names and kwargs as needed by parser.add_argument. 
-    Case 2: Other params in the model file that are not relevant to the argument are not passed. 
-    """
-    ## Case 1
+    ## Check that only known params are passed in the form of names and kwargs as needed by parser.add_argument. 
     test_arg= { "name" : ["-l","--lang"],
                 "help": "Specify the language of the template.",
                 "choices": ["python", "java"] }
@@ -62,27 +52,108 @@ def test_CLIParser_get_arg_from_model():
     assert "names" not in rest_args_as_dict 
     assert "help" in rest_args_as_dict 
 
-    ## Case 2
+def test_CLIParser_get_arg_from_model():
+    ## Other params in the argument model file that are not relevant to the add_argument are not passed. 
     test_arg2= { "name" : ["-l"],
                  "unknown_param": "Not relevant to arg params" }
+    cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
     params_of_add_arg_command2 = cli_tool._get_arg_from_model(test_arg2)
     names_in_command2, rest_args_as_dict2= params_of_add_arg_command2
     assert len(names_in_command2) == 1
 
     assert "unknown_param" not in rest_args_as_dict2 # Full list of accepted params in common.consts file. 
 
-def test_CLIParser_get_subcommands_from_model():
-    """
-    Case 1: Check that only known params are passed in the form of names and kwargs as needed by parser.add_argument. 
-    Case 2: Other params in the model file that are not relevant to the argument are not passed. 
-    """
-    ## Case 1
+def test_add_arg_to_group_or_parser_with_group(mocker):
+    arg = { "name" : ["project"],
+                "help": "help"}
     cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
-    model = test_model_file()
-    cli_tool.command_model = model[consts.cli_tool_name]
-    cli_tool._get_subcommands_from_model(model)
+    group = cli_tool.parser.add_argument_group('group')
+
+    cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
+    cli_tool._add_arg_to_group_or_parser(arg, group)
+
+    assert cli_tool._add_arg_to_group_or_parser(arg, group)
+
+def test_add_arg_to_group_or_parser_with_parser(mocker):
+    arg = { "name" : ["project"],"help": "help"}
+    group = None
+    cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
+    assert cli_tool._add_arg_to_group_or_parser(arg, group)
 
 def test_model_file():
-    model = {'ggt': {'sub-commands': ['component']}, 'component': {'sub-commands': ['init', 'build', 'publish']}, 'init': {'arguments': [{'name': ['-l', '--lang'], 'help': 'Specify the language of the template.', 'choices': ['python', 'java']}, {'name': ['template'], 'help': 'Specify the name of the template you want to use.'}]}, 'build': {}, 'publish': {}}
+    model = {
+    "greengrass-tools" :{
+        "sub-commands":[
+            "component"
+        ]
+    },
+    "component" : {
+        "sub-commands":[
+            "init", "build", "publish"
+        ]
+    },
+
+    "init" : {
+        "arguments" :{
+            "language":
+            {
+                "name" : ["-l","--language"],
+                "help":"help",
+                "choices":["python", "java"]
+            },
+            "template":{
+                "name" : ["-t", "--template"],
+                "help":"help"
+            },
+            "repository":{
+                "name" : ["-r", "--repository"],
+                "help":"help"
+            },
+            "project-name":{
+                "name" : ["-n", "--project-name"],
+                "help":"Specify the name of the directory you want to create in"
+            }
+        },
+        "conflicting_arg_groups":[["language","template"], ["repository"]],
+        "arg_groups": [
+            {
+                "title": "Title",
+                "args": [
+                    "language",
+                    "template"
+                ],
+                "description": "Description"
+            },
+            {
+                "title": "Title",
+                "args": [
+                    "repository"
+                ],
+                "description": "Description"
+            }
+         ]
+        },
+        "build" :{
+        },
+        "publish" :{
+        }
+}
+
     return model
 
+def test_main(mocker):
+    args_namespace = argparse.Namespace(component='init', init=None, lang='python', template='name', **{'greengrass-tools': 'component'})
+    mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
+    mock_run_command = mocker.patch("greengrassTools.common.parse_args_actions.run_command", return_value=None)
+    cli_parser.main()
+    mock_cli_parser.assert_any_call()
+    mock_run_command.assert_any_call(args_namespace)
+
+def test_main_exception(mocker):
+    args_namespace = argparse.Namespace(component='init', init=None, lang='python', template='name', **{'greengrass-tools': 'component'})
+    mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
+    mock_run_command = mocker.patch("greengrassTools.common.parse_args_actions.run_command", return_value=None, side_effect=HTTPError('some'))
+    with pytest.raises(SystemExit) as e:
+        cli_parser.main()
+    mock_cli_parser.assert_any_call()
+    mock_run_command.assert_any_call(args_namespace)
