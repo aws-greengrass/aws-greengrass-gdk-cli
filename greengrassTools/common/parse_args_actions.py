@@ -1,3 +1,5 @@
+import logging
+
 import greengrassTools.CLIParser
 import greengrassTools.commands.methods as command_methods
 import greengrassTools.common.consts as consts
@@ -16,6 +18,9 @@ def run_command(args_namespace):
       None
     """
     d_args = vars(args_namespace)  # namespace as dictionary
+    if "debug" in d_args and d_args["debug"]:
+        logging.info("Setting command output mode to DEBUG.")
+        logging.getLogger().setLevel(logging.DEBUG)
     method_name = get_method_from_command(d_args, consts.cli_tool_name, "")
     if method_name:
         call_action_by_name(method_name, d_args)
@@ -41,6 +46,7 @@ def call_action_by_name(method_name, d_args):
     method_name = method_name.replace(consts.cli_tool_name, consts.cli_tool_name_in_method_names)
     method_to_call = getattr(command_methods, method_name, None)
     if method_to_call:
+        logging.debug("Calling '{}'.".format(method_name))
         method_to_call(d_args)
     else:
         raise Exception("{} does not support the given command.".format(consts.cli_tool_name))
@@ -87,8 +93,9 @@ def conflicting_arg_groups(command_args, command):
     -------
       (bool) Returns True if the command arguments conflict. Else False.
     """
-    cli_model = greengrassTools.CLIParser.cli_model
+    cli_model = greengrassTools.CLIParser.cli_tool.cli_model
     conf_args_dict = _dic_of_conflicting_args(cli_model, command)
+    logging.debug("Checking if arguments in the command conflict.")
     return check_command_args_with_conflicting_args(command_args, conf_args_dict)
 
 
@@ -112,6 +119,11 @@ def check_command_args_with_conflicting_args(command_args, conf_args_dict):
         for j in range(i + 1, len(command_arg_keys)):
             if command_arg_keys[i] in conf_args_dict and command_arg_keys[j] in conf_args_dict:
                 if command_arg_keys[j] not in conf_args_dict[command_arg_keys[i]]:
+                    logging.error(
+                        "Arguments '{}' and '{}' cannot be used together in the command.".format(
+                            command_arg_keys[i], command_arg_keys[j]
+                        )
+                    )
                     return True
     return False
 

@@ -7,38 +7,15 @@ import greengrassTools.common.parse_args_actions as actions
 import pytest
 
 
-def test_run_command_with_valid_namespace(mocker):
-    # Integ test that appropriate action is called only once with valid command namespace.
-    args_namespace = argparse.Namespace(
-        component="init", init=None, lang="python", template="name", **{"greengrass-tools": "component"}
-    )
-    spy_component_build = mocker.spy(methods, "_greengrass_tools_component_build")
-    spy_call_action_by_name = mocker.spy(actions, "call_action_by_name")
-    spy_get_method_from_command = mocker.spy(actions, "get_method_from_command")
-    mock_component_init = mocker.patch(
-        "greengrassTools.commands.methods._greengrass_tools_component_init",
-        return_value=None,
-    )
-    actions.run_command(args_namespace)
-    assert mock_component_init.call_count == 1
-    assert spy_component_build.call_count == 0
-    assert spy_call_action_by_name.call_count == 1
-    assert spy_get_method_from_command.call_count == 3  # Recursively called for three times
-
-
 def test_run_command_with_mocks(mocker):
     # Test that appropriate action is called only once with valid command namespace.
     args_namespace = argparse.Namespace(
         component="init", init=None, lang="python", template="name", **{"greengrass-tools": "component"}
     )
     mock_get_method_from_command = mocker.patch(
-        "greengrassTools.common.parse_args_actions.get_method_from_command",
-        return_value="_greengrass-tools_component_init",
+        "greengrassTools.common.parse_args_actions.get_method_from_command", return_value="_greengrass-tools_component_init"
     )
-    mock_component_init = mocker.patch(
-        "greengrassTools.commands.methods._greengrass_tools_component_init",
-        return_value=None,
-    )
+    mock_component_init = mocker.patch("greengrassTools.commands.methods._greengrass_tools_component_init", return_value=None)
     spy_call_action_by_name = mocker.spy(actions, "call_action_by_name")
 
     actions.run_command(args_namespace)
@@ -67,10 +44,7 @@ def test_run_command_namespace_as_dict(mocker):
     spy_component_build = mocker.spy(methods, "_greengrass_tools_component_build")
     spy_call_action_by_name = mocker.spy(actions, "call_action_by_name")
     spy_get_method_from_command = mocker.spy(actions, "get_method_from_command")
-    mock_component_init = mocker.patch(
-        "greengrassTools.commands.methods._greengrass_tools_component_init",
-        return_value=None,
-    )
+    mock_component_init = mocker.patch("greengrassTools.commands.methods._greengrass_tools_component_init", return_value=None)
     actions.run_command(args_namespace)
     assert mock_component_init.call_count == 1
     assert spy_component_build.call_count == 0
@@ -81,26 +55,13 @@ def test_run_command_namespace_as_dict(mocker):
     spy_get_method_from_command.assert_any_call(vars(args_namespace), "init", "_greengrass-tools_component")
 
 
-def new_func():
-    return 0
-
-
 def test_get_method_from_command(mocker):
     # Test if the method name is correctly formed from the command
-    test_d_args = {
-        "greengrass-tools": "component",
-        "component": "init",
-        "init": None,
-        "lang": "python",
-        "template": "name",
-    }
+    test_d_args = {"greengrass-tools": "component", "component": "init", "init": None, "lang": "python", "template": "name"}
     test_command = "greengrass-tools"
     test_method_name = ""
     spy_get_method_from_command = mocker.spy(actions, "get_method_from_command")
-    mocker.patch(
-        "greengrassTools.commands.methods._greengrass_tools_component_init",
-        return_value=None,
-    )
+    mocker.patch("greengrassTools.commands.methods._greengrass_tools_component_init", return_value=None)
     method_name_from_command = actions.get_method_from_command(test_d_args, test_command, test_method_name)
     spy_get_method_from_command.assert_any_call(test_d_args, test_command, test_method_name)
     assert method_name_from_command == "_greengrass-tools_component_init"
@@ -117,13 +78,7 @@ def test_get_method_from_command(mocker):
 
 def test_get_method_from_command_invalid(mocker):
     # Test if the method name is None when the command is invalid
-    test_d_args = {
-        "greengrass-tools": "component",
-        "component": "init",
-        "init": None,
-        "lang": "python",
-        "template": "name",
-    }
+    test_d_args = {"greengrass-tools": "component", "component": "init", "init": None, "lang": "python", "template": "name"}
     test_method_name = ""
     test_command = ""
     spy_get_method_from_command = mocker.spy(actions, "get_method_from_command")
@@ -142,12 +97,7 @@ def test_get_method_from_command_invalid(mocker):
 def test_get_method_from_command_invalid_subcommand():
     # Test if the method name is None when the command is invalid.
     # There is no init-> None which is invalid for a parsed arg namespace.
-    test_d_args = {
-        "greengrass-tools": "component",
-        "component": "init",
-        "lang": "python",
-        "template": "name",
-    }
+    test_d_args = {"greengrass-tools": "component", "component": "init", "lang": "python", "template": "name"}
     test_method_name = ""
     test_command = "greengrass-tools"
     method_name_from_command = actions.get_method_from_command(test_d_args, test_command, test_method_name)
@@ -157,18 +107,9 @@ def test_get_method_from_command_invalid_subcommand():
 
 def test_call_action_by_name_valid(mocker):
     # Action is called by its name when the method name is valid and exists in the methods file
-    test_d_args = {
-        "greengrass-tools": "component",
-        "component": "init",
-        "init": None,
-        "lang": "python",
-        "template": "name",
-    }
+    test_d_args = {"greengrass-tools": "component", "component": "init", "init": None, "lang": "python", "template": "name"}
     method_name = "_greengrass_tools_component_init"
-    method_mocker = mocker.patch(
-        "greengrassTools.commands.methods._greengrass_tools_component_init",
-        return_value=None,
-    )
+    method_mocker = mocker.patch("greengrassTools.commands.methods._greengrass_tools_component_init", return_value=None)
     actions.call_action_by_name(method_name, test_d_args)
 
     assert method_mocker.call_count == 1
@@ -176,13 +117,7 @@ def test_call_action_by_name_valid(mocker):
 
 def test_call_action_by_name_invalid(mocker):
     # Action is not called by its name when the method name doesn't exists in the methods file
-    test_d_args = {
-        "greengrass-tools": "component",
-        "component": "init",
-        "init": None,
-        "lang": "python",
-        "template": "name",
-    }
+    test_d_args = {"greengrass-tools": "component", "component": "init", "init": None, "lang": "python", "template": "name"}
     method_name = "invalid_method_name"
     with pytest.raises(Exception) as e_info:
         actions.call_action_by_name(method_name, test_d_args)
@@ -192,18 +127,9 @@ def test_call_action_by_name_invalid(mocker):
 
 def test_call_action_by_name_replace_tool_name(mocker):
     # Action is not called by its name when the method name doesn't exists in the methods file
-    test_d_args = {
-        "greengrass-tools": "component",
-        "component": "init",
-        "init": None,
-        "lang": "python",
-        "template": "name",
-    }
+    test_d_args = {"greengrass-tools": "component", "component": "init", "init": None, "lang": "python", "template": "name"}
     method_name = "_greengrass-tools_component_init"
-    method_mocker = mocker.patch(
-        "greengrassTools.commands.methods._greengrass_tools_component_init",
-        return_value=None,
-    )
+    method_mocker = mocker.patch("greengrassTools.commands.methods._greengrass_tools_component_init", return_value=None)
     actions.call_action_by_name(method_name, test_d_args)
     assert method_mocker.call_count == 1
 
@@ -291,7 +217,7 @@ def test_check_command_args_with_conflicting_args(mocker):
     assert not actions.check_command_args_with_conflicting_args({}, conflicting_arg_groups)
     assert mock_list_of_command_args.call_count == 1
 
-    mock_list_of_command_args1 = mocker.patch(
+    mock_list_of_command_args1_conflicting = mocker.patch(
         "greengrassTools.common.parse_args_actions._list_of_command_args", return_value=["language", "repository"]
     )
 
@@ -301,9 +227,9 @@ def test_check_command_args_with_conflicting_args(mocker):
         "repository": {"repository", "template"},
     }
     assert actions.check_command_args_with_conflicting_args({}, conflicting_arg_groups)
-    assert mock_list_of_command_args1.call_count == 1
+    assert mock_list_of_command_args1_conflicting.call_count == 1
 
-    mock_list_of_command_args2 = mocker.patch(
+    mock_list_of_command_args2_mix_of_both = mocker.patch(
         "greengrassTools.common.parse_args_actions._list_of_command_args", return_value=["template", "language", "repository"]
     )
 
@@ -313,7 +239,7 @@ def test_check_command_args_with_conflicting_args(mocker):
         "repository": {"repository", "template"},
     }
     assert actions.check_command_args_with_conflicting_args({}, conflicting_arg_groups)
-    assert mock_list_of_command_args2.call_count == 1
+    assert mock_list_of_command_args2_mix_of_both.call_count == 1
 
 
 def test_conflicting_args_with_conflict(mocker):
@@ -341,7 +267,7 @@ def test_conflicting_args_with_conflict(mocker):
         "greengrass-tools": "component",
     }
     cli_model = {"init": {"conflicting_arg_groups": [["language", "template"], ["repository"], ["project"], ["interactive"]]}}
-    mocker.patch.object(greengrassTools.CLIParser, "cli_model", cli_model)
+    mocker.patch.object(greengrassTools.CLIParser.cli_tool, "cli_model", cli_model)
 
     assert actions.conflicting_arg_groups(command_args, "init")
     assert mock_dic_of_conflicting_args.call_count == 1
@@ -373,7 +299,7 @@ def test_conflicting_args_with_no_conflict(mocker):
         "greengrass-tools": "component",
     }
     cli_model = {"init": {"conflicting_arg_groups": [["language", "template"], ["repository"], ["project"], ["interactive"]]}}
-    mocker.patch.object(greengrassTools.CLIParser, "cli_model", cli_model)
+    mocker.patch.object(greengrassTools.CLIParser.cli_tool, "cli_model", cli_model)
 
     assert not actions.conflicting_arg_groups(command_args, "init")
     assert mock_dic_of_conflicting_args.call_count == 1
