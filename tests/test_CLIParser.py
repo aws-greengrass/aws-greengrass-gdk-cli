@@ -70,24 +70,46 @@ def test_CLIParser_get_arg_from_model_unknown_arg_param():
     assert "unknown_param" not in rest_args_as_dict2  # Full list of accepted params in common.consts file.
 
 
+def test_add_arg_to_group_or_parser_with_group(mocker):
+    arg = {"name": ["project"], "help": "help"}
+    cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
+    group = cli_tool.parser.add_argument_group("group")
+
+    cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
+    cli_tool._add_arg_to_group_or_parser(arg, group)
+
+    assert cli_tool._add_arg_to_group_or_parser(arg, group)
+
+
+def test_add_arg_to_group_or_parser_with_parser(mocker):
+    arg = {"name": ["project"], "help": "help"}
+    group = None
+    cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
+    assert cli_tool._add_arg_to_group_or_parser(arg, group)
+
+
 def test_model_file():
     model = {
         "greengrass-tools": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build", "publish"]},
         "init": {
-            "arguments": [
-                {
-                    "name": ["-l", "--lang"],
-                    "help": "Specify the language of the template.",
-                    "choices": ["python", "java"],
+            "arguments": {
+                "language": {"name": ["-l", "--language"], "help": "help", "choices": ["python", "java"]},
+                "template": {"name": ["-t", "--template"], "help": "help"},
+                "repository": {"name": ["-r", "--repository"], "help": "help"},
+                "project-name": {
+                    "name": ["-n", "--project-name"],
+                    "help": "Specify the name of the directory you want to create in",
                 },
-                {
-                    "name": ["template"],
-                    "help": "Specify the name of the template you want to use.",
-                },
-            ]
+            },
+            "conflicting_arg_groups": [["language", "template"], ["repository"]],
+            "arg_groups": [
+                {"title": "Title", "args": ["language", "template"], "description": "Description"},
+                {"title": "Title", "args": ["repository"], "description": "Description"},
+            ],
         },
         "build": {},
         "publish": {},
     }
+
     return model

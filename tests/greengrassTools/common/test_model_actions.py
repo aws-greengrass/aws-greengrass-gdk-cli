@@ -1,5 +1,9 @@
+from unittest.mock import mock_open, patch
+
 import greengrassTools.common.consts as consts
+import greengrassTools.common.exceptions.error_messages as error_messages
 import greengrassTools.common.model_actions as model_actions
+import pytest
 
 
 def test_model_existence(mocker):
@@ -10,6 +14,31 @@ def test_model_existence(mocker):
     assert consts.cli_tool_name in command_model  # Command model should contain the name of CLI as a key
 
 
+def test_get_validated_model_file_not_exists(mocker):
+    mock_get_static_file_path = mocker.patch("greengrassTools.common.utils.get_static_file_path", return_value=None)
+    mock_is_valid_model = mocker.patch("greengrassTools.common.model_actions.is_valid_model", return_value=False)
+    with pytest.raises(Exception) as e_info:
+        model_actions.get_validated_model()
+
+    expected_err_message = "Model validation failed. CLI model file doesn't exist."
+    assert e_info.value.args[0] == expected_err_message
+    assert mock_is_valid_model.call_count == 0
+    assert mock_get_static_file_path.call_count == 1
+
+
+def test_get_validated_model_file_exists(mocker):
+    file_path = "path/to/open"
+    mock_get_static_file_path = mocker.patch("greengrassTools.common.utils.get_static_file_path", return_value=file_path)
+    mock_is_valid_model = mocker.patch("greengrassTools.common.model_actions.is_valid_model", return_value=True)
+
+    with patch("builtins.open", mock_open(read_data="{}")) as mock_file:
+        model_actions.get_validated_model()
+        assert open(file_path).read() == "{}"
+        mock_file.assert_called_with(file_path)
+        assert mock_is_valid_model.call_count == 1
+        assert mock_get_static_file_path.call_count == 1
+
+
 def test_get_validated_model_with_valid_model(mocker):
     # Should return model when the model is valid
     mocker.patch("greengrassTools.common.model_actions.is_valid_model", return_value=True)
@@ -18,10 +47,12 @@ def test_get_validated_model_with_valid_model(mocker):
 
 
 def test_get_validated_model_with_invalid_model(mocker):
-    # Should return empty model when the model is invalid
+    # Should raise an exception when the model is invalid
     mocker.patch("greengrassTools.common.model_actions.is_valid_model", return_value=False)
-    command_model = model_actions.get_validated_model()
-    assert not command_model
+
+    with pytest.raises(Exception) as e_info:
+        model_actions.get_validated_model()
+    assert e_info.value.args[0] == error_messages.INVALID_CLI_MODEL
 
 
 def test_is_valid_argument_model_valid():
@@ -51,17 +82,8 @@ def test_is_valid_subcommand_model_valid():
     model = {
         "greengrass-tools": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build"]},
-        "init": {
-            "arguments": [
-                {
-                    "name": ["-l", "--lang"],
-                    "help": "language help",
-                    "choices": ["p", "j"],
-                },
-                {"name": ["template"], "help": "template help"},
-            ]
-        },
         "build": {},
+        "init": {},
     }
     valid_model_subcommands = ["component"]
     assert model_actions.is_valid_subcommand_model(model, valid_model_subcommands)
@@ -72,22 +94,10 @@ def test_is_valid_subcommand_model_invalid():
     model = {
         "greengrass-tools": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build"]},
-        "init": {
-            "arguments": [
-                {
-                    "name": ["-l", "--lang"],
-                    "help": "language help",
-                    "choices": ["p", "j"],
-                },
-                {"name": ["template"], "help": "template help"},
-            ]
-        },
+        "init": {},
         "build": {},
     }
-    invalid_model_subcommands = [
-        "component",
-        "invalid-subcommand-that-is-not-present-as-key",
-    ]
+    invalid_model_subcommands = ["component", "invalid-subcommand-that-is-not-present-as-key"]
     assert not model_actions.is_valid_subcommand_model(model, invalid_model_subcommands)
 
 
@@ -96,27 +106,18 @@ def test_is_valid_model():
     valid_model = {
         "greengrass-tools": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build"]},
-        "init": {
-            "arguments": [
-                {
-                    "name": ["-l", "--lang"],
-                    "help": "language help",
-                    "choices": ["p", "j"],
-                },
-                {"name": ["template"], "help": "template help"},
-            ]
-        },
+        "init": {"arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}}},
         "build": {},
     }
     assert model_actions.is_valid_model(valid_model, consts.cli_tool_name)
 
 
 def test_is_valid_model_without_name():
-    # Invalid model with incorrect arguments. Argument without name.
+    # Invalid model with incorrect sub-commands. Subcommand with no key in the cli model.
     invalid_model_without_name_in_args = {
         "greengrass-tools": {
             "sub-commands": ["component"],
-            "arguments": [{"names": ["-l", "--lang"], "help": "help"}],
+            "arguments": {"lang": {"names": ["-l", "--lang"], "help": "help"}},
         },
         "component": {},
     }
@@ -124,18 +125,18 @@ def test_is_valid_model_without_name():
 
 
 def test_is_valid_model_without_help():
-    # Invalid model with incorrect arguments. Argument without help.
+    # Invalid model with incorrect arguments. Argument without name.
     invalid_model_args_without_help = {
         "greengrass-tools": {
             "sub-commands": ["component"],
-            "arguments": [{"name": ["-l", "--lang"], "helper": "help"}],
+            "arguments": {"lang": {"names": ["-l", "--lang"], "help": "help"}},
         },
         "component": {},
     }
     assert not model_actions.is_valid_model(invalid_model_args_without_help, consts.cli_tool_name)
 
 
-def test_is_valid_model_without_invalid_sub_command():
+def test_is_valid_model_with_invalid_sub_command():
     # Invalid model with incorrect sub-commands. Subcommand with no key in the cli model.
     invalid_model_subcommands = {
         "greengrass-tools": {"sub-commands": ["component", "invalid-sub-command"]},

@@ -1,6 +1,7 @@
 import json
 
 import greengrassTools.common.consts as consts
+import greengrassTools.common.exceptions.error_messages as error_messages
 import greengrassTools.common.utils as utils
 
 
@@ -22,7 +23,8 @@ def is_valid_model(cli_model, command):
     else:
         # Validate args
         if "arguments" in cli_model[command]:
-            for argument in cli_model[command]["arguments"]:
+            for arg_name in cli_model[command]["arguments"]:
+                argument = cli_model[command]["arguments"][arg_name]
                 if not is_valid_argument_model(argument):
                     return False
 
@@ -88,9 +90,11 @@ def get_validated_model():
     -------
       cli_model(dict): Empty if the model is invalid otherwise returns cli model.
     """
-    with open(utils.get_static_file_path(consts.cli_model_file)) as f:
-        cli_model = json.loads(f.read())
-    if is_valid_model(cli_model, consts.cli_tool_name):
-        return cli_model
-    else:
-        return {}
+    model_file = utils.get_static_file_path(consts.cli_model_file)
+    if model_file:
+        with open(model_file) as f:
+            cli_model = json.loads(f.read())
+            if is_valid_model(cli_model, consts.cli_tool_name):
+                return cli_model
+            raise Exception(error_messages.INVALID_CLI_MODEL)
+    raise Exception(error_messages.CLI_MODEL_FILE_NOT_EXISTS)

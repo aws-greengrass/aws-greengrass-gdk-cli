@@ -51,12 +51,49 @@ class CLIParser:
         """
         if "arguments" in self.command_model:
             arguments = self.command_model["arguments"]
-            for argument in arguments:
-                name, other_args = self._get_arg_from_model(argument)
-                if len(name) == 2:  # For optional args
-                    self.parser.add_argument(name[0], name[1], **other_args)
-                elif len(name) == 1:  # For positional args
-                    self.parser.add_argument(name[0], **other_args)
+            added_args = {}
+            # Add arguments in groups first
+            if "arg_groups" in self.command_model:
+                for arg_group in self.command_model["arg_groups"]:
+                    group_description = arg_group["description"]
+                    group_title = arg_group["title"]
+                    group = self.parser.add_argument_group(title=group_title, description=group_description)
+                    for arg in arg_group["args"]:
+                        if arg not in added_args:
+                            if self._add_arg_to_group_or_parser(arguments[arg], group):
+                                added_args[arg] = True
+
+                # Add individual args that are not part of groups. Skip if they're already added.
+                for arg in arguments:
+                    if arg not in added_args:
+                        if self._add_arg_to_group_or_parser(arguments[arg], None):
+                            added_args[arg] = True
+
+    def _add_arg_to_group_or_parser(self, argument, group):
+        """
+        Adds argument to either group or command level parser based on group parameter.
+
+        Parameters
+        ----------
+          argument(dict): A dictonary object which argument parameters.
+                          Full list: greengrassTools.common.consts.arg_parameters
+          group(Argument group obect): Argument group object created for each group of arguments that go together.
+
+        Returns
+        -------
+          (bool): Return True if the argument is added to the group or parser.
+        """
+        if group:
+            parser = group
+        else:
+            parser = self.parser
+        name, other_args = self._get_arg_from_model(argument)
+        if len(name) == 2:  # For optional args
+            parser.add_argument(name[0], name[1], **other_args)
+            return True
+        elif len(name) == 1:  # For positional args
+            parser.add_argument(name[0], **other_args)
+            return True
 
     def _get_subcommands_from_model(self, cli_model):
         """
@@ -101,11 +138,16 @@ class CLIParser:
 
 
 def main():
-    cli_tool = CLIParser(consts.cli_tool_name, None)
-    cli_model = model_actions.get_validated_model()
-    if cli_model:
-        cli_parser = cli_tool.create_parser(cli_model)
+    try:
         args_namespace = cli_parser.parse_args()
         parse_args_actions.run_command(args_namespace)
-    else:
-        print("Please provide a valid model to create a CLI parser")
+    except Exception as e:
+        print(e)
+
+
+try:
+    cli_tool = CLIParser(consts.cli_tool_name, None)
+    cli_model = model_actions.get_validated_model()
+    cli_parser = cli_tool.create_parser(cli_model)
+except Exception as e:
+    print(e)
