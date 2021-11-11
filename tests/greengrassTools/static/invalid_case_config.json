@@ -1,15 +1,16 @@
 {
-    "Component" :{
+    "Component": {
         "1": {
             "author": "abc",
             "version": "1.0.0",
             "Build": {
-                "command" : "default"
+                "build_system": "default"
             },
             "publish": {
-                "bucket_name": "default"
+                "bucket": "default",
+                "region": "region"
             }
         }
     },
-    "tools-version": "1.0.0"
+    "tools_version": "1.0.0"
 }

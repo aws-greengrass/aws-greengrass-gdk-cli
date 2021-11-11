@@ -2,9 +2,9 @@
     "component": {
         "1": {
             "author": "abc",
-            "version": "1.b.0",
+            "version": "1.0.0",
             "build": {
-                "build_system": "zip"
+                "build_system": "custom"
             },
             "publish": {
                 "bucket": "default",
