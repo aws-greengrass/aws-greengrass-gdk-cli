@@ -18,3 +18,4 @@ arg_parameters = [
 
 config_schema_file = "config_schema.json"
 cli_model_file = "cli_model.json"
+cli_project_config_file = "greengrass-tools-config.json"
