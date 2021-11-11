@@ -19,3 +19,7 @@ arg_parameters = [
 config_schema_file = "config_schema.json"
 cli_model_file = "cli_model.json"
 cli_project_config_file = "greengrass-tools-config.json"
+
+# TODO: Update URLs
+templates_list_url = ""
+repository_list_url = ""

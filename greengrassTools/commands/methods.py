@@ -11,3 +11,7 @@ def _greengrass_tools_component_build(d_args):
 
 def _greengrass_tools_component_publish(d_args):
     component.publish(d_args)
+
+
+def _greengrass_tools_component_list(d_args):
+    component.list(d_args)
