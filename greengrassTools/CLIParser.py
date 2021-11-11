@@ -11,14 +11,10 @@ class CLIParser:
         self.command = command
         if command != consts.cli_tool_name:
             self.top_level_parser = top_level_parser
-            self.parser = self.top_level_parser.add_parser(
-                command, help="{} help".format(command)
-            )
+            self.parser = self.top_level_parser.add_parser(command, help="{} help".format(command))
         else:
             self.parser = argparse.ArgumentParser(prog=consts.cli_tool_name)
-        self.subparsers = self.parser.add_subparsers(
-            dest=command, help="{} help".format(command)
-        )
+        self.subparsers = self.parser.add_subparsers(dest=command, help="{} help".format(command))
 
     def create_parser(self, cli_model):
         """

@@ -14,9 +14,7 @@ setup(
     long_description_content_type="text/markdown",
     license="Apache-2.0",
     packages=find_packages(),
-    entry_points={
-        "console_scripts": ["greengrass-tools = greengrassTools.CLIParser:main"]
-    },
+    entry_points={"console_scripts": ["greengrass-tools = greengrassTools.CLIParser:main"]},
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
