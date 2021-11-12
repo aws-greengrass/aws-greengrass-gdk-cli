@@ -23,3 +23,4 @@ INIT_NON_EMPTY_DIR_ERROR = (
     "Could not initialize the project as the directory is not empty. Please initialize the project in an empty directory.\nTry"
     " `greengrass-tools component init --help`"
 )
+BUILD_FAILED = "Failed to build the component with the given project configuration."

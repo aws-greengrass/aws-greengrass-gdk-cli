@@ -10,6 +10,26 @@ import greengrassTools.common.utils as utils
 import yaml
 
 
+def get_supported_component_builds():
+    """
+    Reads a json file from static location that contains information related to supported component build systems.
+
+    Parameters
+    ----------
+        None
+
+    Returns
+    -------
+      (dict): Returns a dict object with supported component builds information.
+    """
+    supported_component_builds_file = utils.get_static_file_path(consts.project_build_system_file)
+    if supported_component_builds_file:
+        with open(supported_component_builds_file, "r") as supported_builds_file:
+            logging.debug("Identifying build systems supported by the CLI tool with default configuration.")
+            return json.loads(supported_builds_file.read())
+    return None
+
+
 def get_recipe_file():
     """
     Finds recipe file based on component name and its extension.

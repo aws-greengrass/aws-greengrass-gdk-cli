@@ -1,0 +1,101 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "default": {},
+    "required": [
+        "maven",
+        "gradle",
+        "zip"
+    ],
+    "properties": {
+        "maven": {
+            "type": "object",
+            "required": [
+                "build_command",
+                "build_folder"
+            ],
+            "properties": {
+                "build_command": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                "build_folder": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "gradle": {
+            "type": "object",
+            "default": {},
+            "required": [
+                "build_command",
+                "build_folder"
+            ],
+            "properties": {
+                "build_command": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                "build_folder": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "zip": {
+            "type": "object",
+            "default": {},
+            "required": [
+                "build_command",
+                "build_folder"
+            ],
+            "properties": {
+                "build_command": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                "build_folder": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
