@@ -1,0 +1,21 @@
+{
+    "maven": {
+        "build_command": [
+            "mvn",
+            "clean",
+            "package"
+        ],
+        "build_folder":["target"]
+    },
+    "gradle": {
+        "build_command": [
+            "gradle",
+            "build"
+        ],
+        "build_folder":["build","lib"]
+    },
+    "zip": {
+        "build_command": ["zip"],
+        "build_folder":["zip-build"]
+    }
+}
