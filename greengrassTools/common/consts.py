@@ -23,3 +23,6 @@ cli_project_config_file = "greengrass-tools-config.json"
 # TODO: Update URLs
 templates_list_url = ""
 repository_list_url = ""
+greengrass_build_dir = "greengrass-build"
+project_build_system_file = "project_build_system.json"
+project_build_schema_file = "project_build_schema.json"
