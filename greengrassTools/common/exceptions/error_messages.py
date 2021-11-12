@@ -24,3 +24,4 @@ INIT_NON_EMPTY_DIR_ERROR = (
     " `greengrass-tools component init --help`"
 )
 BUILD_FAILED = "Failed to build the component with the given project configuration."
+PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."
