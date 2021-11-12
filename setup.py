@@ -3,7 +3,30 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
+requirements_file = "requirements.txt"
+author = "AWS IoT Greengrass Labs"
+email = "greengrass-labs@amazon.com"
+url = "https://aws.amazon.com/greengrass/"
+short_description = "Greengrass tools CLI for developing greengrass components."
 long_description = "Greengrass CLI Tool for creating Greengrass components."
+version_file = "greengrassTools/_version.py"
+cli_name = "greengrass-tools"
+key_words = "aws iot greengrass cli component"
+license = "Apache-2.0"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+]
+entry_points = {"console_scripts": ["greengrass-tools = greengrassTools.CLIParser:main"]}
+
+
+def get_requirements():
+    with open(requirements_file, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 def read(rel_path):
@@ -21,23 +44,20 @@ def get_version(rel_path):
 
 
 setup(
-    name="greengrass-tools",
-    version=get_version("greengrassTools/_version.py"),
-    author="AWS IoT Greengrass Labs",
-    author_email="",
-    url="",
-    description="Greengrass CLI Tool for developing greengrass components",
+    name=cli_name,
+    version=get_version(version_file),
+    author=author,
+    author_email=email,
+    url=url,
+    description=short_description,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    license="Apache-2.0",
+    license=license,
     packages=find_packages(),
-    entry_points={"console_scripts": ["greengrass-tools = greengrassTools.CLIParser:main"]},
-    classifiers=(
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ),
-    keywords="aws iot greengrass cli component",
+    entry_points=entry_points,
+    classifiers=classifiers,
+    install_requires=get_requirements(),
+    keywords=key_words,
     zip_safe=False,
     include_package_data=True,
 )
