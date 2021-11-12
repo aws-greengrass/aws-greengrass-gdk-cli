@@ -28,5 +28,6 @@ def test_main_parse_args_publish(mocker):
 
 def test_main_parse_args_list(mocker):
     mock_component_list = mocker.patch("greengrassTools.commands.component.component.list", return_value=None)
-    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "list", "-d"]))
+    args = CLIParser.cli_parser.parse_args(["component", "list", "--template", "-d"])
+    parse_args_actions.run_command(args)
     assert mock_component_list.called

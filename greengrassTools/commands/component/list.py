@@ -11,11 +11,14 @@ def run(command_args):
         li = get_component_list_from_github(consts.templates_list_url)
         logging.info("Found '{}' component templates to display.".format(len(li)))
         display_list(li)
+        return
     elif "repository" in command_args and command_args["repository"]:
         logging.info("Listing all the available component repositories from Greengrass Software Catalog.")
         li = get_component_list_from_github(consts.repository_list_url)
         logging.info("Found '{}' component repositories to display.".format(len(li)))
         display_list(li)
+        return
+    raise Exception(error_messages.LIST_WITH_INVALID_ARGS)
 
 
 def get_component_list_from_github(url):
