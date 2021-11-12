@@ -196,6 +196,7 @@ def test_run_build_command_zip_build(mocker):
 def test_build_system_zip_valid(mocker):
     # build_file = Path('mock-file.py').resolve()
     zip_build_path = Path("zip-build").resolve()
+    zip_artifacts_path = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
     mock_build_info = mocker.patch(
         "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
@@ -217,10 +218,10 @@ def test_build_system_zip_valid(mocker):
 
     curr_dir = Path(".").resolve()
 
-    mock_copytree.assert_called_with(curr_dir, zip_build_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
+    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
     assert mock_make_archive.called
     zip_build_file = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
-    mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_build_path)
+    mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
 
 
 def test_ignore_files_during_zip():
@@ -235,6 +236,8 @@ def test_ignore_files_during_zip():
 def test_build_system_zip_error_archive(mocker):
 
     zip_build_path = Path("zip-build").resolve()
+    zip_artifacts_path = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
+
     mock_build_info = mocker.patch(
         "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
@@ -257,14 +260,16 @@ def test_build_system_zip_error_archive(mocker):
 
     curr_dir = Path(".").resolve()
 
-    mock_copytree.assert_called_with(curr_dir, zip_build_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
+    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
     assert mock_make_archive.called
     zip_build_file = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
-    mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_build_path)
+    mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
 
 
 def test_build_system_zip_error_copytree(mocker):
     zip_build_path = Path("zip-build").resolve()
+    zip_artifacts_path = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
+
     mock_build_info = mocker.patch(
         "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
@@ -287,7 +292,7 @@ def test_build_system_zip_error_copytree(mocker):
 
     curr_dir = Path(".").resolve()
 
-    mock_copytree.assert_called_with(curr_dir, zip_build_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
+    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
     assert not mock_make_archive.called
 
 
