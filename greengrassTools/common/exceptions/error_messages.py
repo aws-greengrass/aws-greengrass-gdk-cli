@@ -1,3 +1,4 @@
+# FILE
 CONFIG_FILE_NOT_EXISTS = (
     "Config file doesn't exist. Please initialize the project using a template or a repository before using greengrass-tools"
     " commands."
@@ -8,20 +9,36 @@ PROJECT_RECIPE_FILE_NOT_FOUND = (
 )
 PROJECT_CONFIG_FILE_INVALID = "Project configuration file '{}' is invalid. Please correct its format and try again. Error: {} "
 CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
+
+# CLI MODEL
 INVALID_CLI_MODEL = "CLI model is invalid. Please provide a valid model to create the CLI parser."
-LISTING_COMPONENTS_FAILED = "Failed to list the available components from GitHub. Please try again after sometime."
+
+# LIST COMMAND
+LISTING_COMPONENTS_FAILED = (
+    "Failed to list the available components from Greengrass Software Catalog. Please try again after sometime."
+)
+LIST_WITH_INVALID_ARGS = (
+    "Could not list the components as the command arguments are invalid. Please supply either `--template` or `--repository`"
+    " as an argument to the list command.\nTry `greengrass-tools component list --help`"
+)
+
+# INIT COMMAND
 INIT_FAILS_DURING_COMPONENT_DOWNLOAD = "Failed to download the selected component {{}}. Please try again after sometime."
 INIT_WITH_INVALID_ARGS = (
     "Could not initialize the project as the arguments passed are invalid. Please initialize the project with correct"
-    " args.\nTry `greengrass-tools component init --help`"
+    " arguments.\nTry `greengrass-tools component init --help`"
 )
 INIT_WITH_CONFLICTING_ARGS = (
-    "Could not initialize the project as the command args are conflicting. Please initialize the project with correct"
-    " args.\nTry `greengrass-tools component init --help` "
+    "Could not initialize the project as the command arguments are conflicting. Please initialize the project with correct"
+    " arguments.\nTry `greengrass-tools component init --help` "
 )
 INIT_NON_EMPTY_DIR_ERROR = (
     "Could not initialize the project as the directory is not empty. Please initialize the project in an empty directory.\nTry"
     " `greengrass-tools component init --help`"
 )
+
+# BUILD COMMAND
 BUILD_FAILED = "Failed to build the component with the given project configuration."
+
+# PUBLISH COMMAND
 PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."
