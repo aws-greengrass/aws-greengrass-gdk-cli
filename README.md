@@ -1,25 +1,21 @@
 
-## Build the tool
-```
-pip3 install jsonschema
-python3 setup.py install 
-python3 setup.py sdist bdist_wheel 
-pip3 install dist/greengrass_tools-1.0.0-py3-none-any.whl --force-reinstall 
-```
+## Installing greengrass-tools CLI
 
-After installing greengrass-tools, run commands like
-```
-greengrass-tools --help
-greengrass-tools component --help
-greengrass-tools component init --help
-```
+Use the following commands to install `greengrass-tools` cli inside a virtual environment. Replace `<venv-name>` with name of the virtual enviroment you want to create. 
 
-## Testing
+1. Install virtual env module.
 
-```
-pip3 install pytest coverage
-```
+    `python3 -m pip install --user virtualenv` 
 
-From the root folder, run
+2. Creating a virtual environment called venv-name
 
-```coverage run --source=greengrassTools -m pytest -v -s tests && coverage report --show-missing```
+    `python3 -m venv <venv-name> `  
+
+3. Activating venv-name virtual env
+
+    `source <venv-name>/bin/activate` 
+
+4. Installing cli tool.
+
+    `pip3 install git+https://github.com/aws-greengrass/aws-greengrass-tools.git`
+
