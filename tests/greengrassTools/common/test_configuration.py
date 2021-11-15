@@ -36,29 +36,31 @@ def test_get_configuration_valid_component_config_found(mocker):
         "invalid_version_config.json",
         "invalid_multiple_components.json",
         "invalid_build_command.json",
+        "invalid_build_command_string.json",
+        "invalid_build_command_array.json",
     ],
 )
 def test_get_configuration_invalid_config_file(mocker, file_name):
-    mock__get_project_config_file = mocker.patch(
+    mock_get_project_config_file = mocker.patch(
         "greengrassTools.common.configuration._get_project_config_file",
         return_value=Path(".").joinpath("tests/greengrassTools/static").joinpath(file_name).resolve(),
     )
 
     with pytest.raises(Exception) as err:
         config.get_configuration()
-    assert mock__get_project_config_file.called
+    assert mock_get_project_config_file.called
     assert "Please correct its format and try again." in err.value.args[0]
 
 
 @pytest.mark.parametrize("file_name", ["valid_build_command.json"])
 def test_get_configuration_config_file(mocker, file_name):
-    mock__get_project_config_file = mocker.patch(
+    mock_get_project_config_file = mocker.patch(
         "greengrassTools.common.configuration._get_project_config_file",
         return_value=Path(".").joinpath("tests/greengrassTools/static").joinpath(file_name).resolve(),
     )
 
     config.get_configuration()
-    assert mock__get_project_config_file.called
+    assert mock_get_project_config_file.called
 
 
 def test_validate_configuration_schema_not_exists(mocker):

@@ -30,8 +30,12 @@
                             "type": "object",
                             "properties": {
                                 "custom_build_command": {
-                                    "type": "array",
-                                    "minItems": 1
+                                    "type": [
+                                        "array",
+                                        "string"
+                                    ],
+                                    "minItems": 1,
+                                    "minLength": 1
                                 },
                                 "build_system": {
                                     "type": "string",
