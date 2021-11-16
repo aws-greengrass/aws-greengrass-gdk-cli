@@ -16,11 +16,11 @@ def run(command_args):
     Builds the component based on the command arguments and the project configuration. The build files
     are created in current directory under "greengrass-build" folder.
 
-    If the project configuration specifies 'default' build command, the component build system is identified
-    based on some special files in the project. If this build system is supported by the tool, the command
-    builds the component artifacts and recipes.
+    If this build system specified in the project configuration is supported by the tool, the command
+    builds the component artifacts and recipes based on the build system.
 
-    If the project configuration specifies custom build command, the tool executes the command as it is.
+    If the project configuration specifies custom build system with a custom build command, then the tool executes
+    the command as it is.
 
     Parameters
     ----------
