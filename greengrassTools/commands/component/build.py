@@ -209,6 +209,9 @@ def _get_build_folder_by_build_system():
     Returns build folder name specific to the build system. This folder contains component artifacts after the build
     is complete.
 
+    If there are multiple modules within the same project, this function recursively identifies all the build folders
+    of the modules.
+
     Parameters
     ----------
         None
@@ -219,7 +222,34 @@ def _get_build_folder_by_build_system():
     """
     build_system = project_config["component_build_config"]["build_system"]
     build_folder = supported_build_sytems[build_system]["build_folder"]
-    return Path(utils.current_directory).joinpath(*build_folder).resolve()
+    if build_system == "gradle":
+        return get_build_folders(build_folder, "build.gradle")
+    elif build_system == "maven":
+        return get_build_folders(build_folder, "pom.xml")
+    return {Path(utils.current_directory).joinpath(*build_folder).resolve()}
+
+
+def get_build_folders(build_folder, build_file):
+    """
+    Recursively identifies build folders in a project.
+
+    This function makes use of build configuration files (such as pom.xml and build.gradle) and build folder
+    directories (such as target, build/libs) to identify the module directory.
+
+    Once the module directory is found, its build folder is added to the return list.
+
+    Parameters
+    ----------
+        build_folder(string): Build foler of a build system(target, build/libs)
+        build_file(string): Build configuration file of a build system (pom.xml, build.gradle)
+
+    Returns
+    -------
+        paths(list): List of build folder paths in a multi-module project.
+    """
+    set_build_file = set(f.parent for f in Path(utils.current_directory).rglob(build_file))
+    set_build_folder = set(f.parent for f in Path(utils.current_directory).rglob(str(Path().joinpath(*build_folder))))
+    return set(x.joinpath(*build_folder) for x in (set_build_folder & set_build_file))
 
 
 def copy_artifacts_and_update_uris():
@@ -248,7 +278,7 @@ def copy_artifacts_and_update_uris():
         logging.debug("No 'Manifests' key in the recipe.")
         return
 
-    build_folder = _get_build_folder_by_build_system()
+    build_folders = _get_build_folder_by_build_system()
     manifests = parsed_component_recipe["Manifests"]
     for manifest in manifests:
         if "Artifacts" not in manifest:
@@ -260,22 +290,30 @@ def copy_artifacts_and_update_uris():
                 logging.debug("No 'URI' found in the recipe artifacts.")
                 continue
             artifact_file = Path(artifact["URI"]).name
-
+            artifact_found = False
             # If the artifact is present in build system specific build folder, copy it to greengrass artifacts build folder
-            build_files = list(build_folder.glob(artifact_file))
-            if len(build_files) == 1:
-                logging.debug(
-                    "Copying file '{}' from '{}' to '{}'.".format(
-                        artifact_file, build_folder, gg_build_component_artifacts_dir
+            for build_folder in build_folders:
+                build_files = list(build_folder.glob(artifact_file))
+                if len(build_files) == 1:
+                    logging.debug(
+                        "Copying file '{}' from '{}' to '{}'.".format(
+                            artifact_file, build_folder, gg_build_component_artifacts_dir
+                        )
                     )
-                )
-                shutil.copy(build_files[0], gg_build_component_artifacts_dir)
-                logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
-                artifact["URI"] = f"{artifact_uri}/{artifact_file}"
-            else:
+                    shutil.copy(build_files[0], gg_build_component_artifacts_dir)
+                    logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
+                    artifact["URI"] = f"{artifact_uri}/{artifact_file}"
+                    artifact_found = True
+                    break
+                else:
+                    logging.debug(
+                        f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
+                        f" '{build_folder}'."
+                    )
+            if not artifact_found:
                 raise Exception(
-                    f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
-                    f" '{build_folder}'."
+                    f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folders."
+                    f" '{build_folders}'."
                 )
 
 
