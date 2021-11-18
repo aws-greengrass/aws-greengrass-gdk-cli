@@ -9,7 +9,7 @@ email = "greengrass-labs@amazon.com"
 url = "https://aws.amazon.com/greengrass/"
 short_description = "Greengrass tools CLI for developing greengrass components."
 long_description = "Greengrass CLI Tool for creating Greengrass components."
-version_file = "greengrassTools/_version.py"
+version_file = "gdk/_version.py"
 cli_name = "gdk"
 key_words = "aws iot greengrass cli component"
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
 ]
-entry_points = {"console_scripts": ["gdk = greengrassTools.CLIParser:main"]}
+entry_points = {"console_scripts": ["gdk = gdk.CLIParser:main"]}
 
 
 def get_requirements():
