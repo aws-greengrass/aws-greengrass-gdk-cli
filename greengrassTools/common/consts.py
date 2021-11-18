@@ -1,6 +1,5 @@
-cli_tool_name = "greengrass-tools"
+cli_tool_name = "gdk"
 
-cli_tool_name_in_method_names = "greengrass_tools"
 
 arg_parameters = [
     "name",
@@ -18,7 +17,7 @@ arg_parameters = [
 
 config_schema_file = "config_schema.json"
 cli_model_file = "cli_model.json"
-cli_project_config_file = "greengrass-tools-config.json"
+cli_project_config_file = "gdk-config.json"
 
 # TODO: Update URLs
 templates_list_url = ""

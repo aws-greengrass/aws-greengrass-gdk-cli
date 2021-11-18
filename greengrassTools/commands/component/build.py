@@ -180,7 +180,7 @@ def _ignore_files_during_zip(path, names):
     Creates a list of files or directories to ignore while copying a directory.
 
     Helper function to create custom list of files/directories to ignore. Here, we exclude,
-    1. project config file -> greengrass-tools-config.json
+    1. project config file -> gdk-config.json
     2. greengrass-build directory
     3. recipe file
     4. tests folder

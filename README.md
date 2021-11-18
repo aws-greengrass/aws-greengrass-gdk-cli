@@ -1,7 +1,7 @@
 
-## Installing greengrass-tools CLI
+## Installing gdk CLI
 
-Use the following commands to install `greengrass-tools` cli inside a virtual environment. Replace `<venv-name>` with name of the virtual enviroment you want to create. 
+Use the following commands to install `gdk` cli inside a virtual environment. Replace `<venv-name>` with name of the virtual enviroment you want to create. 
 
 1. Install virtual env module.
 
@@ -17,5 +17,5 @@ Use the following commands to install `greengrass-tools` cli inside a virtual en
 
 4. Installing cli tool.
 
-    `pip3 install git+https://github.com/aws-greengrass/aws-greengrass-tools.git`
+    `pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git`
 

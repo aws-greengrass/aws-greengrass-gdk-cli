@@ -55,7 +55,7 @@ def upload_artifacts_s3(component_name, component_version):
             logging.error("Component '{}' is not build.".format(component_name))
             raise Exception(
                 f"Failed to publish the component '{component_name}' as it is not build.\nBuild the component"
-                " `greengrass-tools component build` before publishing it."
+                " `gdk component build` before publishing it."
             )
         create_bucket(bucket, region)
         build_component_artifacts = list(project_config["gg_build_component_artifacts_dir"].iterdir())
@@ -296,7 +296,7 @@ def update_and_create_recipe_file(component_name, component_version):
         if parsed_component_recipe["ComponentName"] != component_name:
             logging.error("Component '{}' is not build.".format(parsed_component_recipe["ComponentName"]))
             raise Exception(
-                "Failed to publish the component '{}' as it is not build.\nBuild the component `greengrass-tools component"
+                "Failed to publish the component '{}' as it is not build.\nBuild the component `gdk component"
                 " build` before publishing it.".format(parsed_component_recipe["ComponentName"])
             )
     gg_build_component_artifacts = project_config["gg_build_component_artifacts_dir"]
