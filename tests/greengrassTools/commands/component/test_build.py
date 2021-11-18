@@ -199,7 +199,7 @@ def test_build_system_zip_valid(mocker):
     zip_build_path = Path("zip-build").resolve()
     zip_artifacts_path = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
     mock_build_info = mocker.patch(
-        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
+        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value={zip_build_path}
     )
     mock_clean_dir = mocker.patch("greengrassTools.common.utils.clean_dir", return_value=None)
     mock_copytree = mocker.patch("shutil.copytree")
@@ -240,7 +240,7 @@ def test_build_system_zip_error_archive(mocker):
     zip_artifacts_path = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
 
     mock_build_info = mocker.patch(
-        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
+        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value={zip_build_path}
     )
     mock_clean_dir = mocker.patch("greengrassTools.common.utils.clean_dir", return_value=None)
     mock_copytree = mocker.patch("shutil.copytree")
@@ -272,7 +272,7 @@ def test_build_system_zip_error_copytree(mocker):
     zip_artifacts_path = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
 
     mock_build_info = mocker.patch(
-        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
+        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value={zip_build_path}
     )
     mock_clean_dir = mocker.patch("greengrassTools.common.utils.clean_dir", return_value=None)
     mock_copytree = mocker.patch("shutil.copytree", side_effect=Error("some error"))
@@ -328,7 +328,7 @@ def test_build_system_zip_error_get_build_folder_by_build_system(mocker):
 def test_build_system_zip_error_clean_dir(mocker):
     zip_build_path = Path("zip-build").resolve()
     mock_build_info = mocker.patch(
-        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
+        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value={zip_build_path}
     )
     mock_clean_dir = mocker.patch("greengrassTools.common.utils.clean_dir", return_value=None, side_effect=Error("some error"))
     mock_copytree = mocker.patch("shutil.copytree")
