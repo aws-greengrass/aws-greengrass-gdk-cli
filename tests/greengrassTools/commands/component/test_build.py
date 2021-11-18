@@ -125,8 +125,9 @@ def test_create_recipe_file_yaml_invalid(mocker):
 def test_get_build_folder_by_build_system():
     import greengrassTools.commands.component.build as build
 
-    path = build._get_build_folder_by_build_system()
-    assert path.resolve() == Path(utils.current_directory).joinpath(*["zip-build"]).resolve()
+    paths = build._get_build_folder_by_build_system()
+    assert len(paths) == 1
+    assert Path(utils.current_directory).joinpath(*["zip-build"]).resolve() in paths
 
 
 def test_create_gg_build_directories(mocker):
@@ -347,7 +348,7 @@ def test_build_system_zip_error_clean_dir(mocker):
 
 
 def test_copy_artifacts_and_update_uris_valid(mocker):
-    zip_build_path = Path("zip-build").resolve()
+    zip_build_path = [Path("zip-build").resolve()]
     mock_build_info = mocker.patch(
         "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
@@ -363,7 +364,7 @@ def test_copy_artifacts_and_update_uris_valid(mocker):
 
 def test_copy_artifacts_and_update_uris_recipe_uri_matches(mocker):
     # Copy only if the uri in recipe matches the artifact in build folder
-    zip_build_path = Path("zip-build").resolve()
+    zip_build_path = [Path("zip-build").resolve()]
     mock_build_info = mocker.patch(
         "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
@@ -382,7 +383,7 @@ def test_copy_artifacts_and_update_uris_recipe_uri_matches(mocker):
 def test_copy_artifacts_and_update_uris_recipe_uri_not_matches(mocker):
     # Do not copy if the uri in recipe doesnt match the artifact in build folder
 
-    zip_build_path = Path("zip-build").resolve()
+    zip_build_path = [Path("zip-build").resolve()]
     mock_build_info = mocker.patch(
         "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
@@ -600,3 +601,77 @@ def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
     assert not mock_shutil_copy.called
     assert mock_build_info.called
     assert not mock_glob.called
+
+
+def test_get_build_folder_by_build_system_maven(mocker):
+    import greengrassTools.commands.component.build as build
+
+    dummy_paths = [Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])]
+    mock_get_build_folders = mocker.patch(
+        "greengrassTools.commands.component.build.get_build_folders", return_value=dummy_paths
+    )
+    build.project_config["component_build_config"] = {"build_system": "maven"}
+    maven_build_paths = build._get_build_folder_by_build_system()
+    assert maven_build_paths == dummy_paths
+    mock_get_build_folders.assert_any_call(["target"], "pom.xml")
+
+
+def test_get_build_folder_by_build_system_gradle(mocker):
+    import greengrassTools.commands.component.build as build
+
+    dummy_paths = [Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])]
+    mock_get_build_folders = mocker.patch(
+        "greengrassTools.commands.component.build.get_build_folders", return_value=dummy_paths
+    )
+    build.project_config["component_build_config"] = {"build_system": "gradle"}
+    gradle_build_paths = build._get_build_folder_by_build_system()
+    assert gradle_build_paths == dummy_paths
+    mock_get_build_folders.assert_any_call(["build", "libs"], "build.gradle")
+
+
+def test_get_build_folders_maven(mocker):
+    import greengrassTools.commands.component.build as build
+
+    dummy_build_file_paths = [Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])]
+    dummy_build_folder_paths = [
+        Path("/").joinpath("path1"),
+        Path("/").joinpath(*["path1", "path2"]),
+        Path("/").joinpath(*["path3", "path1"]),
+    ]
+
+    def get_files(*args, **kwargs):
+        if args[0] == "pom.xml":
+            return dummy_build_file_paths
+        else:
+            return dummy_build_folder_paths
+
+    mock_rglob = mocker.patch("pathlib.Path.rglob", side_effect=get_files)
+    build.project_config["component_build_config"] = {"build_system": "maven"}
+    maven_b_paths = build.get_build_folders(["target"], "pom.xml")
+    mock_rglob.assert_any_call("pom.xml")
+    mock_rglob.assert_any_call("target")
+    assert maven_b_paths == {Path("/").joinpath(*["target"]), Path("/").joinpath(*["path1", "target"])}
+
+
+def test_get_build_folders_gradle(mocker):
+    import greengrassTools.commands.component.build as build
+
+    dummy_build_file_paths = [Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])]
+    dummy_build_folder_paths = [
+        Path("/").joinpath("path1"),
+        Path("/").joinpath(*["path1", "path2"]),
+        Path("/").joinpath(*["path3", "path1"]),
+    ]
+
+    def get_files(*args, **kwargs):
+        if args[0] == "build.gradle":
+            return dummy_build_file_paths
+        else:
+            return dummy_build_folder_paths
+
+    mock_rglob = mocker.patch("pathlib.Path.rglob", side_effect=get_files)
+    build.project_config["component_build_config"] = {"build_system": "gradle"}
+    maven_b_paths = build.get_build_folders(["build", "libs"], "build.gradle")
+    mock_rglob.assert_any_call("build.gradle")
+    mock_rglob.assert_any_call(str(Path(".").joinpath(*["build", "libs"])))
+    assert maven_b_paths == {Path("/").joinpath(*["build", "libs"]), Path("/").joinpath(*["path1", "build", "libs"])}
