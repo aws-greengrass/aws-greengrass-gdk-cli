@@ -30,9 +30,6 @@ def call_action_by_name(method_name, d_args):
     """
     Identifies the method for given method name based on namespace and executes the method
 
-    Since method names cannot have "-" and "greengrass-tools" contain a "-", we substitute
-    "greengrass-tools" with "greengrass_tools"
-
     Parameters
     ----------
       method_name(string): Method name determined from the args namespace.
@@ -43,7 +40,6 @@ def call_action_by_name(method_name, d_args):
     -------
       None
     """
-    method_name = method_name.replace(consts.cli_tool_name, consts.cli_tool_name_in_method_names)
     method_to_call = getattr(command_methods, method_name, None)
     if method_to_call:
         logging.debug("Calling '{}'.".format(method_name))
@@ -56,12 +52,12 @@ def get_method_from_command(d_args, command, method_name):
     """
     A recursive function that builds the method_name from the command.
 
-    'greengrass-tools component init --lang python --template template-name'
+    'gdk component init --lang python --template template-name'
     When the above command is parsed(parse_args), the following namespace is returned.
-    Namespace(greengrass-tools='component', foo=None, component='init', init=None, lang='python', template='template-name')
+    Namespace(gdk='component', foo=None, component='init', init=None, lang='python', template='template-name')
     where,
-    greengrass-tools -> component, component -> init, init -> None and we derive the method name from this as
-    '_greengrass-tools_component_init'
+    gdk -> component, component -> init, init -> None and we derive the method name from this as
+    '_gdk_component_init'
 
     Parameters
     ----------

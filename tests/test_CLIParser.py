@@ -88,7 +88,7 @@ def test_add_arg_to_group_or_parser_with_parser(mocker):
 
 def test_model_file():
     model = {
-        "greengrass-tools": {"sub-commands": ["component"]},
+        "gdk": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build", "publish"]},
         "init": {
             "arguments": {
@@ -114,9 +114,7 @@ def test_model_file():
 
 
 def test_main(mocker):
-    args_namespace = argparse.Namespace(
-        component="init", init=None, lang="python", template="name", **{"greengrass-tools": "component"}
-    )
+    args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
     mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
     mock_run_command = mocker.patch("greengrassTools.common.parse_args_actions.run_command", return_value=None)
     cli_parser.main()
@@ -125,9 +123,7 @@ def test_main(mocker):
 
 
 def test_main_exception(mocker):
-    args_namespace = argparse.Namespace(
-        component="init", init=None, lang="python", template="name", **{"greengrass-tools": "component"}
-    )
+    args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
     mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
     mock_run_command = mocker.patch(
         "greengrassTools.common.parse_args_actions.run_command", return_value=None, side_effect=HTTPError("some")

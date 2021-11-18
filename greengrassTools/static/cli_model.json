@@ -1,5 +1,5 @@
 {
-    "greengrass-tools": {
+    "gdk": {
         "sub-commands": [
             "component"
         ],

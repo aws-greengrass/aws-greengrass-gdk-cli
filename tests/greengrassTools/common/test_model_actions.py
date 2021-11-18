@@ -66,7 +66,7 @@ def test_is_valid_argument_model_without_help():
 def test_is_valid_subcommand_model_valid():
     # Valid subcommand with valid commmand key in the cli model.
     model = {
-        "greengrass-tools": {"sub-commands": ["component"], "help": "help"},
+        "gdk": {"sub-commands": ["component"], "help": "help"},
         "component": {"help": "help", "sub-commands": ["init", "build"]},
         "build": {"help": "help"},
         "init": {"help": "help"},
@@ -78,7 +78,7 @@ def test_is_valid_subcommand_model_valid():
 def test_is_valid_subcommand_model_valid_without_help():
     # Valid subcommand without help in the cli model.
     model = {
-        "greengrass-tools": {"sub-commands": ["component"]},
+        "gdk": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build"]},
         "build": {},
         "init": {},
@@ -90,7 +90,7 @@ def test_is_valid_subcommand_model_valid_without_help():
 def test_is_valid_subcommand_model_invalid():
     # Invalid subcommand with no key in the cli model.
     model = {
-        "greengrass-tools": {"sub-commands": ["component"]},
+        "gdk": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build"]},
         "init": {},
         "build": {},
@@ -102,7 +102,7 @@ def test_is_valid_subcommand_model_invalid():
 def test_is_valid_model_without_help_in_command():
     # Invalid model without help for commands
     valid_model = {
-        "greengrass-tools": {"sub-commands": ["component"]},
+        "gdk": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build"]},
         "init": {"arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}}},
         "build": {},
@@ -113,7 +113,7 @@ def test_is_valid_model_without_help_in_command():
 def test_is_valid_model():
     # Valid model with correct args ang sub-commands.
     valid_model = {
-        "greengrass-tools": {"sub-commands": ["component"], "help": "help"},
+        "gdk": {"sub-commands": ["component"], "help": "help"},
         "component": {"help": "help", "sub-commands": ["init", "build"]},
         "init": {"help": "help", "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}}},
         "build": {"help": "help"},
@@ -124,7 +124,7 @@ def test_is_valid_model():
 def test_is_valid_model_without_name():
     # Invalid model with incorrect sub-commands. Subcommand with no key in the cli model.
     invalid_model_without_name_in_args = {
-        "greengrass-tools": {
+        "gdk": {
             "sub-commands": ["component"],
             "arguments": {"lang": {"names": ["-l", "--lang"], "help": "help"}},
         },
@@ -136,7 +136,7 @@ def test_is_valid_model_without_name():
 def test_is_valid_model_without_help():
     # Invalid model with incorrect arguments. Argument without name.
     invalid_model_args_without_help = {
-        "greengrass-tools": {
+        "gdk": {
             "sub-commands": ["component"],
             "arguments": {"lang": {"names": ["-l", "--lang"], "help": "help"}},
         },
@@ -148,7 +148,7 @@ def test_is_valid_model_without_help():
 def test_is_valid_model_with_invalid_sub_command():
     # Invalid model with incorrect sub-commands. Subcommand with no key in the cli model.
     invalid_model_subcommands = {
-        "greengrass-tools": {"sub-commands": ["component", "invalid-sub-command"]},
+        "gdk": {"sub-commands": ["component", "invalid-sub-command"]},
         "component": {},
     }
     assert not model_actions.is_valid_model(invalid_model_subcommands, consts.cli_tool_name)
@@ -157,7 +157,7 @@ def test_is_valid_model_with_invalid_sub_command():
 def test_is_valid_model_with_invalid_arg_group():
     # Valid model with correct args ang sub-commands.
     valid_model = {
-        "greengrass-tools": {"sub-commands": ["component"]},
+        "gdk": {"sub-commands": ["component"]},
         "component": {"sub-commands": ["init", "build"]},
         "init": {
             "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}},

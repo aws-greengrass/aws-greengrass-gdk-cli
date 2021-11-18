@@ -179,9 +179,7 @@ def test_update_and_create_recipe_file_manifests_not_build(mocker):
 
     with pytest.raises(Exception) as e:
         publish.update_and_create_recipe_file(component_name, component_version)
-    assert (
-        "as it is not build.\nBuild the component `greengrass-tools component build` before publishing it." in e.value.args[0]
-    )
+    assert "as it is not build.\nBuild the component `gdk component build` before publishing it." in e.value.args[0]
     assert mock_create_publish_recipe.call_count == 0
 
 
@@ -451,8 +449,7 @@ def test_get_latest_component_version_exception(mocker):
     assert mock_get_latest_component_version.call_count == 1
     assert (
         e.value.args[0]
-        == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during"
-        " publish.\nlisting error"
+        == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during publish.\nlisting error"
     )
 
 
@@ -523,9 +520,7 @@ def test_upload_artifacts_no_artifacts_not_build(mocker):
     mock_dir_exists = mocker.patch("greengrassTools.common.utils.dir_exists", return_value=False)
     with pytest.raises(Exception) as e:
         publish.upload_artifacts_s3("name", "version")
-    assert (
-        "as it is not build.\nBuild the component `greengrass-tools component build` before publishing it." in e.value.args[0]
-    )
+    assert "as it is not build.\nBuild the component `gdk component build` before publishing it." in e.value.args[0]
     assert mock_dir_exists.call_count == 1
     assert mock_iter_dir.call_count == 0
     assert mock_create_bucket.call_count == 0
