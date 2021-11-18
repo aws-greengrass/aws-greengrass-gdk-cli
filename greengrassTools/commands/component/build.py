@@ -289,6 +289,9 @@ def copy_artifacts_and_update_uris():
             if "URI" not in artifact:
                 logging.debug("No 'URI' found in the recipe artifacts.")
                 continue
+            # Skip non-s3 URIs in the recipe. Eg docker URIs
+            if not artifact["URI"].startswith("s3://"):
+                continue
             artifact_file = Path(artifact["URI"]).name
             artifact_found = False
             # If the artifact is present in build system specific build folder, copy it to greengrass artifacts build folder

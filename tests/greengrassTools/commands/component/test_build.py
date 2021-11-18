@@ -532,7 +532,7 @@ def test_copy_artifacts_and_update_uris_no_manifest_in_recipe(mocker):
 
 
 def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
-    # Nothing to copy if artifacts uri in recipe manifest doesnt exist
+    # Nothing to copy if artifacts in recipe manifest don't exist
 
     import greengrassTools.commands.component.build as build
 
@@ -567,8 +567,7 @@ def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
 
 
 def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
-    # Nothing to copy if manifest file doesnt exist
-    # recipe with no manifest key
+    # Nothing to copy if artifact uri don't exist in the recipe.
 
     import greengrassTools.commands.component.build as build
 
@@ -601,6 +600,79 @@ def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
     assert not mock_shutil_copy.called
     assert mock_build_info.called
     assert not mock_glob.called
+
+
+def test_copy_artifacts_and_update_uris_docker_uri_in_recipe(mocker):
+    # Nothing to copy if artifact uri don't exist in the recipe.
+
+    import greengrassTools.commands.component.build as build
+
+    zip_build_path = Path("zip-build").resolve()
+    mock_build_info = mocker.patch(
+        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
+    )
+    mock_iter_dir_list = Path("this-recipe-uri-not-exists.sh").resolve()
+    mock_shutil_copy = mocker.patch("shutil.copy")
+    mock_glob = mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+
+    modify_build = build.project_config
+    modify_build["parsed_component_recipe"] = {
+        "RecipeFormatVersion": "2020-01-25",
+        "ComponentName": "com.example.HelloWorld",
+        "ComponentVersion": "1.0.0",
+        "ComponentDescription": "My first Greengrass component.",
+        "ComponentPublisher": "Amazon",
+        "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
+        "Manifests": [
+            {
+                "Platform": {"os": "linux"},
+                "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                "Artifacts": [{"URI": "docker:uri"}],
+            }
+        ],
+    }
+
+    build.copy_artifacts_and_update_uris()
+    assert not mock_shutil_copy.called
+
+    assert mock_build_info.called
+    assert not mock_glob.called
+
+
+def test_copy_artifacts_and_update_uris_mix_uri_in_recipe(mocker):
+    # Nothing to copy if artifact uri don't exist in the recipe.
+
+    import greengrassTools.commands.component.build as build
+
+    zip_build_path = Path("zip-build").resolve()
+    mock_build_info = mocker.patch(
+        "greengrassTools.commands.component.build._get_build_folder_by_build_system", return_value={zip_build_path}
+    )
+    mock_iter_dir_list = [Path("hello_world.py").resolve()]
+    mock_shutil_copy = mocker.patch("shutil.copy")
+    mock_glob = mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+
+    modify_build = build.project_config
+    modify_build["parsed_component_recipe"] = {
+        "RecipeFormatVersion": "2020-01-25",
+        "ComponentName": "com.example.HelloWorld",
+        "ComponentVersion": "1.0.0",
+        "ComponentDescription": "My first Greengrass component.",
+        "ComponentPublisher": "Amazon",
+        "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
+        "Manifests": [
+            {
+                "Platform": {"os": "linux"},
+                "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                "Artifacts": [{"URI": "docker:uri"}, {"URI": "s3://hello_world.py"}],
+            }
+        ],
+    }
+
+    build.copy_artifacts_and_update_uris()
+    mock_shutil_copy.assert_called_with(Path("hello_world.py").resolve(), json_values["gg_build_component_artifacts_dir"])
+    assert mock_build_info.called
+    mock_glob.assert_called_with("hello_world.py")
 
 
 def test_get_build_folder_by_build_system_maven(mocker):

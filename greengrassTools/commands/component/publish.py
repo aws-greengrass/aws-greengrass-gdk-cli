@@ -314,8 +314,10 @@ def update_and_create_recipe_file(component_name, component_version):
             if "URI" not in artifact:
                 logging.debug("No 'URI' found in the recipe artifacts.")
                 continue
+            # Skip non-s3 URIs in the recipe. Eg docker URIs
+            if not artifact["URI"].startswith("s3://"):
+                continue
             artifact_file = Path(artifact["URI"]).name
-
             # For artifact in build component artifacts folder, update its URI
             build_artifact_files = list(gg_build_component_artifacts.glob(artifact_file))
             if len(build_artifact_files) == 1:
