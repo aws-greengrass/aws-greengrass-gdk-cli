@@ -1,10 +1,10 @@
 import argparse
 
-import greengrassTools.CLIParser as cli_parser
+import gdk.CLIParser as cli_parser
 import pytest
 from urllib3.exceptions import HTTPError
 
-import greengrassTools.common.consts as consts
+import gdk.common.consts as consts
 
 
 def test_CLIParser_initiation_top_level():
@@ -115,8 +115,8 @@ def test_model_file():
 
 def test_main(mocker):
     args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
-    mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
-    mock_run_command = mocker.patch("greengrassTools.common.parse_args_actions.run_command", return_value=None)
+    mock_cli_parser = mocker.patch("gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace)
+    mock_run_command = mocker.patch("gdk.common.parse_args_actions.run_command", return_value=None)
     cli_parser.main()
     mock_cli_parser.assert_any_call()
     mock_run_command.assert_any_call(args_namespace)
@@ -124,9 +124,9 @@ def test_main(mocker):
 
 def test_main_exception(mocker):
     args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
-    mock_cli_parser = mocker.patch("greengrassTools.CLIParser.cli_parser.parse_args", return_value=args_namespace)
+    mock_cli_parser = mocker.patch("gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace)
     mock_run_command = mocker.patch(
-        "greengrassTools.common.parse_args_actions.run_command", return_value=None, side_effect=HTTPError("some")
+        "gdk.common.parse_args_actions.run_command", return_value=None, side_effect=HTTPError("some")
     )
     with pytest.raises(SystemExit):
         cli_parser.main()
