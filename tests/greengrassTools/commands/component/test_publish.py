@@ -283,6 +283,69 @@ def test_update_and_create_recipe_file_no_artifacts_uri(mocker):
     assert no_artifacts_uri_key["ComponentVersion"] == component_version
 
 
+def test_update_and_create_recipe_file_docker_artifacts_uri(mocker):
+    no_artifacts_uri_key = {
+        "RecipeFormatVersion": "2020-01-25",
+        "ComponentName": "com.example.HelloWorld",
+        "ComponentVersion": "1.0.0",
+        "ComponentDescription": "My first Greengrass component.",
+        "ComponentPublisher": "Amazon",
+        "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
+        "Manifests": [
+            {
+                "Platform": {"os": "linux"},
+                "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                "Artifacts": [{"URI": "docker:uri"}],
+            }
+        ],
+    }
+    mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=no_artifacts_uri_key)
+    mock_create_publish_recipe = mocker.patch(
+        "greengrassTools.commands.component.publish.create_publish_recipe_file", return_value=None
+    )
+
+    component_name = "com.example.HelloWorld"
+    component_version = "1.0.0"
+    publish.update_and_create_recipe_file(component_name, component_version)
+    assert mock_create_publish_recipe.call_count == 1
+    mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_uri_key)
+    assert no_artifacts_uri_key["ComponentVersion"] == component_version
+
+
+def test_update_and_create_recipe_file_mix_uri_in_recipe(mocker):
+    # Nothing to copy if artifact uri don't exist in the recipe.
+
+    mock_iter_dir_list = [Path("hello_world.py").resolve()]
+    mock_glob = mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+
+    docker_artifacts_uri_key = {
+        "RecipeFormatVersion": "2020-01-25",
+        "ComponentName": "com.example.HelloWorld",
+        "ComponentVersion": "1.0.0",
+        "ComponentDescription": "My first Greengrass component.",
+        "ComponentPublisher": "Amazon",
+        "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
+        "Manifests": [
+            {
+                "Platform": {"os": "linux"},
+                "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                "Artifacts": [{"URI": "docker:uri"}, {"URI": "s3://hello_world.py"}],
+            }
+        ],
+    }
+    mock_create_publish_recipe = mocker.patch(
+        "greengrassTools.commands.component.publish.create_publish_recipe_file", return_value=None
+    )
+    mocker.patch("greengrassTools.commands.component.project_utils.parse_recipe_file", return_value=docker_artifacts_uri_key)
+    component_name = "com.example.HelloWorld"
+    component_version = "1.0.0"
+    publish.update_and_create_recipe_file(component_name, component_version)
+    mock_glob.assert_called_with("hello_world.py")
+    assert mock_create_publish_recipe.call_count == 1
+    mock_create_publish_recipe.assert_any_call(component_name, component_version, docker_artifacts_uri_key)
+    assert docker_artifacts_uri_key["ComponentVersion"] == component_version
+
+
 def test_get_component_version_from_config(mocker):
     mock_get_next_version = mocker.patch("greengrassTools.commands.component.publish.get_next_version", return_value="")
     version = publish.get_component_version_from_config()
