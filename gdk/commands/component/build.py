@@ -184,6 +184,8 @@ def _ignore_files_during_zip(path, names):
     2. greengrass-build directory
     3. recipe file
     4. tests folder
+    5. node_modules
+    6. hidden files
 
     Parameters
     ----------
@@ -200,6 +202,8 @@ def _ignore_files_during_zip(path, names):
         consts.greengrass_build_dir,
         project_config["component_recipe_file"].name,
         "test*",
+        ".*",
+        "node_modules",
     ]
     return ignore_list
 
