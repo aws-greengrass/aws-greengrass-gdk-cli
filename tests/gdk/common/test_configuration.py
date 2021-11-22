@@ -17,7 +17,7 @@ def test_get_configuration_valid_component_config_found(mocker):
                 "publish": {"bucket": "default", "region": "some-region"},
             }
         },
-        "tools_version": "1.0.0",
+        "gdk_version": "1.0.0",
     }
 
     mock_get_project_config_file = mocker.patch(
