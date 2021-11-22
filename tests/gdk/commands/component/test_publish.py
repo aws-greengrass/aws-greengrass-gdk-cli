@@ -429,7 +429,8 @@ def test_get_latest_component_version_exception(mocker):
     assert mock_get_latest_component_version.call_count == 1
     assert (
         e.value.args[0]
-        == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during publish.\nlisting error"
+        == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during"
+        " publish.\nlisting error"
     )
 
 
