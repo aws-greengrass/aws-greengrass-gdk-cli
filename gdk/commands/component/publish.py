@@ -128,7 +128,7 @@ def bucket_exists_in_same_region(bucket, region):
 
 def create_gg_component(c_name, c_version):
     """
-    Creates a greengrassv2 private component using its recipe.
+    Creates a GreengrassV2 private component using its recipe.
 
     Raises an exception if the recipe is invalid or the request is not successful.
 

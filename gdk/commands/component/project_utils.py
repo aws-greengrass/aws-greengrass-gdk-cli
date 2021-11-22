@@ -157,5 +157,5 @@ def create_sts_client(region=None):
 
 
 def create_greengrass_client(region=None):
-    logging.debug("Creating greengrassv2 client")
+    logging.debug("Creating GreengrassV2 client")
     return boto3.client("greengrassv2", region_name=region)

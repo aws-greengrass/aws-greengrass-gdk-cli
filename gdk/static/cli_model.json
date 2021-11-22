@@ -3,7 +3,7 @@
         "sub-commands": [
             "component"
         ],
-        "help": "Modify this text."
+        "help": "Greengrass development kit - CLI for developing AWS IoT GreengrassV2 components."
     },
     "component": {
         "sub-commands": [
@@ -12,7 +12,7 @@
             "publish",
             "list"
         ],
-        "help": "Modify this text."
+        "help": "Helps you initialize, build and publish GreengrassV2 components."
     },
     "init": {
         "arguments": {
@@ -59,26 +59,26 @@
                     "language",
                     "template"
                 ],
-                "description": "Initialize the project with a component template written in specified programming language"
+                "description": "Initialize the project with a component template written in specified programming language."
             },
             {
                 "title": "Greengrass repository catalog.",
                 "args": [
                     "repository"
                 ],
-                "description": "Initialize the project with a component from Greengrass Repository Catalog"
+                "description": "Initialize the project with a component from Greengrass Repository Catalog."
             }
         ],
-        "help": "Modify this text."
+        "help": "Initialize the project with a component template or repository from Greengrass Software Catalog."
     },
     "build": {
-        "help": "Modify this text."
+        "help": "Build GreengrassV2 component artifacts and recipes from its source code."
     },
     "publish": {
-        "help": "Modify this text."
+        "help": "Create a new version of a GreengrassV2 component from its built artifacts and recipes."
     },
     "list": {
-        "help": "Modify this text.",
+        "help": "List all the available component templates and repositories from Greengrass Software Catalog",
         "arguments": {
             "template": {
                 "name": [

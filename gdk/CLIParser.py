@@ -16,7 +16,8 @@ class ArgumentParser(argparse.ArgumentParser):
         Add custom message with help text at the command level. Python3.9 supports 'exit_on_error' method to achieve
         the same.
         """
-        logging.error("Command failed due to an argument error.{}{}".format(utils.line, message))
+        logging.error(f"Command failed due to an argument error.{utils.error_line}{message}")
+        print(f"{utils.help_line}")
         self.print_help()
         self.exit()
 
@@ -31,10 +32,12 @@ class CLIParser:
         help_text_for_command = self.cli_model[self.command]["help"]
         if command != consts.cli_tool_name:
             self.top_level_parser = top_level_parser
-            self.parser = self.top_level_parser.add_parser(command, help=help_text_for_command)
+            self.parser = self.top_level_parser.add_parser(
+                command, help=help_text_for_command, description=help_text_for_command
+            )
         else:
-            self.parser = ArgumentParser(prog=consts.cli_tool_name)
-        self.subparsers = self.parser.add_subparsers(dest=command, help=help_text_for_command)
+            self.parser = ArgumentParser(prog=consts.cli_tool_name, description=help_text_for_command)
+        self.subparsers = self.parser.add_subparsers(dest=command)
 
     def create_parser(self):
         """
@@ -184,7 +187,7 @@ def main():
         args_namespace = cli_parser.parse_args()
         parse_args_actions.run_command(args_namespace)
     except Exception as e:
-        logging.error("Command failed due to the following error.{}{}".format(utils.line, e))
+        print(f"{utils.error_line}{e}")
         exit(1)
 
 
@@ -194,7 +197,7 @@ try:
     cli_parser = cli_tool.create_parser()
 except Exception as e:
     print(
-        "[FATAL]: Command failed due to CLI tool error.\nPlease report it here if the issue persists.\nError details: {}"
-        .format(e)
+        f"{utils.error_line}Command failed due to CLI error.\nPlease report it at"
+        " https://github.com/aws-greengrass/aws-greengrass-gdk-cli/issues if the issue persists.\nError details: {}".format(e)
     )
     exit(1)

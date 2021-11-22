@@ -103,6 +103,7 @@ def clean_dir(dir):
     shutil.rmtree(dir, ignore_errors=True, onerror=None)
 
 
-line = "\n------------------------------------------------------------------------\n"
+error_line = "\n=============================== ERROR ===============================\n"
+help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()
 log_format = "[%(asctime)s] %(levelname)s - %(message)s"
