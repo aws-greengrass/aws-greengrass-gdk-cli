@@ -57,6 +57,12 @@ def upload_artifacts_s3(component_name, component_version):
                 f"Failed to publish the component '{component_name}' as it is not build.\nBuild the component"
                 " `gdk component build` before publishing it."
             )
+        logging.info(
+            f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
+            " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
+            f" artifacts. For more information, see {utils.doc_link_device_role}."
+        )
+
         create_bucket(bucket, region)
         build_component_artifacts = list(project_config["gg_build_component_artifacts_dir"].iterdir())
         for artifact in build_component_artifacts:
