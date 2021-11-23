@@ -331,10 +331,10 @@ def test_get_component_version_from_config(mocker):
     assert not mock_get_next_version.called
 
 
-def test_get_component_version_from_config_latest(mocker):
+def test_get_component_version_from_config_next_patch(mocker):
     publish.project_config = {
         "component_name": "component_name",
-        "component_version": "LATEST",
+        "component_version": "NEXT_PATCH",
         "component_author": "abc",
         "bucket": "default",
         "region": "default",
@@ -357,76 +357,76 @@ def test_get_component_version_from_config_exception(mocker):
 
 def test_get_next_version_component_not_exists(mocker):
     publish.project_config["account_number"] = "1234"
-    mock_get_latest_component_version = mocker.patch(
-        "gdk.commands.component.publish.get_latest_component_version", return_value=None
+    mock_get_next_patch_component_version = mocker.patch(
+        "gdk.commands.component.publish.get_next_patch_component_version", return_value=None
     )
     version = publish.get_next_version()
     assert version == "1.0.0"  # Fallback version
-    assert mock_get_latest_component_version.call_count == 1
-    mock_get_latest_component_version.assert_any_call("component_name", "default", "1234")
+    assert mock_get_next_patch_component_version.call_count == 1
+    mock_get_next_patch_component_version.assert_any_call("component_name", "default", "1234")
 
 
 def test_get_next_version_component_already_exists(mocker):
-    mock_get_latest_component_version = mocker.patch(
-        "gdk.commands.component.publish.get_latest_component_version", return_value="1.0.6"
+    mock_get_next_patch_component_version = mocker.patch(
+        "gdk.commands.component.publish.get_next_patch_component_version", return_value="1.0.6"
     )
 
     version = publish.get_next_version()
     assert version == "1.0.7"
-    assert mock_get_latest_component_version.call_count == 1
+    assert mock_get_next_patch_component_version.call_count == 1
 
 
 def test_get_next_version_component_already_exists_semver(mocker):
-    mock_get_latest_component_version = mocker.patch(
-        "gdk.commands.component.publish.get_latest_component_version", return_value="1.0.6-x-y-z"
+    mock_get_next_patch_component_version = mocker.patch(
+        "gdk.commands.component.publish.get_next_patch_component_version", return_value="1.0.6-x-y-z"
     )
     version = publish.get_next_version()
     assert version == "1.0.7"
-    assert mock_get_latest_component_version.call_count == 1
+    assert mock_get_next_patch_component_version.call_count == 1
 
 
 def test_get_next_version_component_exception(mocker):
     publish.project_config["account_number"] = "1234"
-    mock_get_latest_component_version = mocker.patch(
-        "gdk.commands.component.publish.get_latest_component_version", side_effect=HTTPError("some error")
+    mock_get_next_patch_component_version = mocker.patch(
+        "gdk.commands.component.publish.get_next_patch_component_version", side_effect=HTTPError("some error")
     )
     with pytest.raises(Exception) as e:
         publish.get_next_version()
-    assert mock_get_latest_component_version.call_count == 1
+    assert mock_get_next_patch_component_version.call_count == 1
     assert e.value.args[0] == "Failed to calculate the next version of the component during publish.\nsome error"
 
 
-def test_get_latest_component_version(mocker):
+def test_get_next_patch_component_version(mocker):
     publish.project_config["account_number"] = "1234"
     mock_client = mocker.patch("boto3.client", return_value=None)
     publish.service_clients = {"greengrass_client": mock_client}
     response = {"componentVersions": [{"componentVersion": "1.0.4"}, {"componentVersion": "1.0.1"}]}
-    mock_get_latest_component_version = mocker.patch("boto3.client.list_component_versions", return_value=response)
-    li = publish.get_latest_component_version("c_name", "region", "1234")
-    assert mock_get_latest_component_version.call_count == 1
+    mock_get_next_patch_component_version = mocker.patch("boto3.client.list_component_versions", return_value=response)
+    li = publish.get_next_patch_component_version("c_name", "region", "1234")
+    assert mock_get_next_patch_component_version.call_count == 1
     assert li == "1.0.4"
 
 
-def test_get_latest_component_version_no_components(mocker):
+def test_get_next_patch_component_version_no_components(mocker):
     mock_client = mocker.patch("boto3.client", return_value=None)
     publish.service_clients = {"greengrass_client": mock_client}
-    mock_get_latest_component_version = mocker.patch(
+    mock_get_next_patch_component_version = mocker.patch(
         "boto3.client.list_component_versions", return_value={"componentVersions": []}
     )
-    li = publish.get_latest_component_version("c_name", "region", "1234")
-    assert mock_get_latest_component_version.call_count == 1
+    li = publish.get_next_patch_component_version("c_name", "region", "1234")
+    assert mock_get_next_patch_component_version.call_count == 1
     assert not li
 
 
-def test_get_latest_component_version_exception(mocker):
+def test_get_next_patch_component_version_exception(mocker):
     mock_client = mocker.patch("boto3.client", return_value=None)
     publish.service_clients = {"greengrass_client": mock_client}
-    mock_get_latest_component_version = mocker.patch(
+    mock_get_next_patch_component_version = mocker.patch(
         "boto3.client.list_component_versions", side_effect=HTTPError("listing error")
     )
     with pytest.raises(Exception) as e:
-        publish.get_latest_component_version("c_name", "region", "1234")
-    assert mock_get_latest_component_version.call_count == 1
+        publish.get_next_patch_component_version("c_name", "region", "1234")
+    assert mock_get_next_patch_component_version.call_count == 1
     assert (
         e.value.args[0]
         == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during"

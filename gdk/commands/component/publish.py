@@ -170,15 +170,15 @@ def get_next_version():
         c_name = project_config["component_name"]
         region = project_config["region"]
         account_num = project_config["account_number"]
-        c_latest_version = get_latest_component_version(c_name, region, account_num)
-        if not c_latest_version:
+        c_next_patch_version = get_next_patch_component_version(c_name, region, account_num)
+        if not c_next_patch_version:
             logging.info(
                 "No private version of the component '{}' exist in the account. Using '{}' as the next version to create."
                 .format(c_name, fallback_version)
             )
             return fallback_version
-        logging.debug("Found latest version '{}' of the component '{}' in the account.".format(c_latest_version, c_name))
-        semver_alphanumeric = c_latest_version.split("-")
+        logging.debug("Found latest version '{}' of the component '{}' in the account.".format(c_next_patch_version, c_name))
+        semver_alphanumeric = c_next_patch_version.split("-")
         semver_numeric = semver_alphanumeric[0].split(".")
         major = semver_numeric[0]
         minor = semver_numeric[1]
@@ -214,7 +214,7 @@ def get_account_number():
         raise Exception("Error while fetching account number from credentials.\n{}".format(e))
 
 
-def get_latest_component_version(component_name, region, account_num):
+def get_next_patch_component_version(component_name, region, account_num):
     """
     Gets highest version of the component from the sorted order of its versions from an account in a region.
 
@@ -248,7 +248,7 @@ def get_component_version_from_config():
     """
     Returns component version based on the project configuration.
 
-    If component version is set to LATEST, patch version of the latest component version is calculated. Otherwise,
+    If component version is set to NEXT_PATCH, patch version of the latest component version is calculated. Otherwise,
     exact version specified will be used as the component version during creation of the component.
 
     Parameters
@@ -261,11 +261,10 @@ def get_component_version_from_config():
     """
     try:
         component_name = project_config["component_name"]
-        if project_config["component_version"] == "LATEST":
+        if project_config["component_version"] == "NEXT_PATCH":
             logging.debug(
-                "Component version set to 'LATEST' in the config file. Calculating next version of the component '{}'".format(
-                    project_config["component_name"]
-                )
+                "Component version set to 'NEXT_PATCH' in the config file. Calculating next version of the component '{}'"
+                .format(project_config["component_name"])
             )
             return get_next_version()
         logging.info("Using the version set for the component '{}' in the config file.".format(component_name))
