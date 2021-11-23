@@ -107,3 +107,4 @@ error_line = "\n=============================== ERROR ==========================
 help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()
 log_format = "[%(asctime)s] %(levelname)s - %(message)s"
+doc_link_device_role = "https://docs.aws.amazon.com/greengrass/v2/developerguide/device-service-role.html"
