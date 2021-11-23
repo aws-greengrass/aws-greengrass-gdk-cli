@@ -21,7 +21,7 @@
                                 },
                                 {
                                     "enum": [
-                                        "LATEST"
+                                        "NEXT_PATCH"
                                     ]
                                 }
                             ]
