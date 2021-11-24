@@ -1,6 +1,9 @@
 import logging
-import os
 import shutil
+import tempfile
+import zipfile
+from io import BytesIO
+from pathlib import Path
 
 import gdk.commands.component.list as list
 import gdk.common.consts as consts
@@ -25,6 +28,7 @@ def run(command_args):
     -------
         None
     """
+
     # Check if directory is not empty
     if not utils.is_directory_empty(utils.current_directory):
         raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
@@ -34,14 +38,14 @@ def run(command_args):
         raise Exception(error_messages.INIT_WITH_CONFLICTING_ARGS)
 
     # Choose appropriate action based on commands
-    if "template" in command_args and "language" in command_args:
+    if command_args["template"] and command_args["language"]:
         template = command_args["template"]
         language = command_args["language"]
         if template and language:
             logging.info("Initializing the project directory with a {} component template - '{}'.".format(language, template))
             init_with_template(template, language)
             return
-    elif "repository" in command_args:
+    elif command_args["repository"]:
         repository = command_args["repository"]
         if repository:
             logging.info(
@@ -70,33 +74,40 @@ def init_with_repository(repository):
 
 
 def download_and_clean(comp_name, comp_type):
+    """
+    Downloads component zip file file from GitHub and unarchives it in current directory.
+
+    Extracts the contents of the zip file into a temporary diretory and moves over them to the current directory.
+
+    Parameters
+    ----------
+      comp_name(string): Name of the component.
+      comp_type(string): Type of the component(template or repository).
+
+    Returns
+    -------
+        None
+    """
     comp_url = get_download_url(comp_name, comp_type)
 
-    download_request = requests.get(comp_url, stream=True)
-    if download_request.status_code != 200:
+    download_response = requests.get(comp_url, stream=True)
+    if download_response.status_code != 200:
         try:
-            download_request.raise_for_status()
+            download_response.raise_for_status()
         except Exception as e:
             logging.error(e)
             raise e
         finally:
             raise Exception(error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(comp_type))
 
-    zip_comp_name = "{}.zip".format(comp_name)
-    with open(zip_comp_name, "wb") as f:
-        logging.debug("Downloading the component {}...".format(comp_type))
-        f.write(download_request.content)
-        logging.debug("Download complete.")
-
-    # unzip the template
-    logging.debug("Unzipping the downloaded component {}...".format(comp_type))
-    shutil.unpack_archive(zip_comp_name, utils.current_directory)
-    logging.debug("Unzip complete.")
-
-    # Delete the downloaded zip template
-    logging.debug("Deleting the downloaded zip component {}.".format(comp_type))
-    os.remove(zip_comp_name)
-    logging.debug("Delete complete.")
+    logging.debug("Downloading the component {}...".format(comp_type))
+    with zipfile.ZipFile(BytesIO(download_response.content)) as zfile:
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            # Extracts the zip file into temporary directory - /some-temp-dir/downloaded-zip-folder/
+            zfile.extractall(tmpdirname)
+            # Moves the unarchived contents from temporary folder (downloaded-zip-folder) to current directory.
+            for f in Path(tmpdirname).joinpath(zfile.namelist()[0]).iterdir():
+                shutil.move(f, utils.current_directory)
 
 
 def get_download_url(comp_name, comp_type):
