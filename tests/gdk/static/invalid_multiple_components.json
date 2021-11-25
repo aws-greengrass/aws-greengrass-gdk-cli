@@ -8,7 +8,7 @@
             },
             "publish": {
                 "bucket": "default",
-                "region": "region"
+                "region": "us-east-1"
             }
         },
         "2": {
@@ -19,7 +19,7 @@
             },
             "publish": {
                 "bucket": "default",
-                "region": "region"
+                "region": "us-east-1"
             }
         }
     },
