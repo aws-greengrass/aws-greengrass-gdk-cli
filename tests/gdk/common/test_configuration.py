@@ -14,7 +14,7 @@ def test_get_configuration_valid_component_config_found(mocker):
                 "author": "abc",
                 "version": "1.0.0",
                 "build": {"build_system": "zip"},
-                "publish": {"bucket": "default", "region": "some-region"},
+                "publish": {"bucket": "default", "region": "us-east-1"},
             }
         },
         "gdk_version": "1.0.0",
@@ -38,6 +38,7 @@ def test_get_configuration_valid_component_config_found(mocker):
         "invalid_build_command.json",
         "invalid_build_command_string.json",
         "invalid_build_command_array.json",
+        "invalid_region_config.json",
     ],
 )
 def test_get_configuration_invalid_config_file(mocker, file_name):

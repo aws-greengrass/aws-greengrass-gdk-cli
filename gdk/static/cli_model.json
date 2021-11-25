@@ -12,7 +12,7 @@
             "publish",
             "list"
         ],
-        "help": "Helps you initialize, build and publish GreengrassV2 components."
+        "help": "Initialize, build and publish GreengrassV2 components using this command."
     },
     "init": {
         "arguments": {

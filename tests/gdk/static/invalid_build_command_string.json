@@ -9,7 +9,7 @@
             },
             "publish": {
                 "bucket": "default",
-                "region": "some-region"
+                "region": "us-east-1"
             }
         }
     },
