@@ -4,7 +4,9 @@
 ### *Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.*
 #### *SPDX-License-Identifier: Apache-2.0*
 
-The Greengrass Development Kit - Command Line Interface (GDK CLI) is a tool that helps you create greengrass v2 components either using templates or community repositories. This will be replaced with what Finn has for GG CLI. 
+The AWS IoT Greengrass Development Kit Command-Line Interface (GDK CLI) provides features that help you develop custom Greengrass components. You can use the GDK CLI to create, build, and publish custom components. When you create a component repository with the GDK CLI, you can start from a template or a community component from the Greengrass Software Catalog.
+
+Please follow the [GDK CLI public documentation](https://docs.aws.amazon.com/greengrass/v2/developerguide/greengrass-development-kit-cli.html) to learn more about the available commands and configuration that GDK CLI has to offer. 
 
 ### Getting Started
 
@@ -38,4 +40,3 @@ Configure AWS CLI with your credentials as shown here - https://docs.aws.amazon.
 3. Creates new version of the component in your AWS account. 
 
 `gdk component publish`
-
