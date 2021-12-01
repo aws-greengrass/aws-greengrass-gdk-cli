@@ -107,7 +107,7 @@ def download_and_clean(comp_name, comp_type):
             zfile.extractall(tmpdirname)
             # Moves the unarchived contents from temporary folder (downloaded-zip-folder) to current directory.
             for f in Path(tmpdirname).joinpath(zfile.namelist()[0]).iterdir():
-                shutil.move(str(f), utils.current_directory)
+                shutil.move(f, utils.current_directory)
 
 
 def get_download_url(comp_name, comp_type):
