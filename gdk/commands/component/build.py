@@ -158,7 +158,7 @@ def _build_system_zip():
         artifacts_zip_build = Path(zip_build).joinpath(utils.current_directory.name).resolve()
         utils.clean_dir(zip_build)
         logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
-        shutil.copytree(utils.current_directory, artifacts_zip_build, dirs_exist_ok=True, ignore=_ignore_files_during_zip)
+        shutil.copytree(utils.current_directory, artifacts_zip_build, ignore=_ignore_files_during_zip)
 
         # Get build file name without extension. This will be used as name of the archive.
         archive_file = utils.current_directory.name
