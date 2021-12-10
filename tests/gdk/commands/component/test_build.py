@@ -215,7 +215,7 @@ def test_build_system_zip_valid(mocker):
 
     curr_dir = Path(".").resolve()
 
-    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
+    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, ignore=mock_ignore_files_during_zip)
     assert mock_make_archive.called
     zip_build_file = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
     mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
@@ -255,7 +255,7 @@ def test_build_system_zip_error_archive(mocker):
 
     curr_dir = Path(".").resolve()
 
-    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
+    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, ignore=mock_ignore_files_during_zip)
     assert mock_make_archive.called
     zip_build_file = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
     mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
@@ -285,7 +285,7 @@ def test_build_system_zip_error_copytree(mocker):
 
     curr_dir = Path(".").resolve()
 
-    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, dirs_exist_ok=True, ignore=mock_ignore_files_during_zip)
+    mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, ignore=mock_ignore_files_during_zip)
     assert not mock_make_archive.called
 
 
