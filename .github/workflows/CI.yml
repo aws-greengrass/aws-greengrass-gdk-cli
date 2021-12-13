@@ -39,6 +39,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Testing CLI (Runs both unit and integration tests)
         run: |
+          pip install .
           coverage run --source=gdk -m pytest -v -s . && coverage report --show-missing --fail-under=70              
   build-on-ubuntu:
     runs-on: ${{ matrix.config.os }}
@@ -67,6 +68,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Testing CLI (Runs both unit and integration tests)
         run: |
+          pip install .
           coverage run --source=gdk -m pytest -v -s . && coverage report --show-missing --fail-under=70      
   build-on-macos:
     runs-on: ${{ matrix.config.os }}
@@ -94,4 +96,5 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Testing CLI (Runs both unit and integration tests)
         run: |
+          pip install .
           coverage run --source=gdk -m pytest -v -s . && coverage report --show-missing --fail-under=70 

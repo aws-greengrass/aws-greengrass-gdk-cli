@@ -6,15 +6,6 @@ from pathlib import Path
 import gdk.common.exceptions.error_messages as error_messages
 
 
-def install_cli():
-    sp.run(["pip3", "install", "."])
-    check_installation = sp.run(["gdk", "--help"], check=True, stdout=sp.PIPE)
-    assert "Greengrass development kit - CLI" in check_installation.stdout.decode()
-
-
-install_cli()
-
-
 def test_list_template():
     check_list_template = sp.run(["gdk", "component", "list", "--template"], check=True, stdout=sp.PIPE)
     assert "HelloWorld-python" in check_list_template.stdout.decode()
