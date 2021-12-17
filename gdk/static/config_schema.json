@@ -1,8 +1,10 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
+    "description": "Contains configuration of the component wrt to the cli project that determines the execution of cli commands.",
     "properties": {
         "component": {
+            "description": "Name of the component in the gdk cli project. As of now, gdk supports only one component per project.",
             "type": "object",
             "maxProperties": 1,
             "minProperties": 1,
@@ -11,15 +13,19 @@
                     "type": "object",
                     "properties": {
                         "author": {
+                            "description": "Author of the component which is interpolated during build and publish phases.",
                             "type": "string"
                         },
                         "version": {
+                            "description": "Version of the component which is interpolated during build and publish phases. Can be an enum or a semver version.",
                             "type": "string",
                             "oneOf": [
                                 {
+                                    "description": "Exact version of the component to use with cli commands. Must be a semver version.",
                                     "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
                                 },
                                 {
+                                    "description": "Enum to dynamically determine the version of the component with cli commands.",
                                     "enum": [
                                         "NEXT_PATCH"
                                     ]
@@ -28,8 +34,10 @@
                         },
                         "build": {
                             "type": "object",
+                            "description": "Configuration used with the build command of the cli.",
                             "properties": {
                                 "custom_build_command": {
+                                    "description": "Custom command provided as an array of strings to execute with cli build command. Required when the 'build_system' is 'custom'.",
                                     "type": [
                                         "array",
                                         "string"
@@ -38,6 +46,7 @@
                                     "minLength": 1
                                 },
                                 "build_system": {
+                                    "description": "Build system to use with the cli build command. Must be one of the defaults supported by the cli or just 'custom'.",
                                     "type": "string",
                                     "enum": [
                                         "zip",
@@ -73,11 +82,14 @@
                         },
                         "publish": {
                             "type": "object",
+                            "description": "Configuration used with the publish command of the cli.",
                             "properties": {
                                 "bucket": {
+                                    "description": "Prefix of the s3 bucket used during component artifacts upload. Name of the bucket is created by appending account and region to bucket prefix.",
                                     "type": "string"
                                 },
                                 "region": {
+                                    "description": "AWS regions supported by AWS IoT Greengrassv2. Must be one of the enum values.",
                                     "type": "string",
                                     "enum": [
                                         "us-east-2",
@@ -113,6 +125,7 @@
             }
         },
         "gdk_version": {
+            "description": "Version of the gdk cli tool compatible with the provided configuration.",
             "type": "string",
             "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
         }
