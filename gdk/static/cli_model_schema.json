@@ -1,0 +1,212 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "description": "This is gdk cli model where every key in this json model represents a command or sub-command of the cli tool.",
+    "properties": {
+        "gdk": {
+            "type": "object",
+            "description": "This is the name of the cli tool that is used as top-level parser of the cli.",
+            "required": [
+                "sub-commands",
+                "help"
+            ],
+            "properties": {
+                "sub-commands": {
+                    "$ref": "#/$defs/sub-commands"
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            }
+        },
+        "component": {
+            "type": "object",
+            "description": "A command of gdk cli tool. This is one of the sub parsers under the top-level parser ('gdk') of the cli.",
+            "required": [
+                "sub-commands",
+                "help"
+            ],
+            "properties": {
+                "sub-commands": {
+                    "$ref": "#/$defs/sub-commands"
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            }
+        },
+        "init": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "arguments",
+                "conflicting_arg_groups",
+                "arg_groups",
+                "help"
+            ],
+            "properties": {
+                "arguments": {
+                    "description": "List of all the arguments that can be passed with the init command.",
+                    "required": [
+                        "language",
+                        "repository",
+                        "template"
+                    ],
+                    "properties": {
+                        "language": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "repository": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "template": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
+                },
+                "conflicting_arg_groups": {
+                    "$ref": "#/$defs/conflicting_arg_groups"
+                },
+                "arg_groups": {
+                    "$ref": "#/$defs/arg_groups"
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            }
+        },
+        "publish": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "help"
+            ],
+            "properties": {
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            }
+        },
+        "list": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "help",
+                "arguments"
+            ],
+            "properties": {
+                "arguments": {
+                    "description": "List of all the arguments that can be passed with the list command.",
+                    "required": [
+                        "template",
+                        "repository"
+                    ],
+                    "properties": {
+                        "template": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "repository": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            }
+        },
+        "build": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "help"
+            ],
+            "properties": {
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            }
+        }
+    },
+    "required": [
+        "gdk",
+        "component",
+        "init",
+        "list",
+        "build",
+        "publish"
+    ],
+    "additionalProperties": false,
+    "$defs": {
+        "sub-commands": {
+            "type": "array",
+            "description": "Array of all the sub commands of a command.",
+            "additionalItems": true,
+            "items": {
+                "type": "string",
+                "description": "Name of the (sub) command."
+            }
+        },
+        "help": {
+            "type": "string",
+            "description": "Description of the command which is displayed in the cli help message."
+        },
+        "argument": {
+            "type": "object",
+            "description": "Name of the argument.",
+            "required": [
+                "name",
+                "help"
+            ]
+        },
+        "conflicting_arg_groups": {
+            "type": "array",
+            "description": "Array of arrays where arguments of one array conflict with arguments of another array.",
+            "additionalItems": true,
+            "items": {
+                "type": "array",
+                "description": "Array of arguments that can go together with a command.",
+                "additionalItems": true,
+                "items": {
+                    "type": "string",
+                    "description": "Name of the argument."
+                }
+            }
+        },
+        "arg_groups": {
+            "type": "array",
+            "description": "Group the compatible arguments of a command in arrays to display them in a separate group in cli help.",
+            "additionalItems": true,
+            "items": {
+                "type": "object",
+                "description": "List of argument groups of a command.",
+                "required": [
+                    "title",
+                    "args",
+                    "description"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "Short title that briefly explains the argument group.",
+                        "default": ""
+                    },
+                    "args": {
+                        "type": "array",
+                        "description": "List of arguments that are passed together with the cli command.",
+                        "additionalItems": true,
+                        "items": {
+                            "type": "string",
+                            "description": "Name of the argument."
+                        }
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Brief description of what the command with this argument group does."
+                    }
+                },
+                "additionalProperties": true
+            }
+        }
+    }
+}
