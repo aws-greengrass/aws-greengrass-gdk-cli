@@ -17,7 +17,10 @@ def run(command_args):
     """
     Initializes the current directory in which the command runs based on the command arguments.
 
-    This function checks if the current directory is empty before initiating the project. Raises an
+    This function creates a new directory if name argument is passed in the command and initializes the project inside it.
+    Errors out if the directory already exists.
+
+    If no name argument is passed, then it checks if the current directory is empty before initiating the project. Raises an
     exception otherwise.
 
     Parameters
@@ -28,10 +31,19 @@ def run(command_args):
     -------
         None
     """
-
-    # Check if directory is not empty
-    if not utils.is_directory_empty(utils.current_directory):
-        raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
+    project_dir = utils.current_directory
+    if not command_args["name"]:
+        # Check if directory is not empty
+        if not utils.is_directory_empty(project_dir):
+            raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
+    else:
+        # Create a new directory with name.
+        project_dir = Path(project_dir).joinpath(command_args["name"]).resolve()
+        try:
+            logging.debug("Creating new project directory '{}' in the current directory.".format(project_dir.name))
+            Path(project_dir).mkdir(exist_ok=False)
+        except FileExistsError:
+            raise Exception(error_messages.INIT_DIR_EXISTS_ERROR.format(project_dir.name))
 
     # Check if the command args are conflicting
     if parse_args_actions.conflicting_arg_groups(command_args, "init"):
@@ -43,7 +55,7 @@ def run(command_args):
         language = command_args["language"]
         if template and language:
             logging.info("Initializing the project directory with a {} component template - '{}'.".format(language, template))
-            init_with_template(template, language)
+            init_with_template(template, language, project_dir)
             return
     elif command_args["repository"]:
         repository = command_args["repository"]
@@ -51,29 +63,29 @@ def run(command_args):
             logging.info(
                 "Initializing the project directory with a component from repository catalog - '{}'.".format(repository)
             )
-            init_with_repository(repository)
+            init_with_repository(repository, project_dir)
             return
     raise Exception(error_messages.INIT_WITH_INVALID_ARGS)
 
 
-def init_with_template(template, language):
+def init_with_template(template, language, project_dir):
     try:
         template_name = "{}-{}".format(template, language)
         logging.info("Fetching the component template '{}' from Greengrass Software Catalog.".format(template_name))
-        download_and_clean(template_name, "template")
+        download_and_clean(template_name, "template", project_dir)
     except Exception as e:
         raise Exception("Could not initialize the project with component template '{}'.\n{}".format(template, e))
 
 
-def init_with_repository(repository):
+def init_with_repository(repository, project_dir):
     try:
         logging.info("Fetching the component repository '{}' from Greengrass Software Catalog.".format(repository))
-        download_and_clean(repository, "repository")
+        download_and_clean(repository, "repository", project_dir)
     except Exception as e:
         raise Exception("Could not initialize the project with component repository '{}'.\n{}".format(repository, e))
 
 
-def download_and_clean(comp_name, comp_type):
+def download_and_clean(comp_name, comp_type, project_dir):
     """
     Downloads component zip file file from GitHub and unarchives it in current directory.
 
@@ -107,7 +119,7 @@ def download_and_clean(comp_name, comp_type):
             zfile.extractall(tmpdirname)
             # Moves the unarchived contents from temporary folder (downloaded-zip-folder) to current directory.
             for f in Path(tmpdirname).joinpath(zfile.namelist()[0]).iterdir():
-                shutil.move(str(f), utils.current_directory)
+                shutil.move(str(f), project_dir)
 
 
 def get_download_url(comp_name, comp_type):

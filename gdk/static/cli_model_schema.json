@@ -50,7 +50,8 @@
                     "required": [
                         "language",
                         "repository",
-                        "template"
+                        "template",
+                        "name"
                     ],
                     "properties": {
                         "language": {
@@ -60,6 +61,9 @@
                             "$ref": "#/$defs/argument"
                         },
                         "template": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "name": {
                             "$ref": "#/$defs/argument"
                         }
                     }

@@ -41,6 +41,13 @@
                     "--repository"
                 ],
                 "help": "Name of the repository to be used."
+            },
+            "name": {
+                "name": [
+                    "-n",
+                    "--name"
+                ],
+                "help": "Name of the project directory to create."
             }
         },
         "conflicting_arg_groups": [
