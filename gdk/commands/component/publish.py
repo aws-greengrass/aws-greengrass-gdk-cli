@@ -2,6 +2,7 @@ import json
 import logging
 from pathlib import Path
 
+import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
@@ -11,15 +12,21 @@ from botocore.exceptions import ClientError
 
 def run(args):
     try:
+
         project_config["account_number"] = get_account_number()
         project_config["bucket"] = "{}-{}-{}".format(
             project_config["bucket"], project_config["region"], project_config["account_number"]
         )
 
         component_name = project_config["component_name"]
-        logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
         component_version = get_component_version_from_config()
-
+        logging.debug(f"Checking if the component '{component_name}' is built.")
+        if not utils.dir_exists(project_config["gg_build_component_artifacts_dir"]):
+            logging.warning(
+                f"The component '{component_name}' is not built.\nSo, building the component before publishing it."
+            )
+            component.build({})
+        logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
         logging.info("Uploading the component built artifacts to s3 bucket.")
         upload_artifacts_s3(component_name, component_version)
 
@@ -51,12 +58,6 @@ def upload_artifacts_s3(component_name, component_version):
     try:
         bucket = project_config["bucket"]
         region = project_config["region"]
-        if not utils.dir_exists(project_config["gg_build_component_artifacts_dir"]):
-            logging.error("Component '{}' is not build.".format(component_name))
-            raise Exception(
-                f"Failed to publish the component '{component_name}' as it is not build.\nBuild the component"
-                " `gdk component build` before publishing it."
-            )
         logging.info(
             f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
             " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
