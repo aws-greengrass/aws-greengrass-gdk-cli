@@ -79,11 +79,23 @@
             "type": "object",
             "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
             "required": [
-                "help"
+                "help",
+                "arguments"
             ],
             "properties": {
                 "help": {
                     "$ref": "#/$defs/help"
+                },
+                "arguments": {
+                    "description": "List of all the arguments that can be passed with the publish command.",
+                    "required": [
+                        "bucket"
+                    ],
+                    "properties": {
+                        "bucket": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
                 }
             }
         },

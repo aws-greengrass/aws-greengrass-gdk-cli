@@ -565,9 +565,33 @@ def test_publish_run_not_build(mocker):
     mock_dir_exists = mocker.patch("gdk.common.utils.dir_exists", return_value=False)
     mock_build = mocker.patch("gdk.commands.component.component.build", return_value=None)
     mock_create_gg_component = mocker.patch("gdk.commands.component.publish.create_gg_component", return_value=None)
-    publish.run({})
+    publish.run({"bucket": None})
     assert publish.project_config["account_number"] == "1234"
     assert publish.project_config["bucket"] == "default-us-east-1-1234"
+    assert mock_dir_exists.call_count == 1
+    assert mock_build.call_count == 1
+    assert mock_get_account_num.call_count == 1
+    assert mock_get_component_version_from_config.call_count == 1
+    assert mock_upload_artifacts_s3.call_count == 1
+    assert mock_update_and_create_recipe_file.call_count == 1
+    assert mock_create_gg_component.call_count == 1
+
+
+def test_publish_run_not_build_command_bucket(mocker):
+    mock_get_account_num = mocker.patch("gdk.commands.component.publish.get_account_number", return_value="1234")
+    mock_get_component_version_from_config = mocker.patch(
+        "gdk.commands.component.publish.get_component_version_from_config", return_value=None
+    )
+    mock_upload_artifacts_s3 = mocker.patch("gdk.commands.component.publish.upload_artifacts_s3", return_value=None)
+    mock_update_and_create_recipe_file = mocker.patch(
+        "gdk.commands.component.publish.update_and_create_recipe_file", return_value=None
+    )
+    mock_dir_exists = mocker.patch("gdk.common.utils.dir_exists", return_value=False)
+    mock_build = mocker.patch("gdk.commands.component.component.build", return_value=None)
+    mock_create_gg_component = mocker.patch("gdk.commands.component.publish.create_gg_component", return_value=None)
+    publish.run({"bucket": "exact-bucket"})
+    assert publish.project_config["account_number"] == "1234"
+    assert publish.project_config["bucket"] == "exact-bucket"
     assert mock_dir_exists.call_count == 1
     assert mock_build.call_count == 1
     assert mock_get_account_num.call_count == 1
@@ -590,7 +614,7 @@ def test_publish_run_build(mocker):
     mock_build = mocker.patch("gdk.commands.component.component.build", return_value=None)
     publish.project_config["bucket"] = "default"
     mock_create_gg_component = mocker.patch("gdk.commands.component.publish.create_gg_component", return_value=None)
-    publish.run({})
+    publish.run({"bucket": None})
     assert publish.project_config["account_number"] == "1234"
     assert publish.project_config["bucket"] == "default-us-east-1-1234"
     assert mock_dir_exists.call_count == 1
@@ -616,7 +640,7 @@ def test_publish_run_exception(mocker):
     mock_create_gg_component = mocker.patch("gdk.commands.component.publish.create_gg_component", return_value=None)
     publish.project_config["bucket"] = "default"
     with pytest.raises(Exception) as e:
-        publish.run({})
+        publish.run({"bucket": None})
     assert publish.project_config["account_number"] == "1234"
     assert publish.project_config["bucket"] == "default-us-east-1-1234"
     assert e.value.args[0] == "{}\n{}".format(error_messages.PUBLISH_FAILED, "some error")
