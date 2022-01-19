@@ -1,0 +1,16 @@
+{
+    "component": {
+        "1": {
+            "author": "abc",
+            "version": "1.0.0",
+            "build": {
+                "build_system": "zip"
+            },
+            "publish": {
+                "bucket": "default",
+                "region": "us-east-1"
+            }
+        }
+    },
+    "gdk_version": "1000.0.0"
+}

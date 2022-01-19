@@ -6,8 +6,6 @@ import gdk.common.model_actions as model_actions
 import gdk.common.parse_args_actions as parse_args_actions
 import gdk.common.utils as utils
 
-from . import _version
-
 
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):
@@ -178,12 +176,14 @@ class CLIParser:
         """
         self.parser.add_argument("-d", "--debug", help="Increase command output to debug level", action="store_true")
         self.parser.add_argument(
-            "-v", "--version", action="version", version="{} {}".format(consts.cli_tool_name, _version.__version__)
+            "-v", "--version", action="version", version="{} {}".format(consts.cli_tool_name, utils.cli_version)
         )
 
 
 def main():
     try:
+        # Check the version of the cli before command parsing.
+        utils.cli_version_check()
         args_namespace = cli_parser.parse_args()
         parse_args_actions.run_command(args_namespace)
     except Exception as e:

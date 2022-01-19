@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import gdk.common.configuration as config
@@ -24,8 +25,14 @@ def test_get_configuration_valid_component_config_found(mocker):
         "gdk.common.configuration._get_project_config_file",
         return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json"),
     )
+    spy_log_debug = mocker.spy(logging, "debug")
+
     assert config.get_configuration() == expected_config
     assert mock_get_project_config_file.called
+    spy_log_debug.assert_called_with(
+        "This gdk project configuration (gdk-1.0.0) is compatible with the existing gdk cli version"
+        f" (gdk-{utils.cli_version})."
+    )
 
 
 @pytest.mark.parametrize(
@@ -53,37 +60,66 @@ def test_get_configuration_invalid_config_file(mocker, file_name):
     assert "Please correct its format and try again." in err.value.args[0]
 
 
+@pytest.mark.parametrize(
+    "file_name",
+    ["invalid_gdk_version.json"],
+)
+def test_get_configuration_invalid_gdk_version(mocker, file_name):
+    mock_get_project_config_file = mocker.patch(
+        "gdk.common.configuration._get_project_config_file",
+        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+    )
+    mock_validate_configuration = mocker.patch("gdk.common.configuration.validate_configuration", return_value=None)
+    spy_log_debug = mocker.spy(logging, "debug")
+    with pytest.raises(Exception) as err:
+        config.get_configuration()
+    assert mock_get_project_config_file.called
+    assert mock_validate_configuration.called
+    assert (
+        "This gdk project requires gdk cli version '1000.0.0' or above. Please update the cli using the command `pip3 install"
+        " git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1000.0.0` before proceeding."
+        == err.value.args[0]
+    )
+
+    assert spy_log_debug.call_count == 0
+
+
 @pytest.mark.parametrize("file_name", ["valid_build_command.json"])
 def test_get_configuration_config_file(mocker, file_name):
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
         return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
     )
-
+    mock_validate_cli_version = mocker.patch("gdk.common.configuration.validate_cli_version", return_value=None)
     config.get_configuration()
     assert mock_get_project_config_file.called
+    assert mock_validate_cli_version.called
 
 
 def test_validate_configuration_schema_not_exists(mocker):
     mock_get_static_file_path = mocker.patch("gdk.common.utils.get_static_file_path", return_value=None)
     mock_jsonschema_validate = mocker.patch("jsonschema.validate", return_value=None)
+    mock_validate_cli_version = mocker.patch("gdk.common.configuration.validate_cli_version", return_value=None)
     with pytest.raises(Exception) as e_info:
         config.validate_configuration("data")
 
     assert e_info.value.args[0] == error_messages.CONFIG_SCHEMA_FILE_NOT_EXISTS
     assert mock_jsonschema_validate.call_count == 0
     assert mock_get_static_file_path.call_count == 1
+    assert not mock_validate_cli_version.called
 
 
 def test_get_configuration_no_project_config_file(mocker):
     mock_file_exists = mocker.patch("gdk.common.utils.file_exists", return_value=False)
     mock_validate_configuration = mocker.patch("gdk.common.configuration.validate_configuration", return_value="data")
+    mock_validate_cli_version = mocker.patch("gdk.common.configuration.validate_cli_version", return_value=None)
     with pytest.raises(Exception) as e_info:
         config.get_configuration()
 
     assert e_info.value.args[0] == error_messages.CONFIG_FILE_NOT_EXISTS
     assert not mock_validate_configuration.called
     assert mock_file_exists.called
+    assert not mock_validate_cli_version.called
 
 
 def test_get_project_config_file_exists(mocker):

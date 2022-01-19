@@ -117,9 +117,11 @@ def test_main(mocker):
     args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
     mock_cli_parser = mocker.patch("gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace)
     mock_run_command = mocker.patch("gdk.common.parse_args_actions.run_command", return_value=None)
+    mock_validate_cli_version = mocker.patch("gdk.common.utils.cli_version_check", return_value=None)
     cli_parser.main()
     mock_cli_parser.assert_any_call()
     mock_run_command.assert_any_call(args_namespace)
+    assert mock_validate_cli_version.called
 
 
 def test_main_exception(mocker):
@@ -128,7 +130,9 @@ def test_main_exception(mocker):
     mock_run_command = mocker.patch(
         "gdk.common.parse_args_actions.run_command", return_value=None, side_effect=HTTPError("some")
     )
+    mock_validate_cli_version = mocker.patch("gdk.common.utils.cli_version_check", return_value=None)
     with pytest.raises(SystemExit):
         cli_parser.main()
     mock_cli_parser.assert_any_call()
     mock_run_command.assert_any_call(args_namespace)
+    assert mock_validate_cli_version.called

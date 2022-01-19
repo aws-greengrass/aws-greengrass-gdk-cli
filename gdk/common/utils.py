@@ -3,6 +3,9 @@ import shutil
 from pathlib import Path
 
 import gdk
+import gdk._version as version
+import requests
+from packaging.version import Version
 
 
 def get_static_file_path(file_name):
@@ -103,8 +106,34 @@ def clean_dir(dir):
     shutil.rmtree(dir, ignore_errors=True, onerror=None)
 
 
+def get_latest_cli_version():
+    try:
+        response = requests.get(latest_cli_version_file)
+        if response.status_code == 200:
+            version_string = response.text.splitlines()[0]
+            l_version = version_string.split("__version__ = ")[1].strip('"')
+            return l_version
+    except Exception as e:
+        logging.debug(
+            f"Fetching latest version of the cli tool failed. Proceeding with the command execution.\nError details: {e}"
+        )
+    return cli_version
+
+
+def cli_version_check():
+    latest_cli_version = get_latest_cli_version()
+    update_command = f"pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v{latest_cli_version}"
+    if Version(cli_version) < Version(latest_cli_version):
+        logging.info(
+            f"New version of GDK CLI - {latest_cli_version} is available. Please update the cli using the command"
+            f" `{update_command}`.\n"
+        )
+
+
 error_line = "\n=============================== ERROR ===============================\n"
 help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()
 log_format = "[%(asctime)s] %(levelname)s - %(message)s"
 doc_link_device_role = "https://docs.aws.amazon.com/greengrass/v2/developerguide/device-service-role.html"
+cli_version = version.__version__
+latest_cli_version_file = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-gdk-cli/main/gdk/_version.py"
