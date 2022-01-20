@@ -277,7 +277,7 @@ def copy_artifacts_and_update_uris():
     logging.info("Updating artifact URIs in the recipe.")
     parsed_component_recipe = project_config["parsed_component_recipe"]
     gg_build_component_artifacts_dir = project_config["gg_build_component_artifacts_dir"]
-    artifact_uri = "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
+    artifact_uri = f"s3://{project_config['bucket']}/{project_config['component_name']}/{project_config['component_version']}"
     if "Manifests" not in parsed_component_recipe:
         logging.debug("No 'Manifests' key in the recipe.")
         return
