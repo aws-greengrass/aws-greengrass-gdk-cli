@@ -35,7 +35,10 @@ INIT_NON_EMPTY_DIR_ERROR = (
     "Could not initialize the project as the directory is not empty. Please initialize the project in an empty directory.\nTry"
     " `gdk component init --help`"
 )
-
+INIT_DIR_EXISTS_ERROR = (
+    "Could not initialize the project as the directory '{}' already exists. Please initialize the project with a new"
+    " directory.\nTry `gdk component init --help`"
+)
 # BUILD COMMAND
 BUILD_FAILED = "Failed to build the component with the given project configuration."
 
