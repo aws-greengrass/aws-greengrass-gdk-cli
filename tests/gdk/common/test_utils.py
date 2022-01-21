@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import gdk.common.utils as utils
@@ -106,3 +107,46 @@ def test_clean_dir(mocker):
     path = Path().resolve()
     utils.clean_dir(path)
     mock_rm.call_count == 1
+
+
+def test_get_latest_cli_version(mocker):
+    res_text = '__version__ = "10.0.0"\n'
+    mock_response = mocker.Mock(status_code=200, text=res_text)
+    mock_get_version = mocker.patch("requests.get", return_value=mock_response)
+
+    assert utils.get_latest_cli_version() == "10.0.0"
+    assert mock_get_version.called
+
+
+def test_get_latest_cli_version_invalid_version(mocker):
+    res_text = '__versions__ = "10.0.0"\n'
+    mock_response = mocker.Mock(status_code=200, text=lambda: res_text)
+    mock_get_version = mocker.patch("requests.get", return_value=mock_response)
+    version = utils.get_latest_cli_version()
+    assert version == utils.cli_version
+    assert mock_get_version.called
+
+
+def test_get_latest_cli_version_invalid_request(mocker):
+    res_text = "__version__ = 1.0.0"
+    mock_response = mocker.Mock(status_code=200, text=lambda: res_text)
+    mock_get_version = mocker.patch("requests.get", return_value=mock_response, side_effect=HTTPError("hi"))
+
+    assert utils.get_latest_cli_version() == "1.0.0"
+    assert mock_get_version.called
+
+
+def test_cli_version_check_latest_not_available(mocker):
+    mock_get_latest_cli_version = mocker.patch("gdk.common.utils.get_latest_cli_version", return_value=utils.cli_version)
+    spy_log = mocker.spy(logging, "info")
+    utils.cli_version_check()
+    assert mock_get_latest_cli_version.called
+    assert spy_log.call_count == 0
+
+
+def test_cli_version_check_latest_available(mocker):
+    mock_get_latest_cli_version = mocker.patch("gdk.common.utils.get_latest_cli_version", return_value="1000.0.0")
+    spy_log = mocker.spy(logging, "info")
+    utils.cli_version_check()
+    assert mock_get_latest_cli_version.called
+    assert spy_log.call_count == 1

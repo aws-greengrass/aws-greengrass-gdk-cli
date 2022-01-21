@@ -6,6 +6,7 @@ import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import jsonschema
+from packaging.version import Version
 
 
 def get_configuration():
@@ -27,6 +28,7 @@ def get_configuration():
         config_data = json.loads(config_file.read())
     try:
         validate_configuration(config_data)
+        validate_cli_version(config_data)
         return config_data
     except jsonschema.exceptions.ValidationError as err:
         raise Exception(error_messages.PROJECT_CONFIG_FILE_INVALID.format(project_config_file.name, err.message))
@@ -55,6 +57,21 @@ def validate_configuration(data):
         schema = json.loads(schemaFile.read())
     logging.debug("Validating the configuration file.")
     jsonschema.validate(data, schema)
+
+
+def validate_cli_version(config_data):
+    cli_version = utils.cli_version
+    config_version = config_data["gdk_version"]
+    if Version(cli_version) < Version(config_version):
+        update_command = f"pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v{config_version}"
+        raise Exception(
+            f"This gdk project requires gdk cli version '{config_version}' or above. Please update the cli using the command"
+            f" `{update_command}` before proceeding."
+        )
+    logging.debug(
+        f"This gdk project configuration (gdk-{config_version}) is compatible with the existing gdk cli version"
+        f" (gdk-{cli_version})."
+    )
 
 
 def _get_project_config_file():
