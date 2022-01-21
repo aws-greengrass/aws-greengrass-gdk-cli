@@ -10,13 +10,16 @@ import yaml
 from botocore.exceptions import ClientError
 
 
-def run(args):
+def run(command_args):
     try:
 
         project_config["account_number"] = get_account_number()
-        project_config["bucket"] = "{}-{}-{}".format(
-            project_config["bucket"], project_config["region"], project_config["account_number"]
-        )
+        if command_args["bucket"]:
+            project_config["bucket"] = command_args["bucket"]
+        else:
+            project_config["bucket"] = "{}-{}-{}".format(
+                project_config["bucket"], project_config["region"], project_config["account_number"]
+            )
 
         component_name = project_config["component_name"]
         component_version = get_component_version_from_config()

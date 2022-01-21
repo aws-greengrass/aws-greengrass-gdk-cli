@@ -75,7 +75,16 @@
         "help": "Build GreengrassV2 component artifacts and recipes from its source code."
     },
     "publish": {
-        "help": "Create a new version of a GreengrassV2 component from its built artifacts and recipes."
+        "help": "Create a new version of a GreengrassV2 component from its built artifacts and recipes.",
+        "arguments": {
+            "bucket": {
+                "name": [
+                    "-b",
+                    "--bucket"
+                ],
+                "help": "Name of the s3 bucket to use for uploading component artifacts."
+            }
+        }
     },
     "list": {
         "help": "List all the available component templates and repositories from Greengrass Software Catalog",
