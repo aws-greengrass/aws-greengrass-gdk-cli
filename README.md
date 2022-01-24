@@ -19,7 +19,7 @@ Please follow the [GDK CLI public documentation](https://docs.aws.amazon.com/gre
 
 To install the latest version of CLI using this git repository and pip, run the following command
 
-`pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git`
+`pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1.0.0`
 
 Run `gdk --help` to check if the cli tool is successfully installed.
 
