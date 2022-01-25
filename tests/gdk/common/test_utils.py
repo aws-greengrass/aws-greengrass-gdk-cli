@@ -132,7 +132,7 @@ def test_get_latest_cli_version_invalid_request(mocker):
     mock_response = mocker.Mock(status_code=200, text=lambda: res_text)
     mock_get_version = mocker.patch("requests.get", return_value=mock_response, side_effect=HTTPError("hi"))
 
-    assert utils.get_latest_cli_version() == "1.0.0"
+    assert utils.get_latest_cli_version() == utils.cli_version
     assert mock_get_version.called
 
 
@@ -150,3 +150,11 @@ def test_cli_version_check_latest_available(mocker):
     utils.cli_version_check()
     assert mock_get_latest_cli_version.called
     assert spy_log.call_count == 1
+
+
+def test_cli_version_check_latest_available_dev(mocker):
+    mock_get_latest_cli_version = mocker.patch("gdk.common.utils.get_latest_cli_version", return_value="1000.0.0-dev")
+    spy_log = mocker.spy(logging, "info")
+    utils.cli_version_check()
+    assert mock_get_latest_cli_version.called
+    assert spy_log.call_count == 0

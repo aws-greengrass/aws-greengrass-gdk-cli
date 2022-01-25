@@ -123,7 +123,7 @@ def get_latest_cli_version():
 def cli_version_check():
     latest_cli_version = get_latest_cli_version()
     update_command = f"pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v{latest_cli_version}"
-    if Version(cli_version) < Version(latest_cli_version):
+    if Version(cli_version) < Version(latest_cli_version) and dev_version_identifier not in latest_cli_version:
         logging.info(
             f"New version of GDK CLI - {latest_cli_version} is available. Please update the cli using the command"
             f" `{update_command}`.\n"
@@ -137,3 +137,4 @@ log_format = "[%(asctime)s] %(levelname)s - %(message)s"
 doc_link_device_role = "https://docs.aws.amazon.com/greengrass/v2/developerguide/device-service-role.html"
 cli_version = version.__version__
 latest_cli_version_file = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-gdk-cli/main/gdk/_version.py"
+dev_version_identifier = "-dev"
