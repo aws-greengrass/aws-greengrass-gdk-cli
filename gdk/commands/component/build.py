@@ -276,14 +276,12 @@ def copy_artifacts_and_update_uris():
     logging.info("Copying over the build artifacts to the greengrass component artifacts build folder.")
     logging.info("Updating artifact URIs in the recipe.")
     parsed_component_recipe = project_config["parsed_component_recipe"]
-    gg_build_component_artifacts_dir = project_config["gg_build_component_artifacts_dir"]
-    artifact_uri = "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
     if "Manifests" not in parsed_component_recipe:
         logging.debug("No 'Manifests' key in the recipe.")
         return
-
     build_folders = _get_build_folder_by_build_system()
     manifests = parsed_component_recipe["Manifests"]
+    s3_client = None
     for manifest in manifests:
         if "Artifacts" not in manifest:
             logging.debug("No 'Artifacts' key in the recipe manifest.")
@@ -294,34 +292,50 @@ def copy_artifacts_and_update_uris():
                 logging.debug("No 'URI' found in the recipe artifacts.")
                 continue
             # Skip non-s3 URIs in the recipe. Eg docker URIs
-            if not artifact["URI"].startswith("s3://"):
+            if not artifact["URI"].startswith(utils.s3_prefix):
                 continue
-            artifact_file = Path(artifact["URI"]).name
-            artifact_found = False
-            # If the artifact is present in build system specific build folder, copy it to greengrass artifacts build folder
-            for build_folder in build_folders:
-                build_files = list(build_folder.glob(artifact_file))
-                if len(build_files) == 1:
-                    logging.debug(
-                        "Copying file '{}' from '{}' to '{}'.".format(
-                            artifact_file, build_folder, gg_build_component_artifacts_dir
-                        )
+            if not is_artifact_in_build(artifact, build_folders):
+                if not s3_client:
+                    s3_client = project_utils.create_s3_client(project_config["region"])
+                if not is_artifact_in_s3(s3_client, artifact["URI"]):
+                    raise Exception(
+                        "Could not find artifact with URI '{}' on s3 or inside the build folders.".format(artifact["URI"])
                     )
-                    shutil.copy(build_files[0], gg_build_component_artifacts_dir)
-                    logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
-                    artifact["URI"] = f"{artifact_uri}/{artifact_file}"
-                    artifact_found = True
-                    break
-                else:
-                    logging.debug(
-                        f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
-                        f" '{build_folder}'."
-                    )
-            if not artifact_found:
-                raise Exception(
-                    f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folders."
-                    f" '{build_folders}'."
-                )
+
+
+def is_artifact_in_build(artifact, build_folders):
+    artifact_uri = f"{utils.s3_prefix}BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
+    gg_build_component_artifacts_dir = project_config["gg_build_component_artifacts_dir"]
+    artifact_file = Path(artifact["URI"]).name
+    # If the artifact is present in build system specific build folder, copy it to greengrass artifacts build folder
+    for build_folder in build_folders:
+        build_files = list(build_folder.glob(artifact_file))
+        if len(build_files) == 1:
+            logging.debug(
+                "Copying file '{}' from '{}' to '{}'.".format(artifact_file, build_folder, gg_build_component_artifacts_dir)
+            )
+            shutil.copy(build_files[0], gg_build_component_artifacts_dir)
+            logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
+            artifact["URI"] = f"{artifact_uri}/{artifact_file}"
+            return True
+        else:
+            logging.debug(
+                f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
+                f" '{build_folder}'."
+            )
+    logging.warning(f"Could not find the artifact file '{artifact_file}' in the build folder '{build_folders}'.")
+    return False
+
+
+def is_artifact_in_s3(s3_client, artifact_uri):
+    bucket_name, object_key = artifact_uri.replace(utils.s3_prefix, "").split("/", 1)
+    try:
+        response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
+        if response["HTTPStatusCode"] == 200:
+            return True
+    except Exception as e:
+        logging.warning(f"Could not find the artifact '{artifact_uri}' on s3.\nError details: {e}")
+    return False
 
 
 def create_build_recipe_file():
