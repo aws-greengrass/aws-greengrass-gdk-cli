@@ -45,7 +45,9 @@ def call_action_by_name(method_name, d_args):
         logging.debug("Calling '{}'.".format(method_name))
         method_to_call(d_args)
     else:
-        raise Exception("{} does not support the given command.".format(consts.cli_tool_name))
+        gdk.CLIParser.cli_parser.error(
+            f"{consts.cli_tool_name}-v{gdk.CLIParser.utils.cli_version} does not support the given command."
+        )
 
 
 def get_method_from_command(d_args, command, method_name):

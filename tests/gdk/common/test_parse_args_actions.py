@@ -115,10 +115,8 @@ def test_call_action_by_name_invalid(mocker):
     # Action is not called by its name when the method name doesn't exists in the methods file
     test_d_args = {"gdk": "component", "component": "init", "init": None, "lang": "python", "template": "name"}
     method_name = "invalid_method_name"
-    with pytest.raises(Exception) as e_info:
+    with pytest.raises(SystemExit):
         actions.call_action_by_name(method_name, test_d_args)
-    expected_err_message = "{} does not support the given command.".format(consts.cli_tool_name)
-    assert e_info.value.args[0] == expected_err_message
 
 
 def test_dic_of_conflicting_args():

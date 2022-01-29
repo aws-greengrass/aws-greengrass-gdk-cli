@@ -67,8 +67,10 @@ def upload_artifacts_s3(component_name, component_version):
             f" artifacts. For more information, see {utils.doc_link_device_role}."
         )
 
-        create_bucket(bucket, region)
         build_component_artifacts = list(project_config["gg_build_component_artifacts_dir"].iterdir())
+        # Create bucket only when there's something to upload.
+        if len(build_component_artifacts) != 0:
+            create_bucket(bucket, region)
         for artifact in build_component_artifacts:
             s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
             logging.debug("Uploading artifact '{}' to the bucket '{}'.".format(artifact.resolve(), bucket))
