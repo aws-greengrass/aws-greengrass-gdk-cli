@@ -429,8 +429,7 @@ def test_get_next_patch_component_version_exception(mocker):
     assert mock_get_next_patch_component_version.call_count == 1
     assert (
         e.value.args[0]
-        == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during"
-        " publish.\nlisting error"
+        == "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during publish.\nlisting error"
     )
 
 
@@ -500,7 +499,7 @@ def test_upload_artifacts_no_artifacts(mocker):
     mock_upload_file = mocker.patch("boto3.client.upload_file", return_value=response)
     publish.upload_artifacts_s3("name", "version")
     assert mock_iter_dir.call_count == 1
-    assert mock_create_bucket.call_count == 1
+    assert not mock_create_bucket.called
     assert not mock_upload_file.called
 
 

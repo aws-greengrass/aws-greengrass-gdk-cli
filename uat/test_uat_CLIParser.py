@@ -4,8 +4,6 @@ import subprocess as sp
 import tempfile
 from pathlib import Path
 
-import gdk.common.exceptions.error_messages as error_messages
-
 
 def test_list_template():
     check_list_template = sp.run(["gdk", "component", "list", "--template"], check=True, stdout=sp.PIPE)
@@ -81,5 +79,4 @@ def test_build_template_zip():
         .resolve()
     )
 
-    recipes_path = Path(path_HelloWorld).joinpath("greengrass-build").joinpath("recipes").joinpath("recipe.yaml").resolve()
     assert artifact_path.exists()
