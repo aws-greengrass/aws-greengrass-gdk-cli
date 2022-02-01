@@ -137,3 +137,4 @@ log_format = "[%(asctime)s] %(levelname)s - %(message)s"
 doc_link_device_role = "https://docs.aws.amazon.com/greengrass/v2/developerguide/device-service-role.html"
 cli_version = version.__version__
 latest_cli_version_file = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-gdk-cli/main/gdk/_version.py"
+s3_prefix = "s3://"

@@ -312,7 +312,7 @@ def update_and_create_recipe_file(component_name, component_version):
             )
     gg_build_component_artifacts = project_config["gg_build_component_artifacts_dir"]
     bucket = project_config["bucket"]
-    artifact_uri = f"s3://{bucket}/{component_name}/{component_version}"
+    artifact_uri = f"{utils.s3_prefix}{bucket}/{component_name}/{component_version}"
 
     if "Manifests" not in parsed_component_recipe:
         logging.debug("No 'Manifests' key in the recipe.")
