@@ -36,7 +36,9 @@ jobs:
       - name: Testing CLI (Runs both unit and integration tests)
         run: |
           if ( Test-Path test-requirements.txt ) { pip install -r test-requirements.txt; }
-          coverage run --source=gdk -m pytest -v -s . && coverage report --show-missing --fail-under=70
+          coverage run --source=gdk -m pytest -v -s . && coverage xml --fail-under=70
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
       - name: Lint with flake8
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -67,7 +69,9 @@ jobs:
       - name: Testing CLI (Runs both unit and integration tests)
         run: |
           if [ -f test-requirements.txt ]; then pip install -r test-requirements.txt; fi
-          coverage run --source=gdk -m pytest -v -s . && coverage report --show-missing --fail-under=70
+          coverage run --source=gdk -m pytest -v -s . && coverage xml --fail-under=70
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
       - name: Lint with flake8
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -97,7 +101,9 @@ jobs:
       - name: Testing CLI (Runs both unit and integration tests)
         run: |
           if [ -f test-requirements.txt ]; then pip install -r test-requirements.txt; fi
-          coverage run --source=gdk -m pytest -v -s . && coverage report --show-missing --fail-under=70
+          coverage run --source=gdk -m pytest -v -s . && coverage xml --fail-under=70
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
       - name: Lint with flake8
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
