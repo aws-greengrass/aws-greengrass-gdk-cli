@@ -8,22 +8,24 @@ on:
   pull_request:
     branches: '*'
 
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  build-on-windows:
-    runs-on: ${{ matrix.config.os }}
+  build:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: [3.6]
-        config:
-          - os: windows-latest
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    name: Build on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: Validate commit messages 
+        uses: wagoid/commitlint-github-action@v4
+        if: matrix.os == 'ubuntu-latest'
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -33,79 +35,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
           gdk --help
-      - name: Testing CLI (Runs both unit and integration tests)
-        run: |
-          if ( Test-Path test-requirements.txt ) { pip install -r test-requirements.txt; }
-          coverage run --source=gdk -m pytest -v -s . && coverage xml --fail-under=70
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
       - name: Lint with flake8
         run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-  build-on-ubuntu:
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      matrix:
-        python-version: [3.6]
-        config:
-          - os: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install CLI and verify
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
-          gdk --help
+          pip3 install flake8
+          # The GitHub editor is 127 chars wide
+          flake8 . --count --max-complexity=10 --max-line-length=127 --show-source --statistics
       - name: Testing CLI (Runs both unit and integration tests)
         run: |
-          if [ -f test-requirements.txt ]; then pip install -r test-requirements.txt; fi
-          coverage run --source=gdk -m pytest -v -s . && coverage xml --fail-under=70
+          pip install -r test-requirements.txt
+          coverage run --source=gdk -m pytest -v -s tests integration_tests && coverage xml --fail-under=90
+      - name: Run UATs 
+        run:
+          coverage run --source=gdk -m pytest -v -s uat
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
-      - name: Lint with flake8
-        run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-  build-on-macos:
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      matrix:
-        python-version: [3.6]
-        config:
-          - os: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install CLI and verify
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
-          gdk --help
-      - name: Testing CLI (Runs both unit and integration tests)
-        run: |
-          if [ -f test-requirements.txt ]; then pip install -r test-requirements.txt; fi
-          coverage run --source=gdk -m pytest -v -s . && coverage xml --fail-under=70
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-      - name: Lint with flake8
-        run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
