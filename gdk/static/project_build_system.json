@@ -5,6 +5,11 @@
             "clean",
             "package"
         ],
+        "build_command_win": [
+            "mvn.cmd",
+            "clean",
+            "package"
+        ],
         "build_folder": [
             "target"
         ]
@@ -12,6 +17,10 @@
     "gradle": {
         "build_command": [
             "gradle",
+            "build"
+        ],
+        "build_command_win": [
+            "gradlew",
             "build"
         ],
         "build_folder": [

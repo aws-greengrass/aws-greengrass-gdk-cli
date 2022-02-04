@@ -148,6 +148,7 @@ def test_create_gg_build_directories(mocker):
 def test_run_build_command_with_error_not_zip(mocker):
     mock_build_system_zip = mocker.patch("gdk.commands.component.build._build_system_zip", return_value=None)
     mock_subprocess_run = mocker.patch("subprocess.run", return_value=None, side_effect=Error("some error"))
+    mock_platform_system = mocker.patch("platform.system", return_value=None)
     import gdk.commands.component.build as build
 
     build.project_config["component_build_config"]["build_system"] = "maven"
@@ -155,6 +156,7 @@ def test_run_build_command_with_error_not_zip(mocker):
         build.run_build_command()
     assert not mock_build_system_zip.called
     assert mock_subprocess_run.called
+    assert mock_platform_system.called
     assert "Error building the component with the given build system." in e.value.args[0]
 
 
@@ -162,6 +164,7 @@ def test_run_build_command_with_error_with_zip_build(mocker):
     mock_build_system_zip = mocker.patch(
         "gdk.commands.component.build._build_system_zip", return_value=None, side_effect=Error("some error")
     )
+    mock_platform_system = mocker.patch("platform.system", return_value=None)
     import gdk.commands.component.build as build
 
     build.project_config["component_build_config"]["build_system"] = "zip"
@@ -169,27 +172,43 @@ def test_run_build_command_with_error_with_zip_build(mocker):
         build.run_build_command()
     assert "Error building the component with the given build system." in e.value.args[0]
     assert mock_build_system_zip.called
+    assert mock_platform_system.called
 
 
 def test_run_build_command_not_zip_build(mocker):
     mock_build_system_zip = mocker.patch("gdk.commands.component.build._build_system_zip", return_value=None)
     mock_subprocess_run = mocker.patch("subprocess.run", return_value=None)
+    mock_platform_system = mocker.patch("platform.system", return_value=None)
     import gdk.commands.component.build as build
 
     build.project_config["component_build_config"]["build_system"] = "maven"
     build.run_build_command()
     assert not mock_build_system_zip.called
     assert mock_subprocess_run.called
+    assert mock_platform_system.called
+
+
+def test_run_build_command_windows(mocker):
+    mock_platform_system = mocker.patch("platform.system", return_value="Windows")
+    mock_subprocess_run = mocker.patch("subprocess.run", return_value=None)
+    import gdk.commands.component.build as build
+
+    build.project_config["component_build_config"]["build_system"] = "maven"
+    build.run_build_command()
+    assert mock_subprocess_run.called
+    assert mock_platform_system.called
 
 
 def test_run_build_command_zip_build(mocker):
     mock_build_system_zip = mocker.patch("gdk.commands.component.build._build_system_zip", return_value=None)
+    mock_platform_system = mocker.patch("platform.system", return_value=None)
     mock_subprocess_run = mocker.patch("subprocess.run", return_value=None)
     import gdk.commands.component.build as build
 
     build.project_config["component_build_config"]["build_system"] = "zip"
     build.run_build_command()
     assert not mock_subprocess_run.called
+    assert mock_platform_system.called
     mock_build_system_zip.assert_called_with()
 
 
@@ -199,6 +218,7 @@ def test_build_system_zip_valid(mocker):
     mock_build_info = mocker.patch(
         "gdk.commands.component.build._get_build_folder_by_build_system", return_value={zip_build_path}
     )
+
     mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
     mock_copytree = mocker.patch("shutil.copytree")
     mock_subprocess_run = mocker.patch("subprocess.run", return_value=None)
@@ -335,6 +355,37 @@ def test_build_system_zip_error_clean_dir(mocker):
     assert mock_clean_dir.called
     assert not mock_copytree.called
     assert not mock_make_archive.called
+
+
+def test_get_build_cmd_from_platform_non_windows(mocker):
+    mock_platform_system = mocker.patch("platform.system", return_value=None)
+    import gdk.commands.component.build as build
+
+    build_command = build.get_build_cmd_from_platform("maven")
+    assert build_command == ["mvn", "clean", "package"]
+
+    build_command = build.get_build_cmd_from_platform("gradle")
+    assert build_command == ["gradle", "build"]
+
+    build_command = build.get_build_cmd_from_platform("zip")
+    assert build_command == ["zip"]
+
+    assert mock_platform_system.call_count == 3
+
+
+def test_get_build_cmd_from_platform_windows(mocker):
+    mock_platform_system = mocker.patch("platform.system", return_value="Windows")
+    import gdk.commands.component.build as build
+
+    build_command = build.get_build_cmd_from_platform("maven")
+    assert build_command == ["mvn.cmd", "clean", "package"]
+
+    build_command = build.get_build_cmd_from_platform("gradle")
+    assert build_command == ["gradlew", "build"]
+
+    build_command = build.get_build_cmd_from_platform("zip")
+    assert build_command == ["zip"]
+    assert mock_platform_system.call_count == 3
 
 
 def test_copy_artifacts_and_update_uris_valid(mocker):

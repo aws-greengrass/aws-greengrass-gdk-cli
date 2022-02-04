@@ -1,5 +1,6 @@
 import json
 import logging
+import platform
 import shutil
 import subprocess as sp
 from pathlib import Path
@@ -102,6 +103,24 @@ def default_build_component():
         raise Exception("""{}\n{}""".format(error_messages.BUILD_FAILED, e))
 
 
+def get_build_cmd_from_platform(build_system):
+    """
+    Gets build command of the build system specific to the platform on which the command is running.
+
+    Parameters
+    ----------
+        build_system(string): build system specified in the gdk config file
+
+    Returns
+    -------
+        build_command(list): List of build commands of the build system specific to the platform.
+    """
+    platform_sys = platform.system()
+    if platform_sys == "Windows" and "build_command_win" in supported_build_sytems[build_system]:
+        return supported_build_sytems[build_system]["build_command_win"]
+    return supported_build_sytems[build_system]["build_command"]
+
+
 def run_build_command():
     """
     Runs the build command based on the configuration in 'project_build_system.json' file and component project build
@@ -120,12 +139,12 @@ def run_build_command():
     """
     try:
         build_system = project_config["component_build_config"]["build_system"]
-        build_command = supported_build_sytems[build_system]["build_command"]
+        build_command = get_build_cmd_from_platform(build_system)
         logging.warning(
             f"This component is identified as using '{build_system}' build system. If this is incorrect, please exit and"
             f" specify custom build command in the '{consts.cli_project_config_file}'."
         )
-
+        print(build_command)
         if build_system == "zip":
             logging.info("Zipping source code files of the component.")
             _build_system_zip()
