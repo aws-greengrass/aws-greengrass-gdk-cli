@@ -95,7 +95,7 @@ def default_build_component():
         run_build_command()
 
         # From the recipe, copy necessary artifacts (depends on build system) to the build folder .
-        copy_artifacts_and_update_uris()
+        find_artifacts_and_update_uri()
 
         # Update recipe file with component configuration from project config file.
         create_build_recipe_file()
@@ -144,7 +144,6 @@ def run_build_command():
             f"This component is identified as using '{build_system}' build system. If this is incorrect, please exit and"
             f" specify custom build command in the '{consts.cli_project_config_file}'."
         )
-        print(build_command)
         if build_system == "zip":
             logging.info("Zipping source code files of the component.")
             _build_system_zip()
@@ -275,13 +274,14 @@ def get_build_folders(build_folder, build_file):
     return set(x.joinpath(*build_folder) for x in (set_build_folder & set_build_file))
 
 
-def copy_artifacts_and_update_uris():
+def find_artifacts_and_update_uri():
     """
-    Copies over the build artifacts to the greengrass artifacts build folder and update URIs in the recipe.
+    The artifact URIs in the recipe are used to identify the artifacts in local build folders of the component or on s3.
 
-    The component artifacts created in the build process of the component are identied by the artifact URIs in
-    the recipe and copied over to the greengrass component's artifacts build folder. The parsed component
-    recipe file is also updated with the artifact URIs.
+    If the artifact is not found in the local build folders specific to the build system of the component, it is searched on
+    S3 with exact URI in the recipe.
+
+    Build command fails when the artifacts are neither not found in local both folders not on s3.
 
     Parameters
     ----------
@@ -323,6 +323,21 @@ def copy_artifacts_and_update_uris():
 
 
 def is_artifact_in_build(artifact, build_folders):
+    """
+    Copies over the build artifacts to the greengrass artifacts build folder and update URIs in the recipe.
+
+    The component artifacts in the recipe are looked up in the build folders specific to the build system of the component.
+    If the artifact is found, it is copied over to the greengrass artifacts build folder and the URI is updated in the
+    recipe and returns True. Otherwise, it returns False.
+
+    Parameters
+    ----------
+        artifact(dict): The artifact object in the recipe which contains URI and Unarchive type.
+        build_folders(list): Build folders specific to the build system of the component
+    Returns
+    -------
+        Bool: Returns True if the artifact is found in the local build folders of the component else False.
+    """
     artifact_uri = f"{utils.s3_prefix}BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
     gg_build_component_artifacts_dir = project_config["gg_build_component_artifacts_dir"]
     artifact_file = Path(artifact["URI"]).name
@@ -347,10 +362,21 @@ def is_artifact_in_build(artifact, build_folders):
 
 
 def is_artifact_in_s3(s3_client, artifact_uri):
+    """
+    Uses exact artifact uri to find the artifact on s3. Returns if the artifact is found in S3 else False.
+
+    Parameters
+    ----------
+        s3_client(boto3.client): S3 client created specific to the region in the gdk config.
+        artifact_uri(string): S3 URI to look up for
+    Returns
+    -------
+        Bool: Returns if the artifact is found in S3 bucket else False.
+    """
     bucket_name, object_key = artifact_uri.replace(utils.s3_prefix, "").split("/", 1)
     try:
         response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
-        if response["HTTPStatusCode"] == 200:
+        if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
             return True
     except Exception as e:
         logging.warning(f"Could not find the artifact '{artifact_uri}' on s3.\nError details: {e}")
