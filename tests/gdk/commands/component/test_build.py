@@ -388,7 +388,7 @@ def test_get_build_cmd_from_platform_windows(mocker):
     assert mock_platform_system.call_count == 3
 
 
-def test_copy_artifacts_and_update_uris_valid(mocker):
+def test_find_artifacts_and_update_uri_valid(mocker):
     zip_build_path = [Path("zip-build").resolve()]
     mock_build_info = mocker.patch(
         "gdk.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
@@ -399,14 +399,14 @@ def test_copy_artifacts_and_update_uris_valid(mocker):
 
     import gdk.commands.component.build as build
 
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert mock_build_info.assert_called_once
     assert mock_glob.assert_called_once
     assert mock_shutil_copy.called
     assert not mock_is_artifact_in_s3.called
 
 
-def test_copy_artifacts_and_update_uris_recipe_uri_matches(mocker):
+def test_find_artifacts_and_update_uri_recipe_uri_matches(mocker):
     # Copy only if the uri in recipe matches the artifact in build folder
     zip_build_path = [Path("zip-build").resolve()]
     mock_build_info = mocker.patch(
@@ -418,7 +418,7 @@ def test_copy_artifacts_and_update_uris_recipe_uri_matches(mocker):
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3", return_value=False)
     import gdk.commands.component.build as build
 
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert mock_shutil_copy.called
     assert mock_build_info.assert_called_once
     assert mock_glob.assert_called_once
@@ -426,7 +426,7 @@ def test_copy_artifacts_and_update_uris_recipe_uri_matches(mocker):
     assert not mock_is_artifact_in_s3.called
 
 
-def test_copy_artifacts_and_update_uris_recipe_uri_not_matches_all(mocker):
+def test_find_artifacts_and_update_uri_recipe_uri_not_matches_all(mocker):
     # Do not copy if the uri in recipe doesnt match the artifact in build folder
 
     zip_build_path = [Path("zip-build").resolve()]
@@ -439,7 +439,7 @@ def test_copy_artifacts_and_update_uris_recipe_uri_not_matches_all(mocker):
 
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3", return_value=False)
     with pytest.raises(Exception) as e:
-        build.copy_artifacts_and_update_uris()
+        build.find_artifacts_and_update_uri()
 
     assert (
         "Could not find artifact with URI 's3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/hello_world.py' on s3 or inside"
@@ -452,7 +452,7 @@ def test_copy_artifacts_and_update_uris_recipe_uri_not_matches_all(mocker):
     assert mock_is_artifact_in_s3.called
 
 
-def test_copy_artifacts_and_update_uris_recipe_uri_not_matches_build_folder(mocker):
+def test_find_artifacts_and_update_uri_recipe_uri_not_matches_build_folder(mocker):
     # Do not copy if the uri in recipe doesnt match the artifact in build folder
 
     zip_build_path = [Path("zip-build").resolve()]
@@ -466,7 +466,7 @@ def test_copy_artifacts_and_update_uris_recipe_uri_not_matches_build_folder(mock
     mock_client = mocker.patch("boto3.client", return_value=None)
     mock_create_s3_client = mocker.patch("gdk.commands.component.project_utils.create_s3_client", return_value=mock_client)
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3", return_value=True)
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
 
     assert not mock_shutil_copy.called
     assert mock_build_info.assert_called_once
@@ -477,19 +477,19 @@ def test_copy_artifacts_and_update_uris_recipe_uri_not_matches_build_folder(mock
 
 def test_default_build_component(mocker):
     mock_run_build_command = mocker.patch("gdk.commands.component.build.run_build_command")
-    mock_copy_artifacts_and_update_uris = mocker.patch("gdk.commands.component.build.copy_artifacts_and_update_uris")
+    mock_find_artifacts_and_update_uri = mocker.patch("gdk.commands.component.build.find_artifacts_and_update_uri")
     mock_create_build_recipe_file = mocker.patch("gdk.commands.component.build.create_build_recipe_file")
     import gdk.commands.component.build as build
 
     build.default_build_component()
     assert mock_run_build_command.assert_called_once
-    assert mock_copy_artifacts_and_update_uris.assert_called_once
+    assert mock_find_artifacts_and_update_uri.assert_called_once
     assert mock_create_build_recipe_file.assert_called_once
 
 
 def test_default_build_component_error_run_build_command(mocker):
     mock_run_build_command = mocker.patch("gdk.commands.component.build.run_build_command", side_effect=Error("command"))
-    mock_copy_artifacts_and_update_uris = mocker.patch("gdk.commands.component.build.copy_artifacts_and_update_uris")
+    mock_find_artifacts_and_update_uri = mocker.patch("gdk.commands.component.build.find_artifacts_and_update_uri")
     mock_create_build_recipe_file = mocker.patch("gdk.commands.component.build.create_build_recipe_file")
     import gdk.commands.component.build as build
 
@@ -499,14 +499,14 @@ def test_default_build_component_error_run_build_command(mocker):
     assert "\ncommand" in e.value.args[0]
     assert error_messages.BUILD_FAILED in e.value.args[0]
     assert mock_run_build_command.assert_called_once
-    assert not mock_copy_artifacts_and_update_uris.called
+    assert not mock_find_artifacts_and_update_uri.called
     assert not mock_create_build_recipe_file.called
 
 
-def test_default_build_component_error_copy_artifacts_and_update_uris(mocker):
+def test_default_build_component_error_find_artifacts_and_update_uri(mocker):
     mock_run_build_command = mocker.patch("gdk.commands.component.build.run_build_command")
-    mock_copy_artifacts_and_update_uris = mocker.patch(
-        "gdk.commands.component.build.copy_artifacts_and_update_uris", side_effect=Error("copying")
+    mock_find_artifacts_and_update_uri = mocker.patch(
+        "gdk.commands.component.build.find_artifacts_and_update_uri", side_effect=Error("copying")
     )
     mock_create_build_recipe_file = mocker.patch("gdk.commands.component.build.create_build_recipe_file")
     import gdk.commands.component.build as build
@@ -517,13 +517,13 @@ def test_default_build_component_error_copy_artifacts_and_update_uris(mocker):
     assert "\ncopy" in e.value.args[0]
     assert error_messages.BUILD_FAILED in e.value.args[0]
     assert mock_run_build_command.assert_called_once
-    assert mock_copy_artifacts_and_update_uris.assert_called_once
+    assert mock_find_artifacts_and_update_uri.assert_called_once
     assert not mock_create_build_recipe_file.called
 
 
 def test_default_build_component_error_create_build_recipe_file(mocker):
     mock_run_build_command = mocker.patch("gdk.commands.component.build.run_build_command")
-    mock_copy_artifacts_and_update_uris = mocker.patch("gdk.commands.component.build.copy_artifacts_and_update_uris")
+    mock_find_artifacts_and_update_uri = mocker.patch("gdk.commands.component.build.find_artifacts_and_update_uri")
     mock_create_build_recipe_file = mocker.patch(
         "gdk.commands.component.build.create_build_recipe_file", side_effect=Error("recipe")
     )
@@ -535,7 +535,7 @@ def test_default_build_component_error_create_build_recipe_file(mocker):
     assert "\nrecipe" in e.value.args[0]
     assert error_messages.BUILD_FAILED in e.value.args[0]
     assert mock_run_build_command.assert_called_once
-    assert mock_copy_artifacts_and_update_uris.assert_called_once
+    assert mock_find_artifacts_and_update_uri.assert_called_once
     assert mock_create_build_recipe_file.assert_called_once
 
 
@@ -567,7 +567,7 @@ def test_build_run_custom(mocker):
     assert mock_subprocess_run.called
 
 
-def test_copy_artifacts_and_update_uris_no_manifest_in_recipe(mocker):
+def test_find_artifacts_and_update_uri_no_manifest_in_recipe(mocker):
     # Nothing to copy if manifest file doesnt exist
     # recipe with no manifest key
 
@@ -589,13 +589,13 @@ def test_copy_artifacts_and_update_uris_no_manifest_in_recipe(mocker):
         "ComponentPublisher": "Amazon",
         "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
     }
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert not mock_build_info.called
     assert not mock_is_artifact_in_build.called
     assert not mock_is_artifact_in_s3.called
 
 
-def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
+def test_find_artifacts_and_update_uri_no_artifacts_in_recipe(mocker):
     # Nothing to copy if artifacts in recipe manifest don't exist
 
     import gdk.commands.component.build as build
@@ -622,13 +622,13 @@ def test_copy_artifacts_and_update_uris_no_artifacts_in_recipe(mocker):
         ],
     }
 
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert mock_build_info.called
     assert not mock_is_artifact_in_build.called
     assert not mock_is_artifact_in_s3.called
 
 
-def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
+def test_find_artifacts_and_update_uri_no_artifact_uri_in_recipe(mocker):
     # Nothing to copy if artifact uri don't exist in the recipe.
 
     import gdk.commands.component.build as build
@@ -656,7 +656,7 @@ def test_copy_artifacts_and_update_uris_no_artifact_uri_in_recipe(mocker):
         ],
     }
 
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert mock_build_info.called
     assert not mock_is_artifact_in_build.called
     assert not mock_is_artifact_in_s3.called
@@ -691,7 +691,7 @@ def test_is_artifact_in_build_artifact_not_exists(mocker):
     assert mock_glob.called
 
 
-def test_copy_artifacts_and_update_uris_docker_uri_in_recipe(mocker):
+def test_find_artifacts_and_update_uri_docker_uri_in_recipe(mocker):
     # Nothing to copy if artifact uri doesn't exist in the recipe.
 
     import gdk.commands.component.build as build
@@ -718,13 +718,13 @@ def test_copy_artifacts_and_update_uris_docker_uri_in_recipe(mocker):
         ],
     }
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3")
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert mock_build_info.called
     assert not mock_is_artifact_in_build.called
     assert not mock_is_artifact_in_s3.called
 
 
-def test_copy_artifacts_and_update_uris_mix_uri_in_recipe(mocker):
+def test_find_artifacts_and_update_uri_mix_uri_in_recipe(mocker):
     # Nothing to copy if artifact uri don't exist in the recipe.
 
     import gdk.commands.component.build as build
@@ -751,13 +751,13 @@ def test_copy_artifacts_and_update_uris_mix_uri_in_recipe(mocker):
     }
     mock_is_artifact_in_build = mocker.patch("gdk.commands.component.build.is_artifact_in_build", return_value=True)
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3")
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert mock_build_info.called
     assert mock_is_artifact_in_build.called
     assert not mock_is_artifact_in_s3.called
 
 
-def test_copy_artifacts_and_update_uris_mix_uri_in_recipe_call_counts(mocker):
+def test_find_artifacts_and_update_uri_mix_uri_in_recipe_call_counts(mocker):
     # Nothing to copy if artifact uri don't exist in the recipe.
 
     import gdk.commands.component.build as build
@@ -799,7 +799,7 @@ def test_copy_artifacts_and_update_uris_mix_uri_in_recipe_call_counts(mocker):
     mock_is_artifact_in_build = mocker.patch("gdk.commands.component.build.is_artifact_in_build", side_effect=artifact_found)
     mock_create_s3_client = mocker.patch("gdk.commands.component.project_utils.create_s3_client", return_value=mock_client)
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3")
-    build.copy_artifacts_and_update_uris()
+    build.find_artifacts_and_update_uri()
     assert mock_build_info.called
     # All 4 s3 uris are searched locally
     assert mock_is_artifact_in_build.call_count == 4
@@ -815,7 +815,7 @@ def test_is_artifact_in_s3_found(mocker):
     test_s3_uri = "s3://bucket/object-key.zip"
     mock_client = mocker.patch("boto3.client", return_value=None)
     mock_s3_client = mocker.patch("gdk.commands.component.project_utils.create_s3_client", return_value=mock_client)
-    mock_s3_head_object = mocker.patch("boto3.client.head_object", return_value={"HTTPStatusCode": 200})
+    mock_s3_head_object = mocker.patch("boto3.client.head_object", return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
     artifact_found = build.is_artifact_in_s3(mock_client, test_s3_uri)
     assert artifact_found
     assert not mock_s3_client.called
