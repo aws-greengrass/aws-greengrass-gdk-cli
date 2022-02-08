@@ -394,14 +394,14 @@ def test_find_artifacts_and_update_uri_valid(mocker):
         "gdk.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
     mock_shutil_copy = mocker.patch("shutil.copy")
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[Path(".").joinpath("hello_world.py")])
+    mock_is_file = mocker.patch("pathlib.Path.is_file", return_value=True)
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3", return_value=False)
 
     import gdk.commands.component.build as build
 
     build.find_artifacts_and_update_uri()
     assert mock_build_info.assert_called_once
-    assert mock_glob.assert_called_once
+    assert mock_is_file.assert_called_once
     assert mock_shutil_copy.called
     assert not mock_is_artifact_in_s3.called
 
@@ -412,17 +412,18 @@ def test_find_artifacts_and_update_uri_recipe_uri_matches(mocker):
     mock_build_info = mocker.patch(
         "gdk.commands.component.build._get_build_folder_by_build_system", return_value=zip_build_path
     )
-    mock_iter_dir_list = [Path("hello_world.py").resolve()]
     mock_shutil_copy = mocker.patch("shutil.copy")
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+    mock_is_file = mocker.patch("pathlib.Path.is_file", return_value=True)
     mock_is_artifact_in_s3 = mocker.patch("gdk.commands.component.build.is_artifact_in_s3", return_value=False)
     import gdk.commands.component.build as build
 
     build.find_artifacts_and_update_uri()
     assert mock_shutil_copy.called
     assert mock_build_info.assert_called_once
-    assert mock_glob.assert_called_once
-    mock_shutil_copy.assert_called_with(Path("hello_world.py").resolve(), json_values["gg_build_component_artifacts_dir"])
+    assert mock_is_file.assert_called_once
+    mock_shutil_copy.assert_called_with(
+        Path("zip-build").joinpath("hello_world.py").resolve(), json_values["gg_build_component_artifacts_dir"]
+    )
     assert not mock_is_artifact_in_s3.called
 
 
@@ -667,13 +668,12 @@ def test_is_artifact_in_build_artifact_exists(mocker):
 
     zip_build_path = Path("zip-build").resolve()
 
-    mock_iter_dir_list = Path("hello_world.py").resolve()
     mock_shutil_copy = mocker.patch("shutil.copy")
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[mock_iter_dir_list])
+    mock_is_file = mocker.patch("pathlib.Path.is_file", return_value=True)
     artifact = {"URI": "s3://hello_world.py"}
     artifact_found = build.is_artifact_in_build(artifact, {zip_build_path})
     assert mock_shutil_copy.called
-    assert mock_glob.called
+    assert mock_is_file.called
     assert artifact_found
 
 
@@ -683,12 +683,12 @@ def test_is_artifact_in_build_artifact_not_exists(mocker):
     zip_build_path = Path("zip-build").resolve()
 
     mock_shutil_copy = mocker.patch("shutil.copy")
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[])
+    mock_is_file = mocker.patch("pathlib.Path.is_file", return_value=False)
     artifact = {"URI": "s3://artifact-not-exists.py"}
     artifact_found = build.is_artifact_in_build(artifact, {zip_build_path})
     assert not mock_shutil_copy.called
     assert not artifact_found
-    assert mock_glob.called
+    assert mock_is_file.called
 
 
 def test_find_artifacts_and_update_uri_docker_uri_in_recipe(mocker):
