@@ -340,24 +340,26 @@ def is_artifact_in_build(artifact, build_folders):
     """
     artifact_uri = f"{utils.s3_prefix}BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
     gg_build_component_artifacts_dir = project_config["gg_build_component_artifacts_dir"]
-    artifact_file = Path(artifact["URI"]).name
+    artifact_file_name = Path(artifact["URI"]).name
     # If the artifact is present in build system specific build folder, copy it to greengrass artifacts build folder
     for build_folder in build_folders:
-        build_files = list(build_folder.glob(artifact_file))
-        if len(build_files) == 1:
+        artifact_file = Path(build_folder).joinpath(artifact_file_name).resolve()
+        if artifact_file.is_file():
             logging.debug(
-                "Copying file '{}' from '{}' to '{}'.".format(artifact_file, build_folder, gg_build_component_artifacts_dir)
+                "Copying file '{}' from '{}' to '{}'.".format(
+                    artifact_file_name, build_folder, gg_build_component_artifacts_dir
+                )
             )
-            shutil.copy(build_files[0], gg_build_component_artifacts_dir)
-            logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
-            artifact["URI"] = f"{artifact_uri}/{artifact_file}"
+            shutil.copy(artifact_file, gg_build_component_artifacts_dir)
+            logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file_name))
+            artifact["URI"] = f"{artifact_uri}/{artifact_file_name}"
             return True
         else:
             logging.debug(
-                f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
+                f"Could not find the artifact file specified in the recipe '{artifact_file_name}' inside the build folder"
                 f" '{build_folder}'."
             )
-    logging.warning(f"Could not find the artifact file '{artifact_file}' in the build folder '{build_folders}'.")
+    logging.warning(f"Could not find the artifact file '{artifact_file_name}' in the build folder '{build_folders}'.")
     return False
 
 
