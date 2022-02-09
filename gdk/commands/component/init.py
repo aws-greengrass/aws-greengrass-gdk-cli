@@ -31,6 +31,9 @@ def run(command_args):
     -------
         None
     """
+    # Check if the command args are conflicting
+    if parse_args_actions.conflicting_arg_groups(command_args, "init"):
+        raise Exception(error_messages.INIT_WITH_CONFLICTING_ARGS)
     project_dir = utils.current_directory
     if not command_args["name"]:
         # Check if directory is not empty
@@ -44,10 +47,6 @@ def run(command_args):
             Path(project_dir).mkdir(exist_ok=False)
         except FileExistsError:
             raise Exception(error_messages.INIT_DIR_EXISTS_ERROR.format(project_dir.name))
-
-    # Check if the command args are conflicting
-    if parse_args_actions.conflicting_arg_groups(command_args, "init"):
-        raise Exception(error_messages.INIT_WITH_CONFLICTING_ARGS)
 
     # Choose appropriate action based on commands
     if command_args["template"] and command_args["language"]:
