@@ -19,7 +19,7 @@ def test_init_run_with_non_empty_directory(mocker):
     assert e.value.args[0] == error_messages.INIT_NON_EMPTY_DIR_ERROR
 
     assert mock_is_directory_empty.call_count == 1
-    assert mock_conflicting_args.call_count == 0
+    assert mock_conflicting_args.call_count == 1
     assert mock_init_with_template.call_count == 0
     assert mock_init_with_repository.call_count == 0
 
@@ -90,7 +90,7 @@ def test_init_run_with_conflicting_args(mocker):
 
     assert e.value.args[0] == error_messages.INIT_WITH_CONFLICTING_ARGS
 
-    assert mock_is_directory_empty.call_count == 1
+    assert mock_is_directory_empty.call_count == 0
     assert mock_init_with_template.call_count == 0
     assert mock_init_with_repository.call_count == 0
     assert mock_conflicting_args.call_count == 1
