@@ -18,6 +18,9 @@ jobs:
       matrix:
         python-version: [3.6]
         os: [windows-latest, ubuntu-latest, macos-latest]
+    permissions:
+      id-token: write
+      contents: read
     name: Build on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -44,6 +47,11 @@ jobs:
         run: |
           pip install -r test-requirements.txt
           coverage run --source=gdk -m pytest -v -s tests integration_tests && coverage xml --fail-under=90
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{secrets.GDK_WORKFLOW_AWS_ROLE}}
+          aws-region: us-east-1
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
         with:
