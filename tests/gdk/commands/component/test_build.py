@@ -381,7 +381,7 @@ def test_get_build_cmd_from_platform_windows(mocker):
     assert build_command == ["mvn.cmd", "clean", "package"]
 
     build_command = build.get_build_cmd_from_platform("gradle")
-    assert build_command == ["gradlew", "build"]
+    assert build_command == ["gradle", "build"]
 
     build_command = build.get_build_cmd_from_platform("zip")
     assert build_command == ["zip"]
@@ -862,45 +862,42 @@ def test_get_build_folders_maven(mocker):
     import gdk.commands.component.build as build
 
     dummy_build_file_paths = [Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])]
-    dummy_build_folder_paths = [
-        Path("/").joinpath("path1"),
-        Path("/").joinpath(*["path1", "path2"]),
-        Path("/").joinpath(*["path3", "path1"]),
-    ]
 
     def get_files(*args, **kwargs):
         if args[0] == "pom.xml":
             return dummy_build_file_paths
-        else:
-            return dummy_build_folder_paths
 
-    mock_rglob = mocker.patch("pathlib.Path.rglob", side_effect=get_files)
-    build.project_config["component_build_config"] = {"build_system": "maven"}
-    maven_b_paths = build.get_build_folders(["target"], "pom.xml")
-    mock_rglob.assert_any_call("pom.xml")
-    mock_rglob.assert_any_call("target")
-    assert maven_b_paths == {Path("/").joinpath(*["target"]), Path("/").joinpath(*["path1", "target"])}
+    def mock_exists(self):
+        return str(self) == str(Path("/").joinpath(*["path1", "target"]).resolve())
+
+    with patch.object(Path, "exists", mock_exists):
+        mock_rglob = mocker.patch("pathlib.Path.rglob", side_effect=get_files)
+        build.project_config["component_build_config"] = {"build_system": "maven"}
+        maven_b_paths = build.get_build_folders(["target"], "pom.xml")
+        mock_rglob.assert_any_call("pom.xml")
+        assert maven_b_paths == {Path("/").joinpath(*["path1", "target"]).resolve()}
 
 
 def test_get_build_folders_gradle(mocker):
     import gdk.commands.component.build as build
 
     dummy_build_file_paths = [Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])]
-    dummy_build_folder_paths = [
-        Path("/").joinpath("path1"),
-        Path("/").joinpath(*["path1", "path2"]),
-        Path("/").joinpath(*["path3", "path1"]),
-    ]
 
     def get_files(*args, **kwargs):
         if args[0] == "build.gradle":
             return dummy_build_file_paths
-        else:
-            return dummy_build_folder_paths
 
-    mock_rglob = mocker.patch("pathlib.Path.rglob", side_effect=get_files)
-    build.project_config["component_build_config"] = {"build_system": "gradle"}
-    maven_b_paths = build.get_build_folders(["build", "libs"], "build.gradle")
-    mock_rglob.assert_any_call("build.gradle")
-    mock_rglob.assert_any_call(str(Path(".").joinpath(*["build", "libs"])))
-    assert maven_b_paths == {Path("/").joinpath(*["build", "libs"]), Path("/").joinpath(*["path1", "build", "libs"])}
+    def mock_exists(self):
+        return str(self) == str(Path("/").joinpath(*["build", "libs"]).resolve()) or str(self) == str(
+            Path("/").joinpath(*["path1", "build", "libs"]).resolve()
+        )
+
+    with patch.object(Path, "exists", mock_exists):
+        mock_rglob = mocker.patch("pathlib.Path.rglob", side_effect=get_files)
+        build.project_config["component_build_config"] = {"build_system": "gradle"}
+        gradle_b_paths = build.get_build_folders(["build", "libs"], "build.gradle")
+        mock_rglob.assert_any_call("build.gradle")
+        assert gradle_b_paths == {
+            Path("/").joinpath(*["build", "libs"]).resolve(),
+            Path("/").joinpath(*["path1", "build", "libs"]).resolve(),
+        }

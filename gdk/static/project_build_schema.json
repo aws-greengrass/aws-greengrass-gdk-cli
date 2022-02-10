@@ -29,8 +29,7 @@
             "type": "object",
             "required": [
                 "build_command",
-                "build_folder",
-                "build_command_win"
+                "build_folder"
             ],
             "properties": {
                 "build_command": {

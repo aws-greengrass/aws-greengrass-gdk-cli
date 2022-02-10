@@ -262,16 +262,22 @@ def get_build_folders(build_folder, build_file):
 
     Parameters
     ----------
-        build_folder(string): Build foler of a build system(target, build/libs)
+        build_folder(string): Build folder of a build system(target, build/libs)
         build_file(string): Build configuration file of a build system (pom.xml, build.gradle)
 
     Returns
     -------
-        paths(list): List of build folder paths in a multi-module project.
+        paths(set): Set of build folder paths in a multi-module project.
     """
-    set_build_file = set(f.parent for f in Path(utils.current_directory).rglob(build_file))
-    set_build_folder = set(f.parent for f in Path(utils.current_directory).rglob(str(Path().joinpath(*build_folder))))
-    return set(x.joinpath(*build_folder) for x in (set_build_folder & set_build_file))
+    # Filter module directories which contain pom.xml or build.gradle build files.
+    set_dirs_with_build_file = set(f.parent for f in Path(utils.current_directory).rglob(build_file))
+    set_of_module_dirs = set()
+    for module_dir in set_dirs_with_build_file:
+        module_build_folder = Path(module_dir).joinpath(*build_folder).resolve()
+        # Filter module directories that also contain build folders - target/, build/libs/
+        if module_build_folder.exists():
+            set_of_module_dirs.add(module_build_folder)
+    return set_of_module_dirs
 
 
 def find_artifacts_and_update_uri():
