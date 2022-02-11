@@ -19,10 +19,6 @@
             "gradle",
             "build"
         ],
-        "build_command_win": [
-            "gradlew",
-            "build"
-        ],
         "build_folder": [
             "build",
             "libs"

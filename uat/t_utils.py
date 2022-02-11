@@ -16,15 +16,13 @@ def update_config(config_file, component_name, region, bucket, author):
 
 
 def clean_up_aws_resources(component_name, component_version, region):
-    sts_client = boto3.client("sts", region_name=region)
-    caller_identity_response = sts_client.get_caller_identity()
-    account_num = caller_identity_response["Account"]
+    account_num = get_acc_num(region)
     delete_component(component_name, component_version, region, account_num)
     delete_s3_artifact(region, account_num, component_name, component_version)
 
 
 def delete_s3_artifact(region, account, component_name, component_version):
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = create_s3_client(region)
     try:
         bucket = f"gdk-cli-uat-{region}-{account}"
         res = s3_client.list_objects(Bucket=bucket)
@@ -57,3 +55,13 @@ def get_version_created(recipes_path, component_name):
     split_file_name = file_name.split(f"{component_name}-")
     split_for_version = split_file_name[1].split(".yaml")[0]
     return split_for_version
+
+
+def create_s3_client(region):
+    return boto3.client("s3", region_name=region)
+
+
+def get_acc_num(region):
+    sts_client = boto3.client("sts", region_name=region)
+    caller_identity_response = sts_client.get_caller_identity()
+    return caller_identity_response["Account"]
