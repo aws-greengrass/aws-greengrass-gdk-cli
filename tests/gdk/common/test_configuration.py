@@ -96,19 +96,6 @@ def test_get_configuration_config_file(mocker, file_name):
     assert mock_validate_cli_version.called
 
 
-def test_validate_configuration_schema_not_exists(mocker):
-    mock_get_static_file_path = mocker.patch("gdk.common.utils.get_static_file_path", return_value=None)
-    mock_jsonschema_validate = mocker.patch("jsonschema.validate", return_value=None)
-    mock_validate_cli_version = mocker.patch("gdk.common.configuration.validate_cli_version", return_value=None)
-    with pytest.raises(Exception) as e_info:
-        config.validate_configuration("data")
-
-    assert e_info.value.args[0] == error_messages.CONFIG_SCHEMA_FILE_NOT_EXISTS
-    assert mock_jsonschema_validate.call_count == 0
-    assert mock_get_static_file_path.call_count == 1
-    assert not mock_validate_cli_version.called
-
-
 def test_get_configuration_no_project_config_file(mocker):
     mock_file_exists = mocker.patch("gdk.common.utils.file_exists", return_value=False)
     mock_validate_configuration = mocker.patch("gdk.common.configuration.validate_configuration", return_value="data")

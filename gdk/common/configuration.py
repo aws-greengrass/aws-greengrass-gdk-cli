@@ -51,8 +51,6 @@ def validate_configuration(data):
     """
 
     config_schema_file = utils.get_static_file_path(consts.config_schema_file)
-    if not config_schema_file:
-        raise Exception(error_messages.CONFIG_SCHEMA_FILE_NOT_EXISTS)
     with open(config_schema_file, "r") as schemaFile:
         schema = json.loads(schemaFile.read())
     logging.debug("Validating the configuration file.")
