@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 import gdk.CLIParser
 import gdk.commands.methods as methods
@@ -289,3 +290,24 @@ def test_conflicting_args_with_no_conflict(mocker):
     assert not actions.conflicting_arg_groups(command_args, "init")
     assert mock_dic_of_conflicting_args.call_count == 1
     assert mock_check_command_args_with_conflicting_args.call_count == 1
+
+
+def test_run_command_with_valid_debug_enabled(mocker):
+    # Integ test that appropriate action is called only once with valid command namespace.
+    args_namespace = argparse.Namespace(
+        component="init", init=None, lang="python", template="name", **{"gdk": "component"}, debug=True
+    )
+    spy_component_build = mocker.spy(methods, "_gdk_component_build")
+    spy_call_action_by_name = mocker.spy(actions, "call_action_by_name")
+    spy_get_method_from_command = mocker.spy(actions, "get_method_from_command")
+    mock_component_init = mocker.patch("gdk.commands.methods._gdk_component_init", return_value=None)
+
+    spy_logging_ = mocker.spy(logging.getLogger(), "setLevel")
+    actions.run_command(args_namespace)
+    assert mock_component_init.call_count == 1
+    assert spy_component_build.call_count == 0
+    assert spy_call_action_by_name.call_count == 1
+    assert spy_get_method_from_command.call_count == 3  # Recursively called for three times
+    spy_logging_.assert_called_once_with(logging.DEBUG)
+    with pytest.raises(AssertionError):
+        spy_logging_.assert_called_once_with(logging.WARN)
