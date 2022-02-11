@@ -35,7 +35,7 @@ def get_component_list_from_github(url):
         comp_list = comp_list_response.json()
         return comp_list
     except Exception as e:
-        logging.error(e)
+        logging.error(e, exc_info=True)
         return []
 
 
