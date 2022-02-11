@@ -76,7 +76,7 @@ def test_get_recipe_file_yaml_exists(mocker):
 
 
 def test_get_recipe_file_yaml_none_exists(mocker):
-    # neither recipe.json not recipe.yaml exists
+    # neither recipe.json nor recipe.yaml exists
     def use_this_for_recipe(*args):
         if args[0] == "recipe.json":
             return []
@@ -93,8 +93,8 @@ def test_get_recipe_file_yaml_none_exists(mocker):
     mock_glob.assert_any_call("recipe.yaml")
 
 
-def test_get_recipe_file_yaml_both_exist(mocker):
-    # neither recipe.json not recipe.yaml exists
+def test_get_recipe_file_both_exist(mocker):
+    # Both recipe.json and recipe.yaml exists
     def use_this_for_recipe(*args):
         if args[0] == "recipe.json":
             return [Path(".")]
