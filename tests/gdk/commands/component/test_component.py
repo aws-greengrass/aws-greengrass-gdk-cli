@@ -1,5 +1,6 @@
 import pytest
 from gdk.commands.component import component
+from gdk.commands.component.BuildCommand import BuildCommand
 from gdk.commands.component.InitCommand import InitCommand
 from gdk.common.exceptions.CommandError import ConflictingArgumentsError
 
@@ -27,10 +28,24 @@ def test_component_init_exception(mocker):
 
 
 def test_component_build(mocker):
-    mock_component_build = mocker.patch("gdk.commands.component.build.run", return_value=None)
-    d_args = {"init": None}
+    mock_component_build = mocker.patch.object(BuildCommand, "__init__", return_value=None)
+    mock_component_build_run = mocker.patch.object(BuildCommand, "run", return_value=None)
+    d_args = {"build": None}
     component.build(d_args)
     assert mock_component_build.call_count == 1
+    assert mock_component_build_run.call_count == 1
+    mock_component_build.assert_called_with(d_args)
+
+
+def test_component_build_exception(mocker):
+    mock_component_build = mocker.patch.object(BuildCommand, "__init__", side_effect=Exception("Error in build"))
+    mock_component_build_run = mocker.patch.object(BuildCommand, "run", return_value=None)
+    d_args = {"build": None}
+    with pytest.raises(Exception) as e:
+        component.build(d_args)
+    assert "Could not build the project due to the following error." in e.value.args[0]
+    assert mock_component_build.call_count == 1
+    assert mock_component_build_run.call_count == 0
     mock_component_build.assert_called_with(d_args)
 
 

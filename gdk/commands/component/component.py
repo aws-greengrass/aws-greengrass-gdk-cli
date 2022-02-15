@@ -8,9 +8,12 @@ def init(d_args):
 
 
 def build(d_args):
-    import gdk.commands.component.build as build
+    from gdk.commands.component.BuildCommand import BuildCommand
 
-    build.run(d_args)
+    try:
+        BuildCommand(d_args).run()
+    except Exception as e:
+        raise Exception(f"Could not build the project due to the following error.\n{e}")
 
 
 def publish(d_args):
