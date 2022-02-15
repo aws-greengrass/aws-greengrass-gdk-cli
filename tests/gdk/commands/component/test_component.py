@@ -1,11 +1,28 @@
+import pytest
 from gdk.commands.component import component
+from gdk.commands.component.InitCommand import InitCommand
+from gdk.common.exceptions.CommandError import ConflictingArgumentsError
 
 
 def test_component_init(mocker):
-    mock_component_init = mocker.patch("gdk.commands.component.init.run", return_value=None)
+    mock_component_init = mocker.patch.object(InitCommand, "__init__", return_value=None)
+    mock_component_init_run = mocker.patch.object(InitCommand, "run", return_value=None)
     d_args = {"init": None}
     component.init(d_args)
     assert mock_component_init.call_count == 1
+    assert mock_component_init_run.call_count == 1
+    mock_component_init.assert_called_with(d_args)
+
+
+def test_component_init_exception(mocker):
+    mock_component_init = mocker.patch.object(InitCommand, "__init__", side_effect=ConflictingArgumentsError("a", "b"))
+    mock_component_init_run = mocker.patch.object(InitCommand, "run", return_value=None)
+    d_args = {"init": None}
+    with pytest.raises(Exception) as e:
+        component.init(d_args)
+    assert "Arguments 'a' and 'b' are conflicting and cannot be used together in a command." in e.value.args[0]
+    assert mock_component_init.call_count == 1
+    assert mock_component_init_run.call_count == 0
     mock_component_init.assert_called_with(d_args)
 
 
