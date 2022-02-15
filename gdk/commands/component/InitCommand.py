@@ -5,12 +5,12 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 
-import gdk.commands.component.list as list
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import requests
 from gdk.commands.Command import Command
+from gdk.commands.component.ListCommand import ListCommand
 
 
 class InitCommand(Command):
@@ -125,7 +125,7 @@ class InitCommand(Command):
             url = consts.templates_list_url
         elif comp_type == "repository":
             url = consts.repository_list_url
-        available_components = list.get_component_list_from_github(url)
+        available_components = ListCommand({}).get_component_list_from_github(url)
         if comp_name in available_components:
             logging.debug("Component {} '{}' is available in Greengrass Software Catalog.".format(comp_type, comp_name))
             return available_components[comp_name]

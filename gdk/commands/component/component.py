@@ -23,6 +23,11 @@ def publish(d_args):
 
 
 def list(d_args):
-    import gdk.commands.component.list as list
+    from gdk.commands.component.ListCommand import ListCommand
 
-    list.run(d_args)
+    try:
+        ListCommand(d_args).run()
+    except Exception as e:
+        raise Exception(
+            f"Could not list the available components from Greengrass Software Catalog due to the following error.\n{e}"
+        )

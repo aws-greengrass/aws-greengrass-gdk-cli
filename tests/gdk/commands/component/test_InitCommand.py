@@ -4,6 +4,7 @@ from unittest.mock import Mock, mock_open, patch
 import gdk.common.exceptions.error_messages as error_messages
 import pytest
 from gdk.commands.component.InitCommand import InitCommand
+from gdk.commands.component.ListCommand import ListCommand
 from gdk.common.exceptions.CommandError import ConflictingArgumentsError
 from urllib3.exceptions import HTTPError
 
@@ -200,8 +201,9 @@ class InitCommandTest(TestCase):
 
     @patch("zipfile.ZipFile")
     def test_download_and_clean_valid(self, mock_zip):
-        mock_get_available_templates = self.mocker.patch(
-            "gdk.commands.component.list.get_component_list_from_github",
+        mock_get_available_templates = self.mocker.patch.object(
+            ListCommand,
+            "get_component_list_from_github",
             return_value={"template-language": "template-url"},
         )
 
@@ -230,8 +232,9 @@ class InitCommandTest(TestCase):
         language = "language"
         project_dir = "dir"
         formatted_template_name = f"{template}-{language}"
-        mock_get_available_templates = self.mocker.patch(
-            "gdk.commands.component.list.get_component_list_from_github",
+        mock_get_available_templates = self.mocker.patch.object(
+            ListCommand,
+            "get_component_list_from_github",
             return_value={formatted_template_name: "template-url"},
         )
         mock_response = self.mocker.Mock(
@@ -254,8 +257,9 @@ class InitCommandTest(TestCase):
         language = "language"
         formatted_template_name = f"{template}-{language}"
 
-        mock_get_component_list_from_github = self.mocker.patch(
-            "gdk.commands.component.list.get_component_list_from_github",
+        mock_get_component_list_from_github = self.mocker.patch.object(
+            ListCommand,
+            "get_component_list_from_github",
             return_value={formatted_template_name: "template-url"},
         )
         self.mocker.patch.object(InitCommand, "__init__", return_value=None)
@@ -266,8 +270,9 @@ class InitCommandTest(TestCase):
 
     def test_get_download_url_valid_repository(self):
         repository = "repository_name"
-        mock_get_component_list_from_github = self.mocker.patch(
-            "gdk.commands.component.list.get_component_list_from_github",
+        mock_get_component_list_from_github = self.mocker.patch.object(
+            ListCommand,
+            "get_component_list_from_github",
             return_value={"repository_name": "repository-url"},
         )
         self.mocker.patch.object(InitCommand, "__init__", return_value=None)
@@ -278,8 +283,9 @@ class InitCommandTest(TestCase):
 
     def test_get_download_url_invalid_template(self):
         template = "template-language"
-        mock_get_component_list_from_github = self.mocker.patch(
-            "gdk.commands.component.list.get_component_list_from_github",
+        mock_get_component_list_from_github = self.mocker.patch.object(
+            ListCommand,
+            "get_component_list_from_github",
             return_value={"repository_name": "repository-url"},
         )
         self.mocker.patch.object(InitCommand, "__init__", return_value=None)
@@ -291,8 +297,9 @@ class InitCommandTest(TestCase):
 
     def test_get_download_url_invalid_repository(self):
         repository = "repository_name"
-        mock_get_component_list_from_github = self.mocker.patch(
-            "gdk.commands.component.list.get_component_list_from_github",
+        mock_get_component_list_from_github = self.mocker.patch.object(
+            ListCommand,
+            "get_component_list_from_github",
             return_value={"template-language": "template-url"},
         )
         self.mocker.patch.object(InitCommand, "__init__", return_value=None)

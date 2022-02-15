@@ -2,6 +2,7 @@ import pytest
 from gdk.commands.component import component
 from gdk.commands.component.BuildCommand import BuildCommand
 from gdk.commands.component.InitCommand import InitCommand
+from gdk.commands.component.ListCommand import ListCommand
 from gdk.common.exceptions.CommandError import ConflictingArgumentsError
 
 
@@ -59,9 +60,23 @@ def test_component_publish(mocker):
     mock_component_publish.assert_called_with(d_args)
 
 
-def test_component_list(mocker):
-    mock_component_list = mocker.patch("gdk.commands.component.list.run", return_value=None)
+def mock_component_list(mocker):
+    mock_component_list = mocker.patch.object(ListCommand, "__init__", return_value=None)
+    mock_component_list_run = mocker.patch.object(ListCommand, "run", return_value=None)
     d_args = {"list": None}
-    component.list(d_args)
+    component.build(d_args)
     assert mock_component_list.call_count == 1
+    assert mock_component_list_run.call_count == 1
+    mock_component_list.assert_called_with(d_args)
+
+
+def mock_component_list_exception(mocker):
+    mock_component_list = mocker.patch.object(ListCommand, "__init__", side_effect=Exception("Error in list"))
+    mock_component_list_run = mocker.patch.object(ListCommand, "run", return_value=None)
+    d_args = {"list": None}
+    with pytest.raises(Exception) as e:
+        component.build(d_args)
+    assert "Could not list components from the software catalog due to the following error." in e.value.args[0]
+    assert mock_component_list.call_count == 1
+    assert mock_component_list_run.call_count == 0
     mock_component_list.assert_called_with(d_args)
