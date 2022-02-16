@@ -17,9 +17,12 @@ def build(d_args):
 
 
 def publish(d_args):
-    import gdk.commands.component.publish as publish
+    from gdk.commands.component.PublishCommand import PublishCommand
 
-    publish.run(d_args)
+    try:
+        PublishCommand(d_args).run()
+    except Exception as e:
+        raise Exception(f"Could not publish the component due to the following error.\n{e}")
 
 
 def list(d_args):

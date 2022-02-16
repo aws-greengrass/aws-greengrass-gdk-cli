@@ -3,6 +3,7 @@ from gdk.commands.component import component
 from gdk.commands.component.BuildCommand import BuildCommand
 from gdk.commands.component.InitCommand import InitCommand
 from gdk.commands.component.ListCommand import ListCommand
+from gdk.commands.component.PublishCommand import PublishCommand
 from gdk.common.exceptions.CommandError import ConflictingArgumentsError
 
 
@@ -51,12 +52,24 @@ def test_component_build_exception(mocker):
 
 
 def test_component_publish(mocker):
-    mocker.patch("gdk.commands.component.project_utils.get_service_clients", return_value=None)
-    mocker.patch("gdk.commands.component.project_utils.get_project_config_values", return_value={"region": "None"})
-    mock_component_publish = mocker.patch("gdk.commands.component.publish.run", return_value=None)
-    d_args = {"init": None}
+    mock_component_publish = mocker.patch.object(PublishCommand, "__init__", return_value=None)
+    mock_component_publish_run = mocker.patch.object(PublishCommand, "run", return_value=None)
+    d_args = {"publish": None}
     component.publish(d_args)
     assert mock_component_publish.call_count == 1
+    assert mock_component_publish_run.call_count == 1
+    mock_component_publish.assert_called_with(d_args)
+
+
+def test_component_publish_exception(mocker):
+    mock_component_publish = mocker.patch.object(PublishCommand, "__init__", side_effect=Exception("Error in publish"))
+    mock_component_publish_run = mocker.patch.object(PublishCommand, "run", return_value=None)
+    d_args = {"publish": None}
+    with pytest.raises(Exception) as e:
+        component.publish(d_args)
+    assert "Could not publish the component due to the following error." in e.value.args[0]
+    assert mock_component_publish.call_count == 1
+    assert mock_component_publish_run.call_count == 0
     mock_component_publish.assert_called_with(d_args)
 
 
