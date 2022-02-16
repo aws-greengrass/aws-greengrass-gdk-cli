@@ -227,7 +227,32 @@ class InitCommandTest(TestCase):
         assert mock_template_download.call_count == 1
         assert mock_get_available_templates.call_count == 1
 
-    def test_init_with_template_invalid_url(self):
+    def test_init_with_template_invalid_url_server_error(self):
+        template = "template"
+        language = "language"
+        project_dir = "dir"
+        formatted_template_name = f"{template}-{language}"
+        mock_get_available_templates = self.mocker.patch.object(
+            ListCommand,
+            "get_component_list_from_github",
+            return_value={formatted_template_name: "template-url"},
+        )
+        mock_response = self.mocker.Mock(
+            status_code=500, raise_for_status=self.mocker.Mock(side_effect=HTTPError("some error"))
+        )
+        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
+        self.mocker.patch.object(InitCommand, "__init__", return_value=None)
+        init = InitCommand({})
+        with patch("builtins.open", mock_open()) as mock_file:
+            with pytest.raises(Exception) as e:
+                init.download_and_clean(formatted_template_name, template, project_dir)
+
+            assert "Failed to download the selected component" in e.value.args[0]
+            assert mock_template_download.call_count == 1
+            assert mock_get_available_templates.call_count == 1
+            assert not mock_file.called
+
+    def test_init_with_template_invalid_url_not_found(self):
         template = "template"
         language = "language"
         project_dir = "dir"
