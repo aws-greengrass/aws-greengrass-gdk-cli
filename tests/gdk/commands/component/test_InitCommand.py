@@ -19,7 +19,7 @@ class InitCommandTest(TestCase):
         mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=False)
         mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
         mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_command_args_conflict", return_value=None)
+        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
 
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
@@ -37,7 +37,7 @@ class InitCommandTest(TestCase):
         mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
         mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
         mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_command_args_conflict", return_value=False)
+        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=False)
         InitCommand(test_d_args).run()
 
         assert mock_is_directory_empty.call_count == 1
@@ -50,7 +50,7 @@ class InitCommandTest(TestCase):
         mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
         mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
         mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_command_args_conflict", return_value=False)
+        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=False)
 
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
@@ -68,7 +68,7 @@ class InitCommandTest(TestCase):
         mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
         mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
         mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_command_args_conflict", return_value=False)
+        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=False)
 
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
@@ -86,7 +86,7 @@ class InitCommandTest(TestCase):
         mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
         mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
         mock_conflicting_args = self.mocker.patch.object(
-            InitCommand, "check_if_command_args_conflict", side_effect=ConflictingArgumentsError("a", "b")
+            InitCommand, "check_if_arguments_conflict", side_effect=ConflictingArgumentsError("a", "b")
         )
 
         with pytest.raises(Exception) as e:

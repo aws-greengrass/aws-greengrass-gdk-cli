@@ -21,8 +21,8 @@ class PublishCommand(Command):
     def run(self):
         try:
             self.project_config["account_number"] = self.get_account_number()
-            if self.command_args["bucket"]:
-                self.project_config["bucket"] = self.command_args["bucket"]
+            if self.arguments["bucket"]:
+                self.project_config["bucket"] = self.arguments["bucket"]
             else:
                 self.project_config["bucket"] = "{}-{}-{}".format(
                     self.project_config["bucket"], self.project_config["region"], self.project_config["account_number"]

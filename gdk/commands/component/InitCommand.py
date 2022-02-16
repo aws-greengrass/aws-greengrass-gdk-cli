@@ -36,13 +36,13 @@ class InitCommand(Command):
             None
         """
         project_dir = utils.current_directory
-        if not self.command_args["name"]:
+        if not self.arguments["name"]:
             # Check if directory is not empty
             if not utils.is_directory_empty(project_dir):
                 raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
         else:
             # Create a new directory with name.
-            project_dir = Path(project_dir).joinpath(self.command_args["name"]).resolve()
+            project_dir = Path(project_dir).joinpath(self.arguments["name"]).resolve()
             try:
                 logging.debug("Creating new project directory '{}' in the current directory.".format(project_dir.name))
                 Path(project_dir).mkdir(exist_ok=False)
@@ -50,17 +50,17 @@ class InitCommand(Command):
                 raise Exception(error_messages.INIT_DIR_EXISTS_ERROR.format(project_dir.name))
 
         # Choose appropriate action based on commands
-        if self.command_args["template"] and self.command_args["language"]:
-            template = self.command_args["template"]
-            language = self.command_args["language"]
+        if self.arguments["template"] and self.arguments["language"]:
+            template = self.arguments["template"]
+            language = self.arguments["language"]
             if template and language:
                 logging.info(
                     "Initializing the project directory with a {} component template - '{}'.".format(language, template)
                 )
                 self.init_with_template(template, language, project_dir)
                 return
-        elif self.command_args["repository"]:
-            repository = self.command_args["repository"]
+        elif self.arguments["repository"]:
+            repository = self.arguments["repository"]
             if repository:
                 logging.info(
                     "Initializing the project directory with a component from repository catalog - '{}'.".format(repository)

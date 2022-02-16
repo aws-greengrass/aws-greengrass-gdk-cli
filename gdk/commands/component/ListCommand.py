@@ -11,13 +11,13 @@ class ListCommand(Command):
         super().__init__(command_args, "list")
 
     def run(self):
-        if "template" in self.command_args and self.command_args["template"]:
+        if "template" in self.arguments and self.arguments["template"]:
             logging.info("Listing all the available component templates from Greengrass Software Catalog.")
             li = self.get_component_list_from_github(consts.templates_list_url)
             logging.info("Found '{}' component templates to display.".format(len(li)))
             self.display_list(li)
             return
-        elif "repository" in self.command_args and self.command_args["repository"]:
+        elif "repository" in self.arguments and self.arguments["repository"]:
             logging.info("Listing all the available component repositories from Greengrass Software Catalog.")
             li = self.get_component_list_from_github(consts.repository_list_url)
             logging.info("Found '{}' component repositories to display.".format(len(li)))

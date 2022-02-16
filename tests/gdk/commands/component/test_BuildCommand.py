@@ -22,15 +22,15 @@ class BuildCommandTest(TestCase):
         mock_get_supported_component_builds = self.mocker.patch(
             "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
         )
-        mock_check_if_command_args_conflict = self.mocker.patch.object(
-            BuildCommand, "check_if_command_args_conflict", return_value=None
+        mock_check_if_arguments_conflict = self.mocker.patch.object(
+            BuildCommand, "check_if_arguments_conflict", return_value=None
         )
         mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
         BuildCommand({})
 
         assert self.mock_get_proj_config.call_count == 1
         assert mock_get_supported_component_builds.call_count == 1
-        assert mock_check_if_command_args_conflict.call_count == 1
+        assert mock_check_if_arguments_conflict.call_count == 1
         assert mock_run.call_count == 0
 
     def test_build_command_instantiation_failed_fetching_config(self):
@@ -41,8 +41,8 @@ class BuildCommandTest(TestCase):
         mock_get_supported_component_builds = self.mocker.patch(
             "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
         )
-        mock_check_if_command_args_conflict = self.mocker.patch.object(
-            BuildCommand, "check_if_command_args_conflict", return_value=None
+        mock_check_if_arguments_conflict = self.mocker.patch.object(
+            BuildCommand, "check_if_arguments_conflict", return_value=None
         )
         mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
         with pytest.raises(Exception) as e:
@@ -50,7 +50,7 @@ class BuildCommandTest(TestCase):
         assert "exception fetching proj values" in e.value.args[0]
         assert mock_get_proj_config.call_count == 1
         assert mock_get_supported_component_builds.call_count == 0
-        assert mock_check_if_command_args_conflict.call_count == 1
+        assert mock_check_if_arguments_conflict.call_count == 1
         assert mock_run.call_count == 0
 
     def test_build_command_instantiation_failed_fetching_build_config(self):
@@ -59,8 +59,8 @@ class BuildCommandTest(TestCase):
             "gdk.commands.component.project_utils.get_supported_component_builds",
             side_effect=Exception("exception fetching build"),
         )
-        mock_check_if_command_args_conflict = self.mocker.patch.object(
-            BuildCommand, "check_if_command_args_conflict", return_value=None
+        mock_check_if_arguments_conflict = self.mocker.patch.object(
+            BuildCommand, "check_if_arguments_conflict", return_value=None
         )
         mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
         with pytest.raises(Exception) as e:
@@ -68,7 +68,7 @@ class BuildCommandTest(TestCase):
         assert "exception fetching build" in e.value.args[0]
         assert self.mock_get_proj_config.call_count == 1
         assert mock_get_supported_component_builds.call_count == 1
-        assert mock_check_if_command_args_conflict.call_count == 1
+        assert mock_check_if_arguments_conflict.call_count == 1
         assert mock_run.call_count == 0
 
     def test_build_command_instantiation_failed_conflicting_args(self):
@@ -76,9 +76,9 @@ class BuildCommandTest(TestCase):
         mock_get_supported_component_builds = self.mocker.patch(
             "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
         )
-        mock_check_if_command_args_conflict = self.mocker.patch.object(
+        mock_check_if_arguments_conflict = self.mocker.patch.object(
             BuildCommand,
-            "check_if_command_args_conflict",
+            "check_if_arguments_conflict",
             side_effect=Exception("exception due to conflictins args"),
         )
         mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
@@ -87,7 +87,7 @@ class BuildCommandTest(TestCase):
         assert "exception due to conflictins args" in e.value.args[0]
         assert self.mock_get_proj_config.call_count == 0
         assert mock_get_supported_component_builds.call_count == 0
-        assert mock_check_if_command_args_conflict.call_count == 1
+        assert mock_check_if_arguments_conflict.call_count == 1
         assert mock_run.call_count == 0
 
     def test_build_run_default(self):
