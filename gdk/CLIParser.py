@@ -192,7 +192,6 @@ def main():
 
 
 try:
-    logging.basicConfig(level=logging.INFO, format=utils.log_format, datefmt="%Y-%m-%d %H:%M:%S", force=True)
     cli_tool = CLIParser(consts.cli_tool_name, None)
     cli_parser = cli_tool.create_parser()
 except Exception as e:

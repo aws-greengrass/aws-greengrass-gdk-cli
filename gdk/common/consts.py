@@ -29,3 +29,7 @@ repository_list_url = (
     "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/"
     + "community-components.json"
 )
+
+# DEFAULT LOGGING
+log_format = "[%(asctime)s] %(levelname)s - %(message)s"
+date_format = "%Y-%m-%d %H:%M:%S"
