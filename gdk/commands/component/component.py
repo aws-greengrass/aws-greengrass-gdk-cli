@@ -1,22 +1,36 @@
 def init(d_args):
-    import gdk.commands.component.init as init
+    from gdk.commands.component.InitCommand import InitCommand
 
-    init.run(d_args)
+    try:
+        InitCommand(d_args).run()
+    except Exception as e:
+        raise Exception(f"Could not initialze the project due to the following error.\n{e}")
 
 
 def build(d_args):
-    import gdk.commands.component.build as build
+    from gdk.commands.component.BuildCommand import BuildCommand
 
-    build.run(d_args)
+    try:
+        BuildCommand(d_args).run()
+    except Exception as e:
+        raise Exception(f"Could not build the project due to the following error.\n{e}")
 
 
 def publish(d_args):
-    import gdk.commands.component.publish as publish
+    from gdk.commands.component.PublishCommand import PublishCommand
 
-    publish.run(d_args)
+    try:
+        PublishCommand(d_args).run()
+    except Exception as e:
+        raise Exception(f"Could not publish the component due to the following error.\n{e}")
 
 
 def list(d_args):
-    import gdk.commands.component.list as list
+    from gdk.commands.component.ListCommand import ListCommand
 
-    list.run(d_args)
+    try:
+        ListCommand(d_args).run()
+    except Exception as e:
+        raise Exception(
+            f"Could not list the available components from Greengrass Software Catalog due to the following error.\n{e}"
+        )
