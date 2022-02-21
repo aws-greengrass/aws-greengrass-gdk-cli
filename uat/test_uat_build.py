@@ -1,19 +1,18 @@
 import os
 import shutil
-import subprocess as sp
 from pathlib import Path
 
 import t_utils
 
 
-def test_build_template_zip(change_test_dir):
+def test_build_template_zip(change_test_dir, gdk_cli):
     # Recipe contains HelloWorld.zip artifact. So, create HelloWorld directory inside temporary directory.
     path_HelloWorld = Path(change_test_dir).joinpath("HelloWorld")
     component_name = "com.example.PythonHelloWorld"
     region = "us-east-1"
     # Check if init downloads templates with necessary files.
-    check_init_template = sp.run(
-        ["gdk", "component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"], check=True, stdout=sp.PIPE
+    check_init_template = gdk_cli.run(
+        ["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"]
     )
     assert check_init_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("recipe.yaml").resolve().exists()
@@ -25,7 +24,7 @@ def test_build_template_zip(change_test_dir):
 
     os.chdir(path_HelloWorld)
     # Check if build works as expected.
-    check_build_template = sp.run(["gdk", "component", "build"], check=True, stdout=sp.PIPE)
+    check_build_template = gdk_cli.run(["component", "build"])
     assert check_build_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("zip-build").resolve().exists()
     assert Path(path_HelloWorld).joinpath("greengrass-build").resolve().exists()
@@ -42,17 +41,15 @@ def test_build_template_zip(change_test_dir):
     assert artifact_path.exists()
 
 
-def test_build_template_zip_fail_with_no_artifact(change_test_dir):
+def test_build_template_zip_fail_with_no_artifact(change_test_dir, gdk_cli):
     # Recipe contains HelloWorld.zip artifact. So, create a directory with different name.
     dir_name = "artifact-not-exists"
     dir_path = Path(change_test_dir).joinpath(dir_name)
     component_name = "com.example.PythonHelloWorld"
     region = "us-east-1"
     # Check if init downloads templates with necessary files.
-    check_init_template = sp.run(
-        ["gdk", "component", "init", "-t", "HelloWorld", "-l", "python", "-n", dir_name],
-        check=True,
-        stdout=sp.PIPE,
+    check_init_template = gdk_cli.run(
+        ["component", "init", "-t", "HelloWorld", "-l", "python", "-n", dir_name]
     )
     assert check_init_template.returncode == 0
     assert Path(dir_path).joinpath("recipe.yaml").resolve().exists()
@@ -64,8 +61,8 @@ def test_build_template_zip_fail_with_no_artifact(change_test_dir):
 
     os.chdir(dir_path)
     # Check if build works as expected.
-    check_build_template = sp.run(["gdk", "component", "build"], stdout=sp.PIPE)
-    output = check_build_template.stdout.decode()
+    check_build_template = gdk_cli.run(["component", "build"])
+    output = check_build_template.output
     assert check_build_template.returncode == 1
     assert Path(dir_path).joinpath("zip-build").resolve().exists()
     assert (
@@ -76,13 +73,13 @@ def test_build_template_zip_fail_with_no_artifact(change_test_dir):
     assert "Failed to build the component with the given project configuration." in output
 
 
-def test_build_template_maven(change_test_dir):
+def test_build_template_maven(change_test_dir, gdk_cli):
     path_HelloWorld = Path(change_test_dir).joinpath("HelloWorld")
     component_name = "com.example.JavaHelloWorld"
     region = "us-east-1"
     # Check if init downloads templates with necessary files.
-    check_init_template = sp.run(
-        ["gdk", "component", "init", "-t", "HelloWorld", "-l", "java", "-n", "HelloWorld"], check=True, stdout=sp.PIPE
+    check_init_template = gdk_cli.run(
+        ["component", "init", "-t", "HelloWorld", "-l", "java", "-n", "HelloWorld"]
     )
     assert check_init_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("recipe.yaml").resolve().exists()
@@ -93,12 +90,12 @@ def test_build_template_maven(change_test_dir):
 
     os.chdir(path_HelloWorld)
     # Check if build works as expected.
-    check_build_template = sp.run(["gdk", "component", "build"])
+    check_build_template = gdk_cli.run(["component", "build"])
     assert check_build_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("greengrass-build").resolve().exists()
 
 
-def test_build_template_gradle_multi_project(change_test_dir):
+def test_build_template_gradle_multi_project(change_test_dir, gdk_cli):
     path_multi_gradle_project = Path(change_test_dir).joinpath("gradle-build-test").resolve()
     zip_file = "gradle-build-test.zip"
     component_name = "com.example.Multi.Gradle"
@@ -125,12 +122,12 @@ def test_build_template_gradle_multi_project(change_test_dir):
     t_utils.update_config(config_file, component_name, region, bucket="", author="")
 
     # Check if build works as expected.
-    check_build_template = sp.run(["gdk", "component", "build"])
+    check_build_template = gdk_cli.run(["component", "build"])
     assert check_build_template.returncode == 0
     assert Path(path_multi_gradle_project).joinpath("greengrass-build").resolve().exists()
 
 
-def test_build_template_maven_multi_project(change_test_dir):
+def test_build_template_maven_multi_project(change_test_dir, gdk_cli):
     path_multi_gradle_project = Path(change_test_dir).joinpath("maven-build-test").resolve()
     zip_file = "maven-build-test.zip"
     component_name = "com.example.Multi.Maven"
@@ -157,6 +154,6 @@ def test_build_template_maven_multi_project(change_test_dir):
     t_utils.update_config(config_file, component_name, region, bucket="", author="")
 
     # Check if build works as expected.
-    check_build_template = sp.run(["gdk", "component", "build"])
+    check_build_template = gdk_cli.run(["component", "build"])
     assert check_build_template.returncode == 0
     assert Path(path_multi_gradle_project).joinpath("greengrass-build").resolve().exists()
