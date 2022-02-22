@@ -43,10 +43,22 @@ jobs:
           pip3 install flake8
           # The GitHub editor is 127 chars wide
           flake8 . --count --max-complexity=10 --max-line-length=127 --show-source --statistics
-      - name: Testing CLI (Runs both unit and integration tests)
+      - name: Unit Testing CLI
         run: |
           pip install -r test-requirements.txt
-          coverage run --source=gdk -m pytest -v -s tests integration_tests && coverage xml --fail-under=90
+          coverage run --source=gdk -m pytest -v -s tests && coverage xml --fail-under=99
+      - name: Upload tests coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          flags: unit
+      - name: Integration Testing CLI
+        run: |
+          pip install -r test-requirements.txt
+          coverage run --source=gdk -m pytest -v -s integration_tests && coverage xml --fail-under=90
+      - name: Upload integration tests coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          flags: integ
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -56,8 +68,13 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Run UATs 
-        run: | 
+      - name: Run UATs
+        run: |
           coverage run --source=gdk -m pytest -v -s uat
-      - name: Upload coverage to Codecov
+      - name: Run UATs with code coverage
+        run: |
+          coverage run --source=gdk -m pytest -v -s uat --gdkimpl code && coverage xml --fail-under=77
+      - name: Upload UAT coverage to Codecov
         uses: codecov/codecov-action@v2
+        with:
+          flags: uat
