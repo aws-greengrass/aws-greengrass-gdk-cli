@@ -39,8 +39,6 @@ INIT_DIR_EXISTS_ERROR = (
     "Could not initialize the project as the directory '{}' already exists. Please initialize the project with a new"
     " directory.\nTry `gdk component init --help`"
 )
-# BUILD COMMAND
-BUILD_FAILED = "Failed to build the component with the given project configuration."
 
 # PUBLISH COMMAND
 PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."

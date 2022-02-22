@@ -69,11 +69,11 @@ def test_build_template_zip_fail_with_no_artifact(change_test_dir):
     assert check_build_template.returncode == 1
     assert Path(dir_path).joinpath("zip-build").resolve().exists()
     assert (
-        "Could not find artifact with URI 's3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld.zip' on s3 or inside"
-        " the build folders."
+        "Could not find the artifact with URI 's3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld.zip' in S3 or"
+        " inside the build folders."
         in output
     )
-    assert "Failed to build the component with the given project configuration." in output
+    assert "Could not build the project due to the following error." in output
 
 
 def test_build_template_maven(change_test_dir):

@@ -7,10 +7,10 @@ from pathlib import Path
 
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.consts as consts
-import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import yaml
 from gdk.commands.Command import Command
+from gdk.common.exceptions.BuildError import ArtifactNotFoundException, BuildSystemException, ZipBuildRecursionException
 
 
 class BuildCommand(Command):
@@ -54,8 +54,18 @@ class BuildCommand(Command):
             logging.info("Running the following command\n{}".format(custom_build_command))
             sp.run(custom_build_command)
         else:
-            logging.info(f"Using '{build_system}' build system to build the component.")
-            self.default_build_component()
+            logging.info(
+                f"This component is identified as using '{build_system}' build system. If this is incorrect, please exit and"
+                f" specify custom build command in the '{consts.cli_project_config_file}'."
+            )
+            try:
+                self.default_build_component()
+            except ZipBuildRecursionException as e:
+                raise e
+            except ArtifactNotFoundException as e:
+                raise e
+            except Exception as e:
+                raise BuildSystemException(build_system, e)
 
     def create_gg_build_directories(self):
         """
@@ -97,17 +107,14 @@ class BuildCommand(Command):
         -------
             None
         """
-        try:
-            # Build the project with specified build system
-            self.run_build_command()
+        # Build the project with specified build system
+        self.run_build_command()
 
-            # From the recipe, copy necessary artifacts (depends on build system) to the build folder .
-            self.find_artifacts_and_update_uri()
+        # From the recipe, copy necessary artifacts (depends on build system) to the build folder .
+        self.find_artifacts_and_update_uri()
 
-            # Update recipe file with component configuration from project config file.
-            self.create_build_recipe_file()
-        except Exception as e:
-            raise Exception("""{}\n{}""".format(error_messages.BUILD_FAILED, e))
+        # Update recipe file with component configuration from project config file.
+        self.create_build_recipe_file()
 
     def get_build_cmd_from_platform(self, build_system):
         """
@@ -142,21 +149,14 @@ class BuildCommand(Command):
         -------
             None
         """
-        try:
-            build_system = self.project_config["component_build_config"]["build_system"]
-            build_command = self.get_build_cmd_from_platform(build_system)
-            logging.warning(
-                f"This component is identified as using '{build_system}' build system. If this is incorrect, please exit and"
-                f" specify custom build command in the '{consts.cli_project_config_file}'."
-            )
-            if build_system == "zip":
-                logging.info("Zipping source code files of the component.")
-                self._build_system_zip()
-            else:
-                logging.info("Running the build command '{}'".format(" ".join(build_command)))
-                sp.run(build_command)
-        except Exception as e:
-            raise Exception(f"Error building the component with the given build system.\n{e}")
+        build_system = self.project_config["component_build_config"]["build_system"]
+        build_command = self.get_build_cmd_from_platform(build_system)
+        if build_system == "zip":
+            logging.info("Zipping source code files of the component.")
+            self._build_system_zip()
+        else:
+            logging.info("Running the build command '{}'".format(" ".join(build_command)))
+            sp.run(build_command)
 
     def _build_system_zip(self):
         """
@@ -192,9 +192,8 @@ class BuildCommand(Command):
             archive_file_name = Path(zip_build).joinpath(archive_file).resolve()
             shutil.make_archive(archive_file_name, "zip", root_dir=artifacts_zip_build)
             logging.debug("Archive complete.")
-
-        except Exception as e:
-            raise Exception("""Failed to zip the component in default build mode.\n{}""".format(e))
+        except RecursionError as e:
+            raise ZipBuildRecursionException(e)
 
     def _ignore_files_during_zip(self, path, names):
         """
@@ -323,9 +322,7 @@ class BuildCommand(Command):
                     if not s3_client:
                         s3_client = project_utils.create_s3_client(self.project_config["region"])
                     if not self.is_artifact_in_s3(s3_client, artifact["URI"]):
-                        raise Exception(
-                            "Could not find artifact with URI '{}' on s3 or inside the build folders.".format(artifact["URI"])
-                        )
+                        raise ArtifactNotFoundException(artifact["URI"])
 
     def is_artifact_in_build(self, artifact, build_folders):
         """
@@ -415,11 +412,8 @@ class BuildCommand(Command):
         gg_build_recipe_file = Path(self.project_config["gg_build_recipes_dir"]).joinpath(component_recipe_file_name).resolve()
 
         with open(gg_build_recipe_file, "w") as recipe_file:
-            try:
-                logging.info("Creating component recipe in '{}'.".format(self.project_config["gg_build_recipes_dir"]))
-                if component_recipe_file_name.endswith(".json"):
-                    recipe_file.write(json.dumps(parsed_component_recipe, indent=4))
-                else:
-                    yaml.dump(parsed_component_recipe, recipe_file)
-            except Exception as e:
-                raise Exception("""Failed to create build recipe file at '{}'.\n{}""".format(gg_build_recipe_file, e))
+            logging.info("Creating component recipe in '{}'.".format(self.project_config["gg_build_recipes_dir"]))
+            if component_recipe_file_name.endswith(".json"):
+                recipe_file.write(json.dumps(parsed_component_recipe, indent=4))
+            else:
+                yaml.dump(parsed_component_recipe, recipe_file)

@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
-from shutil import Error
 from unittest.mock import mock_open, patch
 
 import gdk.CLIParser as CLIParser
 import gdk.common.consts as consts
-import gdk.common.exceptions.error_messages as error_messages
+import gdk.common.exceptions.BuildError as BuildError
 import gdk.common.parse_args_actions as parse_args_actions
 import gdk.common.utils as utils
 import pytest
@@ -303,7 +302,9 @@ def test_build_run_default_gradle_yaml_artifact_not_found(mocker, supported_buil
 def test_build_run_default_exception(mocker, rglob_build_file):
     mock_create_gg_build_directories = mocker.patch.object(BuildCommand, "create_gg_build_directories")
     mock_default_build_component = mocker.patch.object(
-        BuildCommand, "default_build_component", side_effect=Exception("error in default_build_component")
+        BuildCommand,
+        "default_build_component",
+        side_effect=BuildError.BuildSystemException("error in default_build_component"),
     )
     mock_get_proj_config = mocker.patch(
         "gdk.commands.component.project_utils.get_project_config_values",
@@ -328,7 +329,7 @@ def test_default_build_component_error_run_build_command(mocker, rglob_build_fil
     mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
     mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
     mock_run_build_command = mocker.patch.object(
-        BuildCommand, "run_build_command", side_effect=Error("err in run_build_command")
+        BuildCommand, "run_build_command", side_effect=BuildError.ZipBuildRecursionException("err in run_build_command")
     )
     mock_find_artifacts_and_update_uri = mocker.patch.object(BuildCommand, "find_artifacts_and_update_uri")
     mock_create_build_recipe_file = mocker.patch.object(BuildCommand, "create_build_recipe_file")
@@ -341,7 +342,7 @@ def test_default_build_component_error_run_build_command(mocker, rglob_build_fil
     )
     with pytest.raises(Exception) as e:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert error_messages.BUILD_FAILED in e.value.args[0]
+    assert "Could not build the project due to the following error." in e.value.args[0]
     assert mock_run_build_command.assert_called_once
     assert not mock_find_artifacts_and_update_uri.called
     assert not mock_create_build_recipe_file.called
@@ -448,7 +449,7 @@ def test_build_run_default_gradle_yaml_error_creating_recipe(mocker, supported_b
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
             mock_file.assert_any_call(file_name, "w")
             mock_yaml_dump.call_count == 1
-        assert "Failed to create build recipe file at" in e.value.args[0]
+        assert "writing failed" in e.value.args[0]
     assert mock_get_proj_config.assert_called_once
     mock_subprocess_run.assert_called_with(["gradle", "build"])  # called gradle build command
     assert mock_copy_dir.call_count == 0  # No copying directories
