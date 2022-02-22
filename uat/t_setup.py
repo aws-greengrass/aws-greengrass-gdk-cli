@@ -22,8 +22,11 @@ class GdkProcess:
     def run(self, arguments=None) -> ProcessOutput:
         if arguments is None:
             arguments = []
-        output = sp.run(["gdk"] + arguments, stdout=sp.PIPE)
-        return ProcessOutput(output.returncode, output.stdout.decode())
+        try:
+            output = sp.run(["gdk"] + arguments, check=True, stdout=sp.PIPE)
+            return ProcessOutput(output.returncode, output.stdout.decode())
+        except sp.CalledProcessError as e:
+            return ProcessOutput(e.returncode, e.stdout.decode())
 
 
 class GdkInstrumentedProcess(GdkProcess):

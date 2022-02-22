@@ -5,7 +5,7 @@ from t_setup import GdkProcess, GdkInstrumentedProcess
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--gdkimpl", action="store", default="installed", help="supports two gdk implementations: installed or code"
+        "--instrumented", action="store_true", default=False, help="run tests against code instead of installed gdk cli"
     )
 
 
@@ -17,8 +17,7 @@ def change_test_dir(tmpdir, monkeypatch):
 
 @pytest.fixture()
 def gdk_cli(request):
-    option = request.config.getoption("--gdkimpl")
-    if option == "code":
+    if request.config.getoption("--instrumented"):
         return GdkInstrumentedProcess()
     else:
         return GdkProcess()
