@@ -18,78 +18,6 @@ class BuildCommandTest(TestCase):
             return_value=project_config(),
         )
 
-    def test_build_command_instantiation(self):
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-        )
-        mock_check_if_arguments_conflict = self.mocker.patch.object(
-            BuildCommand, "check_if_arguments_conflict", return_value=None
-        )
-        mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
-        BuildCommand({})
-
-        assert self.mock_get_proj_config.call_count == 1
-        assert mock_get_supported_component_builds.call_count == 1
-        assert mock_check_if_arguments_conflict.call_count == 1
-        assert mock_run.call_count == 0
-
-    def test_build_command_instantiation_failed_fetching_config(self):
-        mock_get_proj_config = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_project_config_values",
-            side_effect=Exception("exception fetching proj values"),
-        )
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-        )
-        mock_check_if_arguments_conflict = self.mocker.patch.object(
-            BuildCommand, "check_if_arguments_conflict", return_value=None
-        )
-        mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
-        with pytest.raises(Exception) as e:
-            BuildCommand({})
-        assert "exception fetching proj values" in e.value.args[0]
-        assert mock_get_proj_config.call_count == 1
-        assert mock_get_supported_component_builds.call_count == 0
-        assert mock_check_if_arguments_conflict.call_count == 1
-        assert mock_run.call_count == 0
-
-    def test_build_command_instantiation_failed_fetching_build_config(self):
-
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds",
-            side_effect=Exception("exception fetching build"),
-        )
-        mock_check_if_arguments_conflict = self.mocker.patch.object(
-            BuildCommand, "check_if_arguments_conflict", return_value=None
-        )
-        mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
-        with pytest.raises(Exception) as e:
-            BuildCommand({})
-        assert "exception fetching build" in e.value.args[0]
-        assert self.mock_get_proj_config.call_count == 1
-        assert mock_get_supported_component_builds.call_count == 1
-        assert mock_check_if_arguments_conflict.call_count == 1
-        assert mock_run.call_count == 0
-
-    def test_build_command_instantiation_failed_conflicting_args(self):
-
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-        )
-        mock_check_if_arguments_conflict = self.mocker.patch.object(
-            BuildCommand,
-            "check_if_arguments_conflict",
-            side_effect=Exception("exception due to conflictins args"),
-        )
-        mock_run = self.mocker.patch.object(BuildCommand, "run", return_value=None)
-        with pytest.raises(Exception) as e:
-            BuildCommand({})
-        assert "exception due to conflictins args" in e.value.args[0]
-        assert self.mock_get_proj_config.call_count == 0
-        assert mock_get_supported_component_builds.call_count == 0
-        assert mock_check_if_arguments_conflict.call_count == 1
-        assert mock_run.call_count == 0
-
     def test_build_run_default(self):
         mock_create_gg_build_directories = self.mocker.patch.object(BuildCommand, "create_gg_build_directories")
         mock_default_build_component = self.mocker.patch.object(BuildCommand, "default_build_component")
@@ -137,26 +65,6 @@ class BuildCommandTest(TestCase):
         assert mock_run_build_command.assert_called_once
         assert mock_find_artifacts_and_update_uri.assert_called_once
         assert mock_create_build_recipe_file.assert_called_once
-
-        assert mock_get_supported_component_builds.called
-
-    def test_default_build_component_error_run_build_command(self):
-
-        mock_run_build_command = self.mocker.patch.object(BuildCommand, "run_build_command", side_effect=Error("command"))
-        mock_find_artifacts_and_update_uri = self.mocker.patch.object(BuildCommand, "find_artifacts_and_update_uri")
-        mock_create_build_recipe_file = self.mocker.patch.object(BuildCommand, "create_build_recipe_file")
-
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-        )
-        build = BuildCommand({})
-        with pytest.raises(Exception) as e:
-            build.default_build_component()
-        assert "\ncommand" in e.value.args[0]
-        assert error_messages.BUILD_FAILED in e.value.args[0]
-        assert mock_run_build_command.assert_called_once
-        assert not mock_find_artifacts_and_update_uri.called
-        assert not mock_create_build_recipe_file.called
 
         assert mock_get_supported_component_builds.called
 
