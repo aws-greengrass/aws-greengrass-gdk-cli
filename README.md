@@ -1,5 +1,6 @@
 # Greengrass Development Kit - Command Line Interface
 ![CI](https://github.com/aws-greengrass/aws-greengrass-gdk-cli/workflows/CI/badge.svg?branch=main)
+[![codecov](https://codecov.io/gh/aws-greengrass/aws-greengrass-gdk-cli/branch/main/graph/badge.svg)](https://codecov.io/gh/aws-greengrass/aws-greengrass-gdk-cli)
 
 ### *Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.*
 #### *SPDX-License-Identifier: Apache-2.0*
