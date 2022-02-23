@@ -1,6 +1,3 @@
-from gdk.common.exceptions.BuildError import BuildException
-
-
 def init(d_args):
     from gdk.commands.component.InitCommand import InitCommand
 
@@ -16,7 +13,7 @@ def build(d_args):
     try:
         BuildCommand(d_args).run()
     except Exception as e:
-        raise BuildException("Could not build the project due to the following error.", e)
+        raise Exception(f"Could not build the project due to the following error.\n{e}")
 
 
 def publish(d_args):

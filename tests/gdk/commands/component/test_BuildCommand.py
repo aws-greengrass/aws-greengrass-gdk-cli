@@ -6,7 +6,7 @@ from unittest.mock import mock_open, patch
 import gdk.common.utils as utils
 import pytest
 from gdk.commands.component.BuildCommand import BuildCommand
-from gdk.common.exceptions.BuildError import ArtifactNotFoundException, BuildSystemException, ZipBuildRecursionException
+from gdk.common.exceptions import error_messages
 
 
 class BuildCommandTest(TestCase):
@@ -28,65 +28,6 @@ class BuildCommandTest(TestCase):
         mock_subprocess_run = self.mocker.patch("subprocess.run")
         BuildCommand({}).run()
 
-        assert self.mock_get_proj_config.assert_called_once
-        assert mock_create_gg_build_directories.assert_called_once
-        assert mock_default_build_component.assert_called_once
-        assert not mock_subprocess_run.called
-        assert mock_get_supported_component_builds.called
-
-    def test_build_run_default_zip_exception(self):
-        mock_create_gg_build_directories = self.mocker.patch.object(BuildCommand, "create_gg_build_directories")
-        mock_default_build_component = self.mocker.patch.object(
-            BuildCommand, "default_build_component", side_effect=ZipBuildRecursionException("error archiving")
-        )
-
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-        )
-        mock_subprocess_run = self.mocker.patch("subprocess.run")
-
-        with pytest.raises(Exception) as e:
-            BuildCommand({}).run()
-        assert "Failed to create an archive inside the zip-build folder." in e.value.args[0]
-        assert self.mock_get_proj_config.assert_called_once
-        assert mock_create_gg_build_directories.assert_called_once
-        assert mock_default_build_component.assert_called_once
-        assert not mock_subprocess_run.called
-        assert mock_get_supported_component_builds.called
-
-    def test_build_run_default_artifact_not_found_exception(self):
-        mock_create_gg_build_directories = self.mocker.patch.object(BuildCommand, "create_gg_build_directories")
-        mock_default_build_component = self.mocker.patch.object(
-            BuildCommand, "default_build_component", side_effect=ArtifactNotFoundException("uri")
-        )
-
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-        )
-        mock_subprocess_run = self.mocker.patch("subprocess.run")
-
-        with pytest.raises(Exception) as e:
-            BuildCommand({}).run()
-        assert "Could not find the artifact with URI" in e.value.args[0]
-        assert self.mock_get_proj_config.assert_called_once
-        assert mock_create_gg_build_directories.assert_called_once
-        assert mock_default_build_component.assert_called_once
-        assert not mock_subprocess_run.called
-        assert mock_get_supported_component_builds.called
-
-    def test_build_run_default_build_system_exception(self):
-        mock_create_gg_build_directories = self.mocker.patch.object(BuildCommand, "create_gg_build_directories")
-        mock_default_build_component = self.mocker.patch.object(
-            BuildCommand, "default_build_component", side_effect=BuildSystemException("error in build")
-        )
-
-        mock_get_supported_component_builds = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-        )
-        mock_subprocess_run = self.mocker.patch("subprocess.run")
-        with pytest.raises(Exception) as e:
-            BuildCommand({}).run()
-        assert "Failed to build the component with the given build system" in e.value.args[0]
         assert self.mock_get_proj_config.assert_called_once
         assert mock_create_gg_build_directories.assert_called_once
         assert mock_default_build_component.assert_called_once
@@ -130,7 +71,7 @@ class BuildCommandTest(TestCase):
     def test_default_build_component_error_find_artifacts_and_update_uri(self):
         mock_run_build_command = self.mocker.patch.object(BuildCommand, "run_build_command")
         mock_find_artifacts_and_update_uri = self.mocker.patch.object(
-            BuildCommand, "find_artifacts_and_update_uri", side_effect=Error("error copying")
+            BuildCommand, "find_artifacts_and_update_uri", side_effect=Error("copying")
         )
 
         mock_get_supported_component_builds = self.mocker.patch(
@@ -142,7 +83,8 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build.default_build_component()
 
-        assert "error copying" in e.value.args[0]
+        assert "\ncopy" in e.value.args[0]
+        assert error_messages.BUILD_FAILED in e.value.args[0]
         assert mock_run_build_command.assert_called_once
         assert mock_find_artifacts_and_update_uri.assert_called_once
         assert not mock_create_build_recipe_file.called
@@ -153,7 +95,7 @@ class BuildCommandTest(TestCase):
         mock_run_build_command = self.mocker.patch.object(BuildCommand, "run_build_command")
         mock_find_artifacts_and_update_uri = self.mocker.patch.object(BuildCommand, "find_artifacts_and_update_uri")
         mock_create_build_recipe_file = self.mocker.patch.object(
-            BuildCommand, "create_build_recipe_file", side_effect=Error("error in recipe")
+            BuildCommand, "create_build_recipe_file", side_effect=Error("recipe")
         )
 
         mock_get_supported_component_builds = self.mocker.patch(
@@ -163,7 +105,8 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build.default_build_component()
 
-        assert "error in recipe" in e.value.args[0]
+        assert "\nrecipe" in e.value.args[0]
+        assert error_messages.BUILD_FAILED in e.value.args[0]
         assert mock_run_build_command.assert_called_once
         assert mock_find_artifacts_and_update_uri.assert_called_once
         assert mock_create_build_recipe_file.assert_called_once
@@ -191,7 +134,7 @@ class BuildCommandTest(TestCase):
 
     def test_run_build_command_with_error_not_zip(self):
         mock_build_system_zip = self.mocker.patch.object(BuildCommand, "_build_system_zip", return_value=None)
-        mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None, side_effect=Error("error in sp"))
+        mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None, side_effect=Error("some error"))
         mock_get_cmd_from_platform = self.mocker.patch.object(
             BuildCommand, "get_build_cmd_from_platform", return_value="some-command"
         )
@@ -206,7 +149,7 @@ class BuildCommandTest(TestCase):
             build.run_build_command()
         assert not mock_build_system_zip.called
         assert mock_subprocess_run.called
-        assert "error in sp" in e.value.args[0]
+        assert "Error building the component with the given build system." in e.value.args[0]
 
         assert mock_get_supported_component_builds.called
         assert mock_get_cmd_from_platform.called
@@ -224,9 +167,9 @@ class BuildCommandTest(TestCase):
         )
         build = BuildCommand({})
         build.project_config["component_build_config"]["build_system"] = "zip"
-        with pytest.raises(Error) as e:
+        with pytest.raises(Exception) as e:
             build.run_build_command()
-        assert "some error" in e.value.args[0]
+        assert "Error building the component with the given build system." in e.value.args[0]
         assert mock_build_system_zip.called
         assert mock_get_cmd_from_platform.call_count == 1
         assert mock_get_supported_component_builds.call_count == 1
@@ -381,7 +324,7 @@ class BuildCommandTest(TestCase):
         mock_copytree = self.mocker.patch("shutil.copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
         mock_ignore_files_during_zip = self.mocker.patch.object(BuildCommand, "_ignore_files_during_zip", return_value=[])
-        mock_make_archive = self.mocker.patch("shutil.make_archive", side_effect=RecursionError("some error in archive"))
+        mock_make_archive = self.mocker.patch("shutil.make_archive", side_effect=Error("some error"))
 
         build_sys = {
             "zip": {
@@ -393,12 +336,10 @@ class BuildCommandTest(TestCase):
             "gdk.commands.component.project_utils.get_supported_component_builds", return_value=build_sys
         )
         build = BuildCommand({})
-        with pytest.raises(ZipBuildRecursionException) as e:
+        with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert (
-            "Failed to create an archive inside the zip-build folder.\nError details: some error in archive" in e.value.args[0]
-        )
+        assert "Failed to zip the component in default build mode." in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         mock_clean_dir.assert_called_with(zip_build_path)
@@ -420,7 +361,7 @@ class BuildCommandTest(TestCase):
             BuildCommand, "_get_build_folder_by_build_system", return_value={zip_build_path}
         )
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-        mock_copytree = self.mocker.patch("shutil.copytree", side_effect=Error("some error in copytree"))
+        mock_copytree = self.mocker.patch("shutil.copytree", side_effect=Error("some error"))
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
         mock_ignore_files_during_zip = self.mocker.patch.object(BuildCommand, "_ignore_files_during_zip", return_value=[])
 
@@ -438,7 +379,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert "some error in copytree" in e.value.args[0]
+        assert "Failed to zip the component in default build mode." in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         mock_clean_dir.assert_called_with(zip_build_path)
@@ -455,7 +396,7 @@ class BuildCommandTest(TestCase):
             BuildCommand,
             "_get_build_folder_by_build_system",
             return_value=zip_build_path,
-            side_effect=Error("error in getting build system"),
+            side_effect=Error("some error"),
         )
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
         mock_copytree = self.mocker.patch("shutil.copytree")
@@ -477,7 +418,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert "error in getting build system" in e.value.args[0]
+        assert "Failed to zip the component in default build mode." in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         assert not mock_clean_dir.called
@@ -491,9 +432,7 @@ class BuildCommandTest(TestCase):
         mock_build_info = self.mocker.patch.object(
             BuildCommand, "_get_build_folder_by_build_system", return_value={zip_build_path}
         )
-        mock_clean_dir = self.mocker.patch(
-            "gdk.common.utils.clean_dir", return_value=None, side_effect=Error("some error cleaning directory")
-        )
+        mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None, side_effect=Error("some error"))
         mock_copytree = self.mocker.patch("shutil.copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
         mock_make_archive = self.mocker.patch("shutil.make_archive")
@@ -512,7 +451,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert "some error cleaning directory" in e.value.args[0]
+        assert "Failed to zip the component in default build mode." in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         assert mock_clean_dir.called
@@ -604,15 +543,14 @@ class BuildCommandTest(TestCase):
         build = BuildCommand({})
 
         mock_is_artifact_in_s3 = self.mocker.patch.object(BuildCommand, "is_artifact_in_s3", return_value=False)
-        with pytest.raises(ArtifactNotFoundException) as e:
+        with pytest.raises(Exception) as e:
             build.find_artifacts_and_update_uri()
+
         assert (
-            "Could not find the artifact with URI"
-            " 's3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py' in S3 or inside the build"
-            " folders."
+            "Could not find artifact with URI 's3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py'"
+            " on s3 or inside the build folders."
             in e.value.args[0]
         )
-
         assert not mock_shutil_copy.called
         assert mock_build_info.assert_called_once
         assert mock_glob.assert_called_once
@@ -1011,7 +949,7 @@ class BuildCommandTest(TestCase):
         with patch("builtins.open", mock_open()) as mock_file:
             with pytest.raises(Exception) as e:
                 build.create_build_recipe_file()
-            assert "I mock json error" in e.value.args[0]
+            assert "Failed to create build recipe file at" in e.value.args[0]
             mock_file.assert_called_once_with(file_name, "w")
             mock_json_dump.call_count == 1
             assert not mock_yaml_dump.called
@@ -1033,7 +971,7 @@ class BuildCommandTest(TestCase):
         with patch("builtins.open", mock_open()) as mock_file:
             with pytest.raises(Exception) as e:
                 build.create_build_recipe_file()
-            assert "I mock yaml error" in e.value.args[0]
+            assert "Failed to create build recipe file at" in e.value.args[0]
             mock_file.assert_called_once_with(file_name, "w")
             mock_json_dump.call_count == 1
             assert mock_yaml_dump.called
