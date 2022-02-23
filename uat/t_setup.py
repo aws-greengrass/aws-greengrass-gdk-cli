@@ -19,12 +19,16 @@ class GdkProcess:
         pass
 
     @classmethod
-    def run(self, arguments=None) -> ProcessOutput:
+    def run(self, arguments=None, capture_output=True) -> ProcessOutput:
         if arguments is None:
             arguments = []
         try:
-            output = sp.run(["gdk"] + arguments, check=True, stdout=sp.PIPE)
-            return ProcessOutput(output.returncode, output.stdout.decode())
+            if capture_output:
+                output = sp.run(["gdk"] + arguments, check=True, stdout=sp.PIPE)
+                return ProcessOutput(output.returncode, output.stdout.decode())
+            else:
+                output = sp.run(["gdk"] + arguments)
+                return ProcessOutput(output.returncode, "")
         except sp.CalledProcessError as e:
             return ProcessOutput(e.returncode, e.stdout.decode())
 
@@ -34,7 +38,7 @@ class GdkInstrumentedProcess(GdkProcess):
         pass
 
     @classmethod
-    def run(self, arguments=None) -> ProcessOutput:
+    def run(self, arguments=None, capture_output=True) -> ProcessOutput:
         if arguments is None:
             arguments = []
 
@@ -52,10 +56,13 @@ class GdkInstrumentedProcess(GdkProcess):
         output = ""
 
         try:
-            f = io.StringIO()
-            with redirect_stdout(f):
+            if capture_output:
+                f = io.StringIO()
+                with redirect_stdout(f):
+                    parse_args_actions.run_command(args)
+                output = f.getvalue()
+            else:
                 parse_args_actions.run_command(args)
-            output = f.getvalue()
         except Exception as e:
             exit_code = 1
             output = str(e)

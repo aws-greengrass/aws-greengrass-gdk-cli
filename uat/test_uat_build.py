@@ -90,7 +90,7 @@ def test_build_template_maven(change_test_dir, gdk_cli):
 
     os.chdir(path_HelloWorld)
     # Check if build works as expected.
-    check_build_template = gdk_cli.run(["component", "build"])
+    check_build_template = gdk_cli.run(["component", "build"], capture_output=False)
     assert check_build_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("greengrass-build").resolve().exists()
 
@@ -122,7 +122,7 @@ def test_build_template_gradle_multi_project(change_test_dir, gdk_cli):
     t_utils.update_config(config_file, component_name, region, bucket="", author="")
 
     # Check if build works as expected.
-    check_build_template = gdk_cli.run(["component", "build"])
+    check_build_template = gdk_cli.run(["component", "build"], capture_output=False)
     assert check_build_template.returncode == 0
     assert Path(path_multi_gradle_project).joinpath("greengrass-build").resolve().exists()
 
@@ -154,6 +154,6 @@ def test_build_template_maven_multi_project(change_test_dir, gdk_cli):
     t_utils.update_config(config_file, component_name, region, bucket="", author="")
 
     # Check if build works as expected.
-    check_build_template = gdk_cli.run(["component", "build"])
+    check_build_template = gdk_cli.run(["component", "build"], capture_output=False)
     assert check_build_template.returncode == 0
     assert Path(path_multi_gradle_project).joinpath("greengrass-build").resolve().exists()
