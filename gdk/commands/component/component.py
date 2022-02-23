@@ -1,5 +1,6 @@
 from gdk.common.exceptions.BuildError import BuildException
 from gdk.common.exceptions.InitError import InitException
+from gdk.common.exceptions.PublishError import PublishException
 
 
 def init(d_args):
@@ -26,7 +27,7 @@ def publish(d_args):
     try:
         PublishCommand(d_args).run()
     except Exception as e:
-        raise Exception(f"Could not publish the component due to the following error.\n{e}")
+        raise PublishException(f"Could not publish the component due to the following error.\n{e}")
 
 
 def list(d_args):

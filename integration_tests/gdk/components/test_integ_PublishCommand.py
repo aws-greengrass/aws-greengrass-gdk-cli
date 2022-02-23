@@ -221,6 +221,46 @@ def test_publish_run_not_built(mocker, get_service_clients, mock_project_config)
     assert spy_get_caller_identity.call_count == 1  # Get account number
 
 
+def test_publish_run_artifact_not_found(mocker, get_service_clients, mock_project_config):
+    mock_build_dir_exists = mocker.patch(
+        "gdk.common.utils.dir_exists",
+        return_value=False,
+    )
+    mock_build = mocker.patch("gdk.commands.component.component.build", return_value=None)
+
+    pc = mock_project_config.return_value
+    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
+
+    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[])
+    file_name = (
+        Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
+    )
+
+    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
+    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
+    spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
+    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
+    with pytest.raises(Exception) as e:
+        with patch("builtins.open", mock_open()) as mock_file:
+            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
+            mock_file.assert_any_call(file_name, "w")
+        assert (
+            "Could not find the artifact file specified in the recipe 'hello_world.py' inside the build folder"
+            " '/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0'"
+            in e.value.args[0]
+        )
+    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
+    assert mock_build.call_count == 1  # build the component first
+    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
+    assert mock_glob.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+
+    # Assert cloud calls
+    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
+    assert spy_upload_file.call_count == 1  # Only one file to upload
+    assert spy_create_component.call_count == 0  # Create gg private component
+    assert spy_get_caller_identity.call_count == 1  # Get account number
+
+
 def test_publish_run_error_during_upload(mocker, get_service_clients, mock_project_config):
     mock_build_dir_exists = mocker.patch(
         "gdk.common.utils.dir_exists",

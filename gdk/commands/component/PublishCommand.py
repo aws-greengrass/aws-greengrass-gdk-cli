@@ -4,11 +4,16 @@ from pathlib import Path
 
 import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
-import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import yaml
 from botocore.exceptions import ClientError
 from gdk.commands.Command import Command
+from gdk.common.exceptions.PublishError import (
+    ArtifactNotFoundDuringPublishException,
+    ComponentCreationException,
+    ComponentNotBuildException,
+    ComponentVersionException,
+)
 
 
 class PublishCommand(Command):
@@ -19,35 +24,31 @@ class PublishCommand(Command):
         self.service_clients = project_utils.get_service_clients(self.project_config["region"])
 
     def run(self):
-        try:
-            self.project_config["account_number"] = self.get_account_number()
-            if self.arguments["bucket"]:
-                self.project_config["bucket"] = self.arguments["bucket"]
-            else:
-                self.project_config["bucket"] = "{}-{}-{}".format(
-                    self.project_config["bucket"], self.project_config["region"], self.project_config["account_number"]
-                )
+        self.project_config["account_number"] = self.get_account_number()
+        if self.arguments["bucket"]:
+            self.project_config["bucket"] = self.arguments["bucket"]
+        else:
+            self.project_config["bucket"] = "{}-{}-{}".format(
+                self.project_config["bucket"], self.project_config["region"], self.project_config["account_number"]
+            )
 
-            component_name = self.project_config["component_name"]
-            component_version = self.get_component_version_from_config()
-            logging.debug(f"Checking if the component '{component_name}' is built.")
-            if not utils.dir_exists(self.project_config["gg_build_component_artifacts_dir"]):
-                logging.warning(
-                    f"The component '{component_name}' is not built.\nSo, building the component before publishing it."
-                )
-                component.build({})
-            logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
-            logging.info("Uploading the component built artifacts to s3 bucket.")
-            self.upload_artifacts_s3(component_name, component_version)
+        component_name = self.project_config["component_name"]
+        component_version = self.get_component_version_from_config()
+        logging.debug(f"Checking if the component '{component_name}' is built.")
+        if not utils.dir_exists(self.project_config["gg_build_component_artifacts_dir"]):
+            logging.warning(
+                f"The component '{component_name}' is not built.\nSo, building the component before publishing it."
+            )
+            component.build({})
+        logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
+        logging.info("Uploading the component built artifacts to s3 bucket.")
+        self.upload_artifacts_s3(component_name, component_version)
 
-            logging.info(f"Updating the component recipe {component_name}-{component_version}.")
-            self.update_and_create_recipe_file(component_name, component_version)
+        logging.info(f"Updating the component recipe {component_name}-{component_version}.")
+        self.update_and_create_recipe_file(component_name, component_version)
 
-            logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
-            self.create_gg_component(component_name, component_version)
-        except Exception as e:
-            logging.error("Failed to publish new version of the component '{}'".format(self.project_config["component_name"]))
-            raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
+        logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
+        self.create_gg_component(component_name, component_version)
 
     def upload_artifacts_s3(self, component_name, component_version):
         """
@@ -64,25 +65,22 @@ class PublishCommand(Command):
         -------
             None
         """
-        try:
-            bucket = self.project_config["bucket"]
-            region = self.project_config["region"]
-            logging.info(
-                f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
-                " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
-                f" artifacts. For more information, see {utils.doc_link_device_role}."
-            )
+        bucket = self.project_config["bucket"]
+        region = self.project_config["region"]
+        logging.info(
+            f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
+            " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
+            f" artifacts. For more information, see {utils.doc_link_device_role}."
+        )
 
-            build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
-            # Create bucket only when there's something to upload.
-            if len(build_component_artifacts) != 0:
-                self.create_bucket(bucket, region)
-            for artifact in build_component_artifacts:
-                s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
-                logging.debug("Uploading artifact '{}' to the bucket '{}'.".format(artifact.resolve(), bucket))
-                self.service_clients["s3_client"].upload_file(str(artifact.resolve()), bucket, s3_file_path)
-        except Exception as e:
-            raise Exception("Error while uploading the artifacts to s3 during publish.\n{}".format(e))
+        build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
+        # Create bucket only when there's something to upload.
+        if len(build_component_artifacts) != 0:
+            self.create_bucket(bucket, region)
+        for artifact in build_component_artifacts:
+            s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
+            logging.debug("Uploading artifact '{}' to the bucket '{}'.".format(artifact.resolve(), bucket))
+            self.service_clients["s3_client"].upload_file(str(artifact.resolve()), bucket, s3_file_path)
 
     def create_bucket(self, bucket, region):
         """
@@ -133,13 +131,10 @@ class PublishCommand(Command):
         -------
             bool: Returns true if the bucket region is same as the region in check. Else false.
         """
-        try:
-            response = self.service_clients["s3_client"].get_bucket_location(Bucket=bucket)
-            if response["LocationConstraint"] == region:
-                return True
-            return False
-        except Exception as e:
-            raise Exception("Unable to fetch the location of the bucket '{}'.\n{}".format(bucket, e))
+        response = self.service_clients["s3_client"].get_bucket_location(Bucket=bucket)
+        if response["LocationConstraint"] == region:
+            return True
+        return False
 
     def create_gg_component(self, c_name, c_version):
         """
@@ -161,8 +156,7 @@ class PublishCommand(Command):
             try:
                 self.service_clients["greengrass_client"].create_component_version(inlineRecipe=f.read())
             except Exception as e:
-                logging.error("Failed to create the component using the recipe at '{}'.".format(publish_recipe_file))
-                raise Exception("Creating private version '{}' of the component '{}' failed.\n{}".format(c_version, c_name, e))
+                raise ComponentCreationException(c_name, c_version, publish_recipe_file, e)
             logging.info("Created private version '{}' of the component in the account.'{}'.".format(c_version, c_name))
 
     def get_next_version(self):
@@ -180,21 +174,19 @@ class PublishCommand(Command):
         """
         fallback_version = "1.0.0"
         logging.debug("Fetching private components from the account.")
-        try:
-            c_name = self.project_config["component_name"]
-            region = self.project_config["region"]
-            account_num = self.project_config["account_number"]
-            c_next_patch_version = self.get_next_patch_component_version(c_name, region, account_num)
-            if not c_next_patch_version:
-                logging.info(
-                    "No private version of the component '{}' exist in the account. Using '{}' as the next version to create."
-                    .format(c_name, fallback_version)
-                )
-                return fallback_version
-            logging.debug(
-                "Found latest version '{}' of the component '{}' in the account.".format(c_next_patch_version, c_name)
+        c_name = self.project_config["component_name"]
+        region = self.project_config["region"]
+        account_num = self.project_config["account_number"]
+        c_latest_version = self.get_next_patch_component_version(c_name, region, account_num)
+        if not c_latest_version:
+            logging.info(
+                "No private version of the component '{}' exist in the account. Using '{}' as the next version to create."
+                .format(c_name, fallback_version)
             )
-            semver_alphanumeric = c_next_patch_version.split("-")
+            return fallback_version
+        logging.debug("Found latest version '{}' of the component '{}' in the account.".format(c_latest_version, c_name))
+        try:
+            semver_alphanumeric = c_latest_version.split("-")
             semver_numeric = semver_alphanumeric[0].split(".")
             major = semver_numeric[0]
             minor = semver_numeric[1]
@@ -204,7 +196,7 @@ class PublishCommand(Command):
             logging.info("Using '{}' as the next version of the component '{}' to create.".format(next_version, c_name))
             return next_version
         except Exception as e:
-            raise Exception("Failed to calculate the next version of the component during publish.\n{}".format(e))
+            raise ComponentVersionException(c_name, c_latest_version, exception=e)
 
     def get_account_number(self):
         """
@@ -242,20 +234,13 @@ class PublishCommand(Command):
             version(string): Highest version of the component if it exists already. Else returns 1.0.0.
         """
 
-        try:
-            comp_list_response = self.service_clients["greengrass_client"].list_component_versions(
-                arn="arn:aws:greengrass:{}:{}:components:{}".format(region, account_num, component_name)
-            )
-            component_versions = comp_list_response["componentVersions"]
-            if not component_versions:
-                return None
-            return component_versions[0]["componentVersion"]
-        except Exception as e:
-            raise Exception(
-                "Error while getting the component versions of '{}' in '{}' from the account '{}' during publish.\n{}".format(
-                    component_name, region, account_num, e
-                )
-            )
+        comp_list_response = self.service_clients["greengrass_client"].list_component_versions(
+            arn="arn:aws:greengrass:{}:{}:components:{}".format(region, account_num, component_name)
+        )
+        component_versions = comp_list_response["componentVersions"]
+        if not component_versions:
+            return None
+        return component_versions[0]["componentVersion"]
 
     def get_component_version_from_config(self):
         """
@@ -272,21 +257,15 @@ class PublishCommand(Command):
         -------
             None
         """
-        try:
-            component_name = self.project_config["component_name"]
-            if self.project_config["component_version"] == "NEXT_PATCH":
-                logging.debug(
-                    "Component version set to 'NEXT_PATCH' in the config file. Calculating next version of the component '{}'"
-                    .format(self.project_config["component_name"])
-                )
-                return self.get_next_version()
-            logging.info("Using the version set for the component '{}' in the config file.".format(component_name))
-            return self.project_config["component_version"]
-        except Exception as e:
-            logging.error(
-                "Failed to calculate the version of component '{}' based on the configuration.".format(component_name)
+        component_name = self.project_config["component_name"]
+        if self.project_config["component_version"] == "NEXT_PATCH":
+            logging.debug(
+                "Component version set to 'NEXT_PATCH' in the config file. Calculating next version of the component '{}'"
+                .format(component_name)
             )
-            raise (e)
+            return self.get_next_version()
+        logging.info("Using the version set for the component '{}' in the config file.".format(component_name))
+        return self.project_config["component_version"]
 
     def update_and_create_recipe_file(self, component_name, component_version):
         """
@@ -310,10 +289,7 @@ class PublishCommand(Command):
         if "ComponentName" in parsed_component_recipe:
             if parsed_component_recipe["ComponentName"] != component_name:
                 logging.error("Component '{}' is not build.".format(parsed_component_recipe["ComponentName"]))
-                raise Exception(
-                    "Failed to publish the component '{}' as it is not build.\nBuild the component `gdk component"
-                    " build` before publishing it.".format(parsed_component_recipe["ComponentName"])
-                )
+                raise ComponentNotBuildException(parsed_component_recipe["ComponentName"])
         gg_build_component_artifacts = self.project_config["gg_build_component_artifacts_dir"]
         bucket = self.project_config["bucket"]
         artifact_uri = f"{utils.s3_prefix}{bucket}/{component_name}/{component_version}"
@@ -339,10 +315,7 @@ class PublishCommand(Command):
                     logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
                     artifact["URI"] = f"{artifact_uri}/{artifact_file}"
                 else:
-                    raise Exception(
-                        f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
-                        f" '{gg_build_component_artifacts}'."
-                    )
+                    raise ArtifactNotFoundDuringPublishException(artifact_file, gg_build_component_artifacts)
 
         # Update the version of the component in the recipe
         parsed_component_recipe["ComponentVersion"] = component_version
@@ -369,15 +342,12 @@ class PublishCommand(Command):
         publish_recipe_file = Path(self.project_config["gg_build_recipes_dir"]).joinpath(publish_recipe_file_name).resolve()
         self.project_config["publish_recipe_file"] = publish_recipe_file
         with open(publish_recipe_file, "w") as prf:
-            try:
-                logging.debug(
-                    "Creating component recipe '{}' in '{}'.".format(
-                        publish_recipe_file_name, self.project_config["gg_build_recipes_dir"]
-                    )
+            logging.debug(
+                "Creating component recipe '{}' in '{}'.".format(
+                    publish_recipe_file_name, self.project_config["gg_build_recipes_dir"]
                 )
-                if publish_recipe_file_name.endswith(".json"):
-                    prf.write(json.dumps(parsed_component_recipe, indent=4))
-                else:
-                    yaml.dump(parsed_component_recipe, prf)
-            except Exception as e:
-                raise Exception("""Failed to create publish recipe file at '{}'.\n{}""".format(publish_recipe_file, e))
+            )
+            if publish_recipe_file_name.endswith(".json"):
+                prf.write(json.dumps(parsed_component_recipe, indent=4))
+            else:
+                yaml.dump(parsed_component_recipe, prf)

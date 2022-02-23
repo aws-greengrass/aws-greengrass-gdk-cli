@@ -2,7 +2,6 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 import boto3
-import gdk.common.exceptions.error_messages as error_messages
 import pytest
 from gdk.commands.component.PublishCommand import PublishCommand
 from urllib3.exceptions import HTTPError
@@ -79,7 +78,7 @@ class PublishCommandTest(TestCase):
         with mock.patch("builtins.open", mock.mock_open()) as mock_file:
             with pytest.raises(Exception) as e:
                 publish.create_publish_recipe_file(component_name, component_version, parsed_recipe_file)
-            assert "Failed to create publish recipe file at" in e.value.args[0]
+            assert "I mock json error" in e.value.args[0]
             mock_file.assert_called_once_with(file_name, "w")
             mock_json_dump.call_count == 1
             assert not mock_yaml_dump.called
@@ -107,7 +106,7 @@ class PublishCommandTest(TestCase):
         with mock.patch("builtins.open", mock.mock_open()) as mock_file:
             with pytest.raises(Exception) as e:
                 publish.create_publish_recipe_file(component_name, component_version, parsed_recipe_file)
-            assert "Failed to create publish recipe file at" in e.value.args[0]
+            assert "I mock yaml error" in e.value.args[0]
             mock_file.assert_called_once_with(file_name, "w")
             mock_json_dump.call_count == 1
             assert mock_yaml_dump.called
@@ -157,7 +156,11 @@ class PublishCommandTest(TestCase):
         publish = PublishCommand({})
         with pytest.raises(Exception) as e:
             publish.update_and_create_recipe_file(component_name, component_version)
-        assert "as it is not build.\nBuild the component `gdk component build` before publishing it." in e.value.args[0]
+        assert (
+            "The component 'com.example.HelloWorld' is not built.\nPlease build the component using `gdk component build`"
+            " before publishing it."
+            in e.value.args[0]
+        )
         assert mock_create_publish_recipe.call_count == 0
 
     def test_update_and_create_recipe_file_uri_not_matches(self):
@@ -377,16 +380,27 @@ class PublishCommandTest(TestCase):
         assert version == "1.0.7"
         assert mock_get_next_patch_component_version.call_count == 1
 
-    def test_get_next_version_component_exception(self):
+    def test_get_next_version_component_invalid_semver(self):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            PublishCommand, "get_next_patch_component_version", side_effect=HTTPError("some error")
+            PublishCommand, "get_next_patch_component_version", return_value="1.0-x-y-z"
         )
         with pytest.raises(Exception) as e:
             publish.get_next_version()
         assert mock_get_next_patch_component_version.call_count == 1
-        assert e.value.args[0] == "Failed to calculate the next version of the component during publish.\nsome error"
+        assert "The component version '1.0-x-y-z' must contain a major, minor and patch numbers in it." in e.value.args[0]
+
+    def test_get_next_version_component_exception(self):
+        publish = PublishCommand({})
+        publish.project_config["account_number"] = "1234"
+        mock_get_next_patch_component_version = self.mocker.patch.object(
+            PublishCommand, "get_next_patch_component_version", side_effect=HTTPError("get_next_patch_component_version error")
+        )
+        with pytest.raises(Exception) as e:
+            publish.get_next_version()
+        assert mock_get_next_patch_component_version.call_count == 1
+        assert "get_next_patch_component_version error" in e.value.args[0]
 
     def test_get_next_patch_component_version(self):
         publish = PublishCommand({})
@@ -417,16 +431,12 @@ class PublishCommandTest(TestCase):
         mock_client = self.mocker.patch("boto3.client", return_value=None)
         publish.service_clients = {"greengrass_client": mock_client}
         mock_get_next_patch_component_version = self.mocker.patch(
-            "boto3.client.list_component_versions", side_effect=HTTPError("listing error")
+            "boto3.client.list_component_versions", side_effect=HTTPError("list_component_versions error")
         )
         with pytest.raises(Exception) as e:
             publish.get_next_patch_component_version("c_name", "region", "1234")
         assert mock_get_next_patch_component_version.call_count == 1
-        assert (
-            "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during"
-            " publish.\nlisting error"
-            == e.value.args[0]
-        )
+        assert "list_component_versions error" in e.value.args[0]
 
     def test_create_gg_component(self):
         publish = PublishCommand({})
@@ -456,7 +466,12 @@ class PublishCommandTest(TestCase):
         with mock.patch("builtins.open", mock.mock_open()) as mock_file:
             with pytest.raises(Exception) as e:
                 publish.create_gg_component(component_name, component_version)
-            assert "Creating private version '1.0.0' of the component 'component_name' failed." in e.value.args[0]
+            assert (
+                "Failed to create a new version of the component 'component_name-1.0.0' using the recipe at '{}'".format(
+                    publish.project_config["publish_recipe_file"]
+                )
+                in e.value.args[0]
+            )
             mock_file.assert_any_call(publish.project_config["publish_recipe_file"])
             assert mock_create_component.call_count == 1
 
@@ -633,7 +648,7 @@ class PublishCommandTest(TestCase):
             PublishCommand,
             "get_component_version_from_config",
             return_value=None,
-            side_effect=HTTPError("some error"),
+            side_effect=HTTPError("get_component_version_from_config error"),
         )
         mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
         mock_update_and_create_recipe_file = self.mocker.patch.object(
@@ -646,7 +661,7 @@ class PublishCommandTest(TestCase):
             publish.run()
         assert publish.project_config["account_number"] == "1234"
         assert publish.project_config["bucket"] == "default-us-east-1-1234"
-        assert e.value.args[0] == "{}\n{}".format(error_messages.PUBLISH_FAILED, "some error")
+        assert "get_component_version_from_config error" in e.value.args[0]
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
         assert mock_upload_artifacts_s3.call_count == 0
@@ -789,10 +804,12 @@ class PublishCommandTest(TestCase):
         mock_client = self.mocker.patch("boto3.client", return_value=None)
         publish = PublishCommand({})
         publish.service_clients = {"s3_client": mock_client}
-        mock_get_bucket_location = self.mocker.patch("boto3.client.get_bucket_location", side_effect=HTTPError("some eror"))
+        mock_get_bucket_location = self.mocker.patch(
+            "boto3.client.get_bucket_location", side_effect=HTTPError("unable to get bucket")
+        )
         with pytest.raises(Exception) as e:
             publish.bucket_exists_in_same_region("bucket", "us-east-1")
-        assert "Unable to fetch the location of the bucket" in e.value.args[0]
+        assert "unable to get bucket" in e.value.args[0]
         assert mock_get_bucket_location.call_count == 1
 
 
