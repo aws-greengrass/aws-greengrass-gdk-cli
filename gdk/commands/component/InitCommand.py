@@ -6,11 +6,17 @@ from io import BytesIO
 from pathlib import Path
 
 import gdk.common.consts as consts
-import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import requests
 from gdk.commands.Command import Command
 from gdk.commands.component.ListCommand import ListCommand
+from gdk.common.exceptions.InitError import (
+    ComponentUnavailableException,
+    DirectoryNotEmptyException,
+    InitException,
+    InvalidInitArgumentsException,
+    InvalidDirectoryException,
+)
 
 
 class InitCommand(Command):
@@ -39,15 +45,15 @@ class InitCommand(Command):
         if not self.arguments["name"]:
             # Check if directory is not empty
             if not utils.is_directory_empty(project_dir):
-                raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
+                raise DirectoryNotEmptyException()
         else:
             # Create a new directory with name.
             project_dir = Path(project_dir).joinpath(self.arguments["name"]).resolve()
             try:
                 logging.debug("Creating new project directory '{}' in the current directory.".format(project_dir.name))
                 Path(project_dir).mkdir(exist_ok=False)
-            except FileExistsError:
-                raise Exception(error_messages.INIT_DIR_EXISTS_ERROR.format(project_dir.name))
+            except FileExistsError as e:
+                raise InvalidDirectoryException(project_dir.name, e)
 
         # Choose appropriate action based on commands
         if self.arguments["template"] and self.arguments["language"]:
@@ -67,22 +73,16 @@ class InitCommand(Command):
                 )
                 self.init_with_repository(repository, project_dir)
                 return
-        raise Exception(error_messages.INIT_WITH_INVALID_ARGS)
+        raise InvalidInitArgumentsException()
 
     def init_with_template(self, template, language, project_dir):
-        try:
-            template_name = "{}-{}".format(template, language)
-            logging.info("Fetching the component template '{}' from Greengrass Software Catalog.".format(template_name))
-            self.download_and_clean(template_name, "template", project_dir)
-        except Exception as e:
-            raise Exception("Could not initialize the project with component template '{}'.\n{}".format(template, e))
+        template_name = "{}-{}".format(template, language)
+        logging.info("Fetching the component template '{}' from Greengrass Software Catalog.".format(template_name))
+        self.download_and_clean(template_name, "template", project_dir)
 
     def init_with_repository(self, repository, project_dir):
-        try:
-            logging.info("Fetching the component repository '{}' from Greengrass Software Catalog.".format(repository))
-            self.download_and_clean(repository, "repository", project_dir)
-        except Exception as e:
-            raise Exception("Could not initialize the project with component repository '{}'.\n{}".format(repository, e))
+        logging.info("Fetching the component repository '{}' from Greengrass Software Catalog.".format(repository))
+        self.download_and_clean(repository, "repository", project_dir)
 
     def download_and_clean(self, comp_name, comp_type, project_dir):
         """
@@ -106,10 +106,11 @@ class InitCommand(Command):
             try:
                 download_response.raise_for_status()
             except Exception as e:
-                logging.error(e)
-                raise e
-            finally:
-                raise Exception(error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(comp_type))
+                logging.error(
+                    f"Failed to download the component {comp_type} from Greengrass Software Catalog. Please try again after"
+                    " sometime."
+                )
+                raise InitException(e)
 
         logging.debug("Downloading the component {}...".format(comp_type))
         with zipfile.ZipFile(BytesIO(download_response.content)) as zfile:
@@ -126,10 +127,7 @@ class InitCommand(Command):
         elif comp_type == "repository":
             url = consts.repository_list_url
         available_components = ListCommand({}).get_component_list_from_github(url)
-        if comp_name in available_components:
-            logging.debug("Component {} '{}' is available in Greengrass Software Catalog.".format(comp_type, comp_name))
-            return available_components[comp_name]
-        else:
-            raise Exception(
-                "Could not find the component {} '{}' in Greengrass Software Catalog.".format(comp_type, comp_name)
-            )
+        if comp_name not in available_components:
+            raise ComponentUnavailableException(comp_type, comp_name)
+        logging.debug("Component {} '{}' is available in Greengrass Software Catalog.".format(comp_type, comp_name))
+        return available_components[comp_name]

@@ -1,4 +1,5 @@
 from gdk.common.exceptions.BuildError import BuildException
+from gdk.common.exceptions.InitError import InitException
 
 
 def init(d_args):
@@ -6,8 +7,8 @@ def init(d_args):
 
     try:
         InitCommand(d_args).run()
-    except Exception as e:
-        raise Exception(f"Could not initialze the project due to the following error.\n{e}")
+    except Exception as exp:
+        raise InitException("Could not initialize the project due to the following error.", exception=exp)
 
 
 def build(d_args):

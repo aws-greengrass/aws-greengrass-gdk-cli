@@ -21,24 +21,5 @@ LIST_WITH_INVALID_ARGS = (
     " as an argument to the list command.\nTry `gdk component list --help`"
 )
 
-# INIT COMMAND
-INIT_FAILS_DURING_COMPONENT_DOWNLOAD = "Failed to download the selected component {{}}. Please try again after sometime."
-INIT_WITH_INVALID_ARGS = (
-    "Could not initialize the project as the arguments passed are invalid. Please initialize the project with correct"
-    " arguments.\nTry `gdk component init --help`"
-)
-INIT_WITH_CONFLICTING_ARGS = (
-    "Could not initialize the project as the command arguments are conflicting. Please initialize the project with correct"
-    " arguments.\nTry `gdk component init --help` "
-)
-INIT_NON_EMPTY_DIR_ERROR = (
-    "Could not initialize the project as the directory is not empty. Please initialize the project in an empty directory.\nTry"
-    " `gdk component init --help`"
-)
-INIT_DIR_EXISTS_ERROR = (
-    "Could not initialize the project as the directory '{}' already exists. Please initialize the project with a new"
-    " directory.\nTry `gdk component init --help`"
-)
-
 # PUBLISH COMMAND
 PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."

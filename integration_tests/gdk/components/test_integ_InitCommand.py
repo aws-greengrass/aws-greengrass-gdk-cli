@@ -3,7 +3,6 @@ from unittest.mock import Mock, mock_open, patch
 
 import gdk.CLIParser as CLIParser
 import gdk.common.consts as consts
-import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.parse_args_actions as parse_args_actions
 import gdk.common.utils as utils
 import pytest
@@ -20,7 +19,7 @@ class CommandTest(TestCase):
     def test_init_run_non_empty_dir(self):
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-d"]))
-        assert error_messages.INIT_NON_EMPTY_DIR_ERROR in e.value.args[0]
+        assert "The current directory is not empty.\nPlease initialize the project in an empty directory." in e.value.args[0]
 
         mock_non_empty_dir = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=False)
         mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
@@ -28,7 +27,7 @@ class CommandTest(TestCase):
         mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-d"]))
-        assert error_messages.INIT_NON_EMPTY_DIR_ERROR in e.value.args[0]
+        assert "The current directory is not empty.\nPlease initialize the project in an empty directory." in e.value.args[0]
         assert mock_non_empty_dir.call_count == 1
         assert not mock_init_with_template.called
         assert not mock_init_with_repository.called
@@ -72,11 +71,7 @@ class CommandTest(TestCase):
             parse_args_actions.run_command(
                 CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy", "-n", "new-dir"])
             )
-        assert (
-            "Could not initialize the project as the directory 'new-dir' already exists. Please initialize the project"
-            " with a new directory."
-            in e.value.args[0]
-        )
+        assert "Directory or a file named 'new-dir' already exsits in the current directory." in e.value.args[0]
         assert not mock_non_empty_dir.called
         assert mock_new_dir.call_count == 1
         assert not mock_init_with_template.called
@@ -94,7 +89,7 @@ class CommandTest(TestCase):
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
 
-        assert "Could not initialze the project due to the following error." in e.value.args[0]
+        assert "Could not initialize the project due to the following error.\nError details: Some exception" in e.value.args[0]
 
         assert mock_is_directory_empty.call_count == 0
         assert mock_init_with_template.call_count == 0
@@ -112,8 +107,7 @@ class CommandTest(TestCase):
                 CLIParser.cli_parser.parse_args(["component", "init", "-t", "dummy", "-n", "new-dir"])
             )
         assert (
-            "Could not initialize the project as the arguments passed are invalid. Please initialize the project with"
-            " correct arguments."
+            "The arguments passed with the command are invalid.\nPlease initialize the project with correct arguments."
             in e.value.args[0]
         )
         assert not mock_non_empty_dir.called
@@ -212,7 +206,7 @@ class CommandTest(TestCase):
                 CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
             )
 
-        assert "Could not initialize the project with component template 'template'." in e.value.args[0]
+        assert "Could not initialize the project due to the following error." in e.value.args[0]
         assert mock_is_directory_empty.call_count == 1
         assert mock_conflicting_args.call_count == 1
         mock_download_and_clean.assert_called_once_with("template-python", "template", utils.current_directory)
@@ -225,7 +219,7 @@ class CommandTest(TestCase):
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
 
-        assert "Could not initialize the project with component repository 'dummy'." in e.value.args[0]
+        assert "Could not initialize the project due to the following error." in e.value.args[0]
         assert mock_is_directory_empty.call_count == 1
         assert mock_conflicting_args.call_count == 1
         mock_download_and_clean.assert_called_once_with("dummy", "repository", utils.current_directory)

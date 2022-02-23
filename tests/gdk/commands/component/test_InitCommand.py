@@ -1,7 +1,6 @@
 from unittest import TestCase
 from unittest.mock import Mock, mock_open, patch
 
-import gdk.common.exceptions.error_messages as error_messages
 import pytest
 from gdk.commands.component.InitCommand import InitCommand
 from gdk.commands.component.ListCommand import ListCommand
@@ -24,7 +23,7 @@ class InitCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
 
-        assert e.value.args[0] == error_messages.INIT_NON_EMPTY_DIR_ERROR
+        assert "The current directory is not empty." in e.value.args[0]
 
         assert mock_is_directory_empty.call_count == 1
         assert mock_conflicting_args.call_count == 1
@@ -55,7 +54,7 @@ class InitCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
 
-        assert e.value.args[0] == error_messages.INIT_WITH_INVALID_ARGS
+        assert "The arguments passed with the command are invalid." in e.value.args[0]
 
         assert mock_is_directory_empty.call_count == 1
         assert mock_init_with_template.call_count == 0
@@ -73,7 +72,7 @@ class InitCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
 
-        assert e.value.args[0] == error_messages.INIT_WITH_INVALID_ARGS
+        assert "The arguments passed with the command are invalid." in e.value.args[0]
 
         assert mock_is_directory_empty.call_count == 1
         assert mock_init_with_template.call_count == 0
@@ -133,7 +132,7 @@ class InitCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
 
-        assert e.value.args[0] == error_messages.INIT_DIR_EXISTS_ERROR.format("new-dir")
+        assert "Directory or a file named 'new-dir' already exsits in the current directory." in e.value.args[0]
         assert mock_is_directory_empty.call_count == 0
         assert mock_mkdir.call_count == 1
         assert mock_init_with_template.call_count == 0
@@ -147,7 +146,7 @@ class InitCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             InitCommand(test_d_args).run()
 
-        assert e.value.args[0] == error_messages.INIT_WITH_INVALID_ARGS
+        assert "The arguments passed with the command are invalid." in e.value.args[0]
 
         assert mock_is_directory_empty.call_count == 1
         assert mock_init_with_template.call_count == 0
@@ -174,7 +173,7 @@ class InitCommandTest(TestCase):
         init = InitCommand({})
         with pytest.raises(Exception) as e:
             init.init_with_template(template, language, project_dir)
-        assert "Could not initialize the project with component template" in e.value.args[0]
+        assert "Some error" in e.value.args[0]
         mock_download_and_clean.assert_any_call("template-language", "template", project_dir)
 
     def test_init_with_repository_valid(self):
@@ -196,7 +195,7 @@ class InitCommandTest(TestCase):
         init = InitCommand({})
         with pytest.raises(Exception) as e:
             init.init_with_repository(repository, project_dir)
-        assert "Could not initialize the project with component repository" in e.value.args[0]
+        assert "Some error" in e.value.args[0]
         mock_download_and_clean.assert_any_call(repository, "repository", project_dir)
 
     @patch("zipfile.ZipFile")
@@ -238,7 +237,7 @@ class InitCommandTest(TestCase):
             return_value={formatted_template_name: "template-url"},
         )
         mock_response = self.mocker.Mock(
-            status_code=500, raise_for_status=self.mocker.Mock(side_effect=HTTPError("some error"))
+            status_code=500, raise_for_status=self.mocker.Mock(side_effect=HTTPError("Failed to download"))
         )
         mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
         self.mocker.patch.object(InitCommand, "__init__", return_value=None)
@@ -247,7 +246,7 @@ class InitCommandTest(TestCase):
             with pytest.raises(Exception) as e:
                 init.download_and_clean(formatted_template_name, template, project_dir)
 
-            assert "Failed to download the selected component" in e.value.args[0]
+            assert "Failed to download" in e.value.args[0]
             assert mock_template_download.call_count == 1
             assert mock_get_available_templates.call_count == 1
             assert not mock_file.called
@@ -263,7 +262,7 @@ class InitCommandTest(TestCase):
             return_value={formatted_template_name: "template-url"},
         )
         mock_response = self.mocker.Mock(
-            status_code=404, raise_for_status=self.mocker.Mock(side_effect=HTTPError("some error"))
+            status_code=404, raise_for_status=self.mocker.Mock(side_effect=HTTPError("Failed to download"))
         )
         mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
         self.mocker.patch.object(InitCommand, "__init__", return_value=None)
@@ -272,7 +271,7 @@ class InitCommandTest(TestCase):
             with pytest.raises(Exception) as e:
                 init.download_and_clean(formatted_template_name, template, project_dir)
 
-            assert "Failed to download the selected component" in e.value.args[0]
+            assert "Failed to download" in e.value.args[0]
             assert mock_template_download.call_count == 1
             assert mock_get_available_templates.call_count == 1
             assert not mock_file.called
@@ -317,7 +316,7 @@ class InitCommandTest(TestCase):
         init = InitCommand({})
         with pytest.raises(Exception) as e:
             init.get_download_url(template, "template")
-        assert e.value.args[0] == "Could not find the component template 'template-language' in Greengrass Software Catalog."
+        assert "Could not find the component template 'template-language' in Greengrass Software Catalog." in e.value.args[0]
         assert mock_get_component_list_from_github.called
 
     def test_get_download_url_invalid_repository(self):
@@ -331,5 +330,5 @@ class InitCommandTest(TestCase):
         init = InitCommand({})
         with pytest.raises(Exception) as e:
             init.get_download_url(repository, "repository")
-        assert e.value.args[0] == "Could not find the component repository 'repository_name' in Greengrass Software Catalog."
+        assert "Could not find the component repository 'repository_name' in Greengrass Software Catalog." in e.value.args[0]
         assert mock_get_component_list_from_github.called
