@@ -11,9 +11,7 @@ def test_build_template_zip(change_test_dir, gdk_cli):
     component_name = "com.example.PythonHelloWorld"
     region = "us-east-1"
     # Check if init downloads templates with necessary files.
-    check_init_template = gdk_cli.run(
-        ["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"]
-    )
+    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"])
     assert check_init_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("recipe.yaml").resolve().exists()
     config_file = Path(path_HelloWorld).joinpath("gdk-config.json").resolve()
@@ -48,9 +46,7 @@ def test_build_template_zip_fail_with_no_artifact(change_test_dir, gdk_cli):
     component_name = "com.example.PythonHelloWorld"
     region = "us-east-1"
     # Check if init downloads templates with necessary files.
-    check_init_template = gdk_cli.run(
-        ["component", "init", "-t", "HelloWorld", "-l", "python", "-n", dir_name]
-    )
+    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "python", "-n", dir_name])
     assert check_init_template.returncode == 0
     assert Path(dir_path).joinpath("recipe.yaml").resolve().exists()
     config_file = Path(dir_path).joinpath("gdk-config.json").resolve()
@@ -78,9 +74,7 @@ def test_build_template_maven(change_test_dir, gdk_cli):
     component_name = "com.example.JavaHelloWorld"
     region = "us-east-1"
     # Check if init downloads templates with necessary files.
-    check_init_template = gdk_cli.run(
-        ["component", "init", "-t", "HelloWorld", "-l", "java", "-n", "HelloWorld"]
-    )
+    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "java", "-n", "HelloWorld"])
     assert check_init_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("recipe.yaml").resolve().exists()
     config_file = Path(path_HelloWorld).joinpath("gdk-config.json").resolve()

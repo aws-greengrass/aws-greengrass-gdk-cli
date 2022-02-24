@@ -112,7 +112,7 @@ class PublishCommand(Command):
                 if self.bucket_exists_in_same_region(bucket, region):
                     logging.info("Not creating an artifacts bucket as it already exists.")
                     return
-                logging.error("Cannot create the artifacts bucket '{}' as it is already owned by you in other region.")
+                logging.error(f"Cannot create the artifacts bucket '{bucket}' as it is already owned by you in other region.")
             raise Exception(e)
         except Exception as e:
             logging.error("Failed to create the bucket '{}' in region '{}'".format(bucket, region))
