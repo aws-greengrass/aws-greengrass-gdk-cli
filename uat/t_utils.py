@@ -4,13 +4,14 @@ from pathlib import Path
 import boto3
 
 
-def update_config(config_file, component_name, region, bucket, author):
+def update_config(config_file, component_name, region, bucket, author, version="NEXT_PATCH"):
     # Update gdk-config file mandatory field like region.
     with open(str(config_file), "r") as f:
         config = json.loads(f.read())
         config["component"][component_name]["author"] = author
         config["component"][component_name]["publish"]["region"] = region
         config["component"][component_name]["publish"]["bucket"] = bucket
+        config["component"][component_name]["version"] = version
     with open(str(config_file), "w") as f:
         f.write(json.dumps(config))
 
@@ -51,10 +52,9 @@ def get_version_created(recipes_path, component_name):
     for f in Path(recipes_path).iterdir():
         if component_name in str(f.resolve()):
             file_name = f.name
-            break
-    split_file_name = file_name.split(f"{component_name}-")
-    split_for_version = split_file_name[1].split(".yaml")[0]
-    return split_for_version
+            split_file_name = file_name.split(f"{component_name}-")
+            split_for_version = split_file_name[1].split(".yaml")[0]
+            return split_for_version
 
 
 def create_s3_client(region):

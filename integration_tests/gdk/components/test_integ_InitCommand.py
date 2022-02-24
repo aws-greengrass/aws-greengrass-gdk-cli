@@ -94,7 +94,7 @@ class CommandTest(TestCase):
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
 
-        assert "Could not initialze the project due to the following error." in e.value.args[0]
+        assert "Could not initialize the project due to the following error." in e.value.args[0]
 
         assert mock_is_directory_empty.call_count == 0
         assert mock_init_with_template.call_count == 0

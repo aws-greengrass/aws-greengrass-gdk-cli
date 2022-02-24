@@ -12,9 +12,7 @@ def test_publish_template_zip(change_test_dir, gdk_cli):
     bucket = "gdk-cli-uat"
     author = "gdk-cli-uat"
     # Check if init downloads templates with necessary files.
-    check_init_template = gdk_cli.run(
-        ["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"]
-    )
+    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"])
     assert check_init_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("recipe.yaml").resolve().exists()
     config_file = Path(path_HelloWorld).joinpath("gdk-config.json").resolve()
@@ -44,7 +42,7 @@ def test_publish_template_zip(change_test_dir, gdk_cli):
     t_utils.clean_up_aws_resources(component_name, t_utils.get_version_created(recipes_path, component_name), region)
 
 
-def test_publish_without_build_template_zip(change_test_dir, gdk_cli):
+def test_publish_without_build_template_zip_with_bucket_arg(change_test_dir, gdk_cli):
     # Recipe contains HelloWorld.zip artifact. So, create HelloWorld directory inside temporary directory.
     path_HelloWorld = Path(change_test_dir).joinpath("HelloWorld")
     component_name = "com.example.PythonHelloWorld"
@@ -52,9 +50,7 @@ def test_publish_without_build_template_zip(change_test_dir, gdk_cli):
     bucket = "gdk-cli-uat"
     author = "gdk-cli-uat"
     # Check if init downloads templates with necessary files.
-    check_init_template = gdk_cli.run(
-        ["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"]
-    )
+    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"])
     assert check_init_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("recipe.yaml").resolve().exists()
     config_file = Path(path_HelloWorld).joinpath("gdk-config.json").resolve()
@@ -64,8 +60,9 @@ def test_publish_without_build_template_zip(change_test_dir, gdk_cli):
     t_utils.update_config(config_file, component_name, region, bucket, author)
 
     os.chdir(path_HelloWorld)
-
-    check_publish_component = gdk_cli.run(["component", "publish"])
+    # Pass in bucket name as arg
+    bucket_arg = "{}-{}-{}".format(bucket, region, t_utils.get_acc_num(region))
+    check_publish_component = gdk_cli.run(["component", "publish", "-b", bucket_arg])
     assert check_publish_component.returncode == 0
     assert Path(path_HelloWorld).joinpath("zip-build").resolve().exists()
     assert Path(path_HelloWorld).joinpath("greengrass-build").resolve().exists()

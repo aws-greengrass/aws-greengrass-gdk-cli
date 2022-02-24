@@ -4,7 +4,7 @@ def init(d_args):
     try:
         InitCommand(d_args).run()
     except Exception as e:
-        raise Exception(f"Could not initialze the project due to the following error.\n{e}")
+        raise Exception(f"Could not initialize the project due to the following error.\n{e}")
 
 
 def build(d_args):
