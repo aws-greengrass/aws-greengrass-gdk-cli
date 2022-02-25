@@ -131,8 +131,8 @@ def test_get_latest_cli_version_invalid_request(mocker):
     res_text = "__version__ = 1.0.0"
     mock_response = mocker.Mock(status_code=200, text=lambda: res_text)
     mock_get_version = mocker.patch("requests.get", return_value=mock_response, side_effect=HTTPError("hi"))
-
-    assert utils.get_latest_cli_version() == "1.0.0"
+    # Since the request failed, it'll be the version of the cli tool installed.
+    assert utils.get_latest_cli_version() == utils.cli_version
     assert mock_get_version.called
 
 
