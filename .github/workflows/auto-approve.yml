@@ -1,0 +1,32 @@
+# Auto approve pull requests with auto-approve label
+name: Auto approve bot
+
+on:
+  pull_request_target:
+    types: [ labeled, unlabeled, opened, synchronize, reopened, ready_for_review, review_requested ]
+
+jobs:
+  auto-approve:
+    if: contains(github.event.pull_request.labels.*.name, 'auto-approve')
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: auto approve
+        uses: actions/github-script@0.2.0
+        with:
+          script: |
+            github.pullRequests.createReview({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              pull_number: context.payload.pull_request.number,
+              event: 'APPROVE'
+            })
+            github.pullRequests.merge({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              pull_number: context.payload.pull_request.number
+            })
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
