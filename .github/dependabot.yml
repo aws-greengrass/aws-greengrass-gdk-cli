@@ -1,0 +1,35 @@
+# Please see the documentation for Dependabot configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: /
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+    labels:
+      - "auto-approve"
+      - ":robot: bot"
+    open-pull-requests-limit: 5
+    # Include a list of updated dependencies
+    # with a prefix determined by the dependency group
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    target-branch: "development"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "weekly"
+      day: "sunday"
+    labels:
+      - "auto-approve"
+      - ":robot: bot"
+    open-pull-requests-limit: 5
+    # Include a list of updated dependencies
+    # with a prefix determined by the dependency group
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    target-branch: "development"
