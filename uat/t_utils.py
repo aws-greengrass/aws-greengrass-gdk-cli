@@ -1,19 +1,23 @@
 import json
+import random
+import string
 from pathlib import Path
 
 import boto3
 
 
-def update_config(config_file, component_name, region, bucket, author, version="NEXT_PATCH"):
+def update_config(config_file, component_name, region, bucket, author, version="NEXT_PATCH", old_component_name=None):
     # Update gdk-config file mandatory field like region.
     with open(str(config_file), "r") as f:
         config = json.loads(f.read())
+        if old_component_name is not None:
+            config["component"][component_name] = config["component"].pop(old_component_name)
         config["component"][component_name]["author"] = author
         config["component"][component_name]["publish"]["region"] = region
         config["component"][component_name]["publish"]["bucket"] = bucket
         config["component"][component_name]["version"] = version
     with open(str(config_file), "w") as f:
-        f.write(json.dumps(config))
+        f.write(json.dumps(config, indent=4))
 
 
 def clean_up_aws_resources(component_name, component_version, region):
@@ -65,3 +69,9 @@ def get_acc_num(region):
     sts_client = boto3.client("sts", region_name=region)
     caller_identity_response = sts_client.get_caller_identity()
     return caller_identity_response["Account"]
+
+
+def random_id():
+    size = 6
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(random.choice(chars) for _ in range(size))
