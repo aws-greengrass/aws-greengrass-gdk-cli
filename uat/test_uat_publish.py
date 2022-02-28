@@ -7,7 +7,8 @@ import t_utils
 def test_publish_template_zip(change_test_dir, gdk_cli):
     # Recipe contains HelloWorld.zip artifact. So, create HelloWorld directory inside temporary directory.
     path_HelloWorld = Path(change_test_dir).joinpath("HelloWorld")
-    component_name = "com.example.PythonHelloWorld"
+    simple_component_name = "com.example.PythonHelloWorld"
+    component_name = simple_component_name + "." + t_utils.random_id()
     region = "us-east-1"
     bucket = "gdk-cli-uat"
     author = "gdk-cli-uat"
@@ -18,7 +19,9 @@ def test_publish_template_zip(change_test_dir, gdk_cli):
     config_file = Path(path_HelloWorld).joinpath("gdk-config.json").resolve()
     assert config_file.exists()
 
-    t_utils.update_config(config_file, component_name, region, bucket, author)
+    t_utils.update_config(
+        config_file, component_name, region, bucket, author, old_component_name=simple_component_name
+    )
     os.chdir(path_HelloWorld)
     # Check if build works as expected.
     check_build_template = gdk_cli.run(["component", "build"])
@@ -45,7 +48,8 @@ def test_publish_template_zip(change_test_dir, gdk_cli):
 def test_publish_without_build_template_zip_with_bucket_arg(change_test_dir, gdk_cli):
     # Recipe contains HelloWorld.zip artifact. So, create HelloWorld directory inside temporary directory.
     path_HelloWorld = Path(change_test_dir).joinpath("HelloWorld")
-    component_name = "com.example.PythonHelloWorld"
+    simple_component_name = "com.example.PythonHelloWorld"
+    component_name = simple_component_name + "." + t_utils.random_id()
     region = "us-east-1"
     bucket = "gdk-cli-uat"
     author = "gdk-cli-uat"
@@ -57,7 +61,9 @@ def test_publish_without_build_template_zip_with_bucket_arg(change_test_dir, gdk
     assert config_file.exists()
 
     # Update gdk-config file mandatory field like region.
-    t_utils.update_config(config_file, component_name, region, bucket, author)
+    t_utils.update_config(
+        config_file, component_name, region, bucket, author, old_component_name=simple_component_name
+    )
 
     os.chdir(path_HelloWorld)
     # Pass in bucket name as arg

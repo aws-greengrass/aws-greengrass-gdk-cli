@@ -138,7 +138,6 @@ def test_build_run_default_zip_json(mocker, supported_build_system, rglob_build_
     )
     mock_is_artifact_in_build = mocker.patch.object(BuildCommand, "is_artifact_in_build", return_value=True)
 
-    mock_subprocess_run = mocker.patch("subprocess.run")
     mock_json_dump = mocker.patch("json.dumps")
     pc = mock_get_proj_config.return_value
     file_name = Path(pc["gg_build_recipes_dir"]).joinpath(pc["component_recipe_file"].name).resolve()
@@ -148,7 +147,6 @@ def test_build_run_default_zip_json(mocker, supported_build_system, rglob_build_
         mock_json_dump.call_count == 1
 
     assert mock_get_proj_config.assert_called_once
-    assert not mock_subprocess_run.called
     assert mock_copy_dir.call_count == 1  # copy files to zip-build to create a zip
     assert mock_archive_dir.call_count == 1  # archiving directory
     assert mock_is_artifact_in_build.call_count == 1  # only one artifact in project_config. Available in build
