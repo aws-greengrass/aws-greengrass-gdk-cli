@@ -13,12 +13,16 @@ on:
   workflow_dispatch:
 
 jobs:
+
+  # Build job focuses on maintaining quality bar of code contributed in each commit.
+  # Enforce static analysis, commit format and code coverage rules etc. here.
+  # To perform any testing on gdk-cli tool, please add them to the regression job.
   build:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.x]
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: [ 3.7 ]
+        os: [ windows-latest, ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     permissions:
       id-token: write
       contents: read
@@ -27,19 +31,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Validate commit messages 
+      - name: Validate commit messages
         uses: wagoid/commitlint-github-action@v4
         if: matrix.os == 'ubuntu-latest'
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install CLI and verify
+      - name: Python version
         run: |
           python -VV
           python -m pip install --upgrade pip
-          pip install .
-          gdk --help
       - name: Lint with flake8
         run: |
           pip3 install flake8
@@ -48,7 +50,7 @@ jobs:
       - name: Unit Testing CLI
         run: |
           pip install -r test-requirements.txt
-          coverage run --source=gdk -m pytest -v -s tests && coverage xml --fail-under=99
+          coverage run --source=gdk -m pytest -v -s tests && coverage xml --fail-under=98
       - name: Upload tests coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
@@ -70,15 +72,54 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Run UATs
-        run: |
-          # pytest -v -s uat --gdk-debug
-          pytest -v -s uat
       - name: Run UATs with code coverage
         run: |
-          # coverage run --source=gdk -m pytest -v -s uat --instrumented --gdk-debug && coverage xml --fail-under=77
+          pip install -r test-requirements.txt
           coverage run --source=gdk -m pytest -v -s uat --instrumented && coverage xml --fail-under=77
       - name: Upload UAT coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           flags: uat
+
+  # Regression job performs installation of gdk as our customers would and runs our UAT suite for
+  # each matrix permutation to detect regression failures.
+  regression:
+    strategy:
+      max-parallel: 3
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.x]
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write
+      contents: read
+    name: Regression on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install CLI and dependencies
+        run: |
+          python -VV
+          python -m pip install --upgrade pip
+          # Perform clean install without test dependencies to ensure none of test dependencies
+          # have been used in the gdk codebase.
+          pip install .
+          gdk --help
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{secrets.GDK_WORKFLOW_AWS_ROLE}}
+          aws-region: us-east-1
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Run UATs
+        run: |
+          pip install -r test-requirements.txt
+          pytest -v -s uat
