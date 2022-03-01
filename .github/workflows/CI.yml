@@ -72,9 +72,11 @@ jobs:
           java-version: 1.8
       - name: Run UATs
         run: |
+          # pytest -v -s uat --gdk-debug
           pytest -v -s uat
       - name: Run UATs with code coverage
         run: |
+          # coverage run --source=gdk -m pytest -v -s uat --instrumented --gdk-debug && coverage xml --fail-under=77
           coverage run --source=gdk -m pytest -v -s uat --instrumented && coverage xml --fail-under=77
       - name: Upload UAT coverage to Codecov
         uses: codecov/codecov-action@v2

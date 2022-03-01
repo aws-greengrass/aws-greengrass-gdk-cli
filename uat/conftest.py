@@ -7,6 +7,9 @@ def pytest_addoption(parser):
     parser.addoption(
         "--instrumented", action="store_true", default=False, help="run tests against code instead of installed gdk cli"
     )
+    parser.addoption(
+        "--gdk-debug", action="store_true", default=False, help="run gdk commands with debug flag"
+    )
 
 
 @pytest.fixture()
@@ -17,7 +20,9 @@ def change_test_dir(tmpdir, monkeypatch):
 
 @pytest.fixture()
 def gdk_cli(request):
+    debug = request.config.getoption("--gdk-debug")
+    print(f"Initializing GDK client with debug mode {debug}")
     if request.config.getoption("--instrumented"):
-        return GdkInstrumentedProcess()
+        return GdkInstrumentedProcess(debug)
     else:
-        return GdkProcess()
+        return GdkProcess(debug)
