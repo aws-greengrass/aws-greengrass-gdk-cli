@@ -15,13 +15,16 @@ class ProcessOutput:
 
 
 class GdkProcess:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, debug=False) -> None:
+        self.debug = debug
 
-    @classmethod
     def run(self, arguments=None, capture_output=True) -> ProcessOutput:
         if arguments is None:
             arguments = []
+
+        if self.debug:
+            arguments += ["--debug"]
+
         try:
             if capture_output:
                 output = sp.run(["gdk"] + arguments, check=True, stdout=sp.PIPE)
@@ -34,13 +37,15 @@ class GdkProcess:
 
 
 class GdkInstrumentedProcess(GdkProcess):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, debug=False) -> None:
+        super().__init__(debug)
 
-    @classmethod
     def run(self, arguments=None, capture_output=True) -> ProcessOutput:
         if arguments is None:
             arguments = []
+
+        if self.debug:
+            arguments += ["--debug"]
 
         #
         # In each cli execution, python interpreter reloads all gdk modules, here this simulates that effect.
