@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from unittest import TestCase, mock
 
@@ -185,18 +186,14 @@ class PublishCommandTest(TestCase):
         )
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=[])
         mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
+        spy_logging_warning = self.mocker.spy(logging, "warning")
         component_name = "com.example.HelloWorld"
         component_version = "1.0.0"
         publish = PublishCommand({})
-        with pytest.raises(Exception) as e:
-            publish.update_and_create_recipe_file(component_name, component_version)
-        assert (
-            "Could not find the artifact file specified in the recipe 'hello_world.py' inside the build folder"
-            in e.value.args[0]
-        )
+        publish.update_and_create_recipe_file(component_name, component_version)
+        assert spy_logging_warning.call_count == 1
         assert mock_glob.call_count == 1
-        assert not mock_create_publish_recipe.called
+        assert mock_create_publish_recipe.called
 
     def test_update_and_create_recipe_file_no_artifacts(self):
         no_artifacts_key = {

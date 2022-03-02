@@ -339,7 +339,7 @@ class PublishCommand(Command):
                     logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
                     artifact["URI"] = f"{artifact_uri}/{artifact_file}"
                 else:
-                    raise Exception(
+                    logging.warning(
                         f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
                         f" '{gg_build_component_artifacts}'."
                     )
