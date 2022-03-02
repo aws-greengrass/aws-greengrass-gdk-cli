@@ -1,3 +1,5 @@
+import pytest
+
 from pathlib import Path
 
 
@@ -15,6 +17,7 @@ def test_init_template(change_test_dir, gdk_cli):
     assert Path(dirpath).joinpath("gdk-config.json").resolve().exists()
 
 
+@pytest.mark.version(min='1.1.0')
 def test_init_template_with_new_directory(change_test_dir, gdk_cli):
     dir = "test-dir"
     dirpath = Path(change_test_dir).joinpath(dir)
@@ -32,6 +35,7 @@ def test_init_repository(change_test_dir, gdk_cli):
     assert Path(dirpath).joinpath("gdk-config.json").exists()
 
 
+@pytest.mark.version(min='1.1.0')
 def test_init_repository_with_new_dir(change_test_dir, gdk_cli):
     dir = "test-dir"
     dirpath = Path(change_test_dir).joinpath(dir)
