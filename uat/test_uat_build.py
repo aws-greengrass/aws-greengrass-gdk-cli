@@ -1,5 +1,6 @@
 import os
 import shutil
+import pytest
 from pathlib import Path
 
 import t_utils
@@ -8,10 +9,13 @@ import t_utils
 def test_build_template_zip(change_test_dir, gdk_cli):
     # Recipe contains HelloWorld.zip artifact. So, create HelloWorld directory inside temporary directory.
     path_HelloWorld = Path(change_test_dir).joinpath("HelloWorld")
+    path_HelloWorld.mkdir(parents=True, exist_ok=True)
+    os.chdir(str(path_HelloWorld))
+
     component_name = "com.example.PythonHelloWorld"
     region = "us-east-1"
     # Check if init downloads templates with necessary files.
-    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "python", "-n", "HelloWorld"])
+    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "python"])
     assert check_init_template.returncode == 0
     assert Path(path_HelloWorld).joinpath("recipe.yaml").resolve().exists()
     config_file = Path(path_HelloWorld).joinpath("gdk-config.json").resolve()
@@ -35,11 +39,42 @@ def test_build_template_zip(change_test_dir, gdk_cli):
         .joinpath("HelloWorld.zip")
         .resolve()
     )
-
     assert artifact_path.exists()
 
 
+@pytest.mark.version(min='1.0.0')
 def test_build_template_zip_fail_with_no_artifact(change_test_dir, gdk_cli):
+    # Recipe contains HelloWorld.zip artifact. So, create a directory with different name.
+    dir_name = "artifact-not-exists"
+    dir_path = Path(change_test_dir).joinpath(dir_name)
+    dir_path.mkdir(parents=True, exist_ok=True)
+    os.chdir(str(dir_path))
+
+    component_name = "com.example.PythonHelloWorld"
+    region = "us-east-1"
+    # Check if init downloads templates with necessary files.
+    check_init_template = gdk_cli.run(["component", "init", "-t", "HelloWorld", "-l", "python"])
+    assert check_init_template.returncode == 0
+    assert Path(dir_path).joinpath("recipe.yaml").resolve().exists()
+    config_file = Path(dir_path).joinpath("gdk-config.json").resolve()
+    assert config_file.exists()
+
+    # Update gdk-config file mandatory field like region.
+    t_utils.update_config(config_file, component_name, region, bucket="", author="")
+
+    os.chdir(dir_path)
+    # Check if build works as expected.
+    check_build_template = gdk_cli.run(["component", "build"])
+    output = check_build_template.output
+    assert check_build_template.returncode == 1
+    assert Path(dir_path).joinpath("zip-build").resolve().exists()
+    assert "Could not find" in output
+    assert "HelloWorld.zip" in output
+    assert "Failed to build the component with the given project configuration." in output
+
+
+@pytest.mark.version(min='1.1.0')
+def test_build_template_zip_fail_with_no_artifact_with_directory_name(change_test_dir, gdk_cli):
     # Recipe contains HelloWorld.zip artifact. So, create a directory with different name.
     dir_name = "artifact-not-exists"
     dir_path = Path(change_test_dir).joinpath(dir_name)
@@ -69,6 +104,7 @@ def test_build_template_zip_fail_with_no_artifact(change_test_dir, gdk_cli):
     assert "Failed to build the component with the given project configuration." in output
 
 
+@pytest.mark.version(min='1.1.0')
 def test_build_template_maven(change_test_dir, gdk_cli):
     path_HelloWorld = Path(change_test_dir).joinpath("HelloWorld")
     component_name = "com.example.JavaHelloWorld"
@@ -89,6 +125,7 @@ def test_build_template_maven(change_test_dir, gdk_cli):
     assert Path(path_HelloWorld).joinpath("greengrass-build").resolve().exists()
 
 
+@pytest.mark.version(min='1.1.0')
 def test_build_template_gradle_multi_project(change_test_dir, gdk_cli):
     path_multi_gradle_project = Path(change_test_dir).joinpath("gradle-build-test").resolve()
     zip_file = "gradle-build-test.zip"
@@ -121,6 +158,7 @@ def test_build_template_gradle_multi_project(change_test_dir, gdk_cli):
     assert Path(path_multi_gradle_project).joinpath("greengrass-build").resolve().exists()
 
 
+@pytest.mark.version(min='1.1.0')
 def test_build_template_maven_multi_project(change_test_dir, gdk_cli):
     path_multi_gradle_project = Path(change_test_dir).joinpath("maven-build-test").resolve()
     zip_file = "maven-build-test.zip"

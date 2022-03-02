@@ -1,4 +1,5 @@
 import json
+import yaml
 import random
 import string
 from pathlib import Path
@@ -18,6 +19,18 @@ def update_config(config_file, component_name, region, bucket, author, version="
         config["component"][component_name]["version"] = version
     with open(str(config_file), "w") as f:
         f.write(json.dumps(config, indent=4))
+
+
+def replace_uri_in_recipe(recipe_file, os_type, uri_search, uri_replace):
+    with open(str(recipe_file), "r") as f:
+        recipe = yaml.safe_load(f.read())
+        for i in range(0, len(recipe["Manifests"])):
+            if recipe["Manifests"][i]["Platform"]["os"] == os_type:
+                for j in range(0, len(recipe["Manifests"][i]["Artifacts"])):
+                    uri = recipe["Manifests"][i]["Artifacts"][j]["URI"]
+                    recipe["Manifests"][i]["Artifacts"][j]["URI"] = uri.replace(uri_search, uri_replace, 1)
+    with open(str(recipe_file), "w") as f:
+        f.write(yaml.dump(recipe))
 
 
 def clean_up_aws_resources(component_name, component_version, region):
