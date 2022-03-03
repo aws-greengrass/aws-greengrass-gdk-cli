@@ -44,12 +44,14 @@ jobs:
           python -m pip install --upgrade pip
       - name: Lint with flake8
         run: |
-          pip3 install flake8
+          pip install flake8
           # The GitHub editor is 127 chars wide
           flake8 . --count --max-complexity=10 --max-line-length=127 --show-source --statistics
-      - name: Unit Testing CLI
+      - name: Install test dependencies
         run: |
           pip install -r test-requirements.txt
+      - name: Unit Testing CLI
+        run: |
           coverage run --source=gdk -m pytest -v -s tests && coverage xml --fail-under=98
       - name: Upload tests coverage to Codecov
         uses: codecov/codecov-action@v2
@@ -57,7 +59,6 @@ jobs:
           flags: unit
       - name: Integration Testing CLI
         run: |
-          pip install -r test-requirements.txt
           coverage run --source=gdk -m pytest -v -s integration_tests && coverage xml --fail-under=90
       - name: Upload integration tests coverage to Codecov
         uses: codecov/codecov-action@v2
@@ -74,29 +75,30 @@ jobs:
           java-version: 1.8
       - name: Run UATs with code coverage
         run: |
-          pip install -r test-requirements.txt
           coverage run --source=gdk -m pytest -v -s uat --instrumented && coverage xml --fail-under=77
       - name: Upload UAT coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           flags: uat
 
-  # Regression job performs installation of gdk as our customers would and runs our UAT suite for
+  # Regression job performs installation of gdk as our customers would. Runs our UAT suite for
   # each matrix permutation to detect regression failures.
   regression:
     strategy:
-      max-parallel: 3
+      max-parallel: 6
       matrix:
+        gdk-version: [ HEAD, v1.0.0, v1.1.0 ]
         python-version: [3.7, 3.8, 3.x]
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write
       contents: read
-    name: Regression on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    name: Regression of GDK ${{ matrix.gdk-version == 'HEAD' && '' || matrix.gdk-version }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
         with:
+          ref: ${{ matrix.gdk-version == 'HEAD' && github.ref || matrix.gdk-version }}
           fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -119,7 +121,12 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+      - name: Get Latest UATs
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
       - name: Run UATs
         run: |
           pip install -r test-requirements.txt
-          pytest -v -s uat
+          pytest -v -s uat --target-version ${{ matrix.gdk-version }} --gdk-debug
