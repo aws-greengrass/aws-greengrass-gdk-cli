@@ -2,6 +2,7 @@
 pre-commit
 flake8
 # test dependencies
+py
 jsonschema
 requests
 pyyaml
@@ -10,3 +11,5 @@ pytest
 mock
 coverage
 pytest-mock
+behave
+behave-html-formatter

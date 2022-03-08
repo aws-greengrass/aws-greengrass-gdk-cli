@@ -4,6 +4,7 @@
 *.iml
 *build/
 *dist/
+*reports/
 *.egg-info
 *__pycache__
 *htmlcov/

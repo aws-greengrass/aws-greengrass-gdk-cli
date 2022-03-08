@@ -54,13 +54,13 @@ class GdkInstrumentedProcess(GdkProcess):
         reload(parse_args_actions)
         reload(utils)
 
-        # parsed args
-        args = CLIParser.cli_parser.parse_args(arguments)
-
         exit_code = 0
         output = ""
 
         try:
+            # parsed args
+            args = CLIParser.cli_parser.parse_args(arguments)
+
             if capture_output:
                 f = io.StringIO()
                 with redirect_stdout(f):
@@ -68,6 +68,9 @@ class GdkInstrumentedProcess(GdkProcess):
                 output = f.getvalue()
             else:
                 parse_args_actions.run_command(args)
+        except SystemExit as e:
+            exit_code = e.code
+            output = str(e)
         except Exception as e:
             exit_code = 1
             output = str(e)
