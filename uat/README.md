@@ -63,7 +63,7 @@ pytest -v -s uat --gdk-debug
 
 Pass this flag to in combination with coverage to track code coverage by the test suite.
 ```shell
-coverage run --source=gdk -m pytest -v -s uat --instrumented 
+coverage run --source=gdk -m pytest -v -s uat --instrumented
 ```
 
 Note: The `coverage` is required to instrument the code.
@@ -80,14 +80,14 @@ the tests are running against the most recent commit.
 #### 4. `@pytest.mark.version(...)` constraints
 `@pytest.mark.version(...)` is pytest marker to enforce version constraints for any test.
 
-The marker takes kwargs (key & values) to define constraints. These can be combined to create upper and 
+The marker takes kwargs (key & values) to define constraints. These can be combined to create upper and
 lower bounds. Available key args are:
- * `eq`: equal to gdk cli version (exact version match). 
+ * `eq`: equal to gdk cli version (exact version match).
  * `min` : minimum gdk cli version (lower bound)
- * `ge`: greater than or equal to gdk cli version (lower bound). Alias of `min`. 
- * `gt`: greater than gdk cli version (lower bound). 
+ * `ge`: greater than or equal to gdk cli version (lower bound). Alias of `min`.
+ * `gt`: greater than gdk cli version (lower bound).
  * `max` : maximum gdk cli version (upper bound)
- * `le`: less than or equal to gdk cli version (upper bound). Alias of `max`. 
+ * `le`: less than or equal to gdk cli version (upper bound). Alias of `max`.
  * `lt`: less than gdk cli version (upper bound).
 
 Examples:
