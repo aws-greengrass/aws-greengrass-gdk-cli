@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------
+# CONSTANTS
+# ------------------------------------------------------------------------
+
 GG_RECIPE_YAML = "recipe.yaml"
 GG_CONFIG_JSON = "gdk-config.json"
 GG_BUILD_DIR = "greengrass-build"

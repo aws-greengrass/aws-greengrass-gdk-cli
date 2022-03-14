@@ -1,6 +1,9 @@
+import os
 import re
+import tempfile
 
 from behave import fixture, use_fixture
+from pathlib import Path
 from packaging.version import parse as version_parser
 from t_setup import GdkProcess, GdkInstrumentedProcess
 
@@ -102,7 +105,8 @@ registry_auto_use_fixtures = [
 ]
 
 registry_use_by_tag_fixtures = {
-    "version": version_constraint
+    "version": version_constraint,
+    "change_cwd": change_working_dir
 }
 
 # ------------------------------------------------------------------------
@@ -135,3 +139,4 @@ def before_scenario(context, scenario):
 
 def before_all(context):
     context.config.setup_logging()
+
