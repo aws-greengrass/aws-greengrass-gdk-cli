@@ -1,4 +1,4 @@
-from behave import given, then, step
+from behave import given, step
 
 
 @given('cli is installed')
@@ -10,15 +10,15 @@ def gdk_cli_installed(context):
     assert exit_code == 0, f"command exited with:{exit_code}, but expecting 0."
 
 
-@then('command was successful')
-@then('cli exited successfully')
+@step('command was successful')
+@step('cli exited successfully')
 def command_success(context):
     exit_code = context.last_cli_output.returncode
     assert exit_code == 0, f"command exited with:{exit_code}, but expecting 0."
 
 
-@then('command was unsuccessful')
-@then('cli exited with error')
+@step('command was unsuccessful')
+@step('cli exited with error')
 def command_error(context):
     exit_code = context.last_cli_output.returncode
     assert exit_code == 1, f"command exited with:{exit_code}, but expecting 1."
@@ -29,4 +29,3 @@ def command_error(context):
 def gdk_output_contains(context, text):
     output = context.last_cli_output.output
     assert text in output, f"Text '{text}' missing from output:\n{output}"
-

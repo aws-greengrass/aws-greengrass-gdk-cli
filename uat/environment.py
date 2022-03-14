@@ -42,6 +42,7 @@ def change_working_dir(context, **kwargs):
             context.cwd = os.getcwd()
             print(f"Created new working directory at {context.cwd}")
             yield new_dir
+        print(f"Cleaning temp directory at {new_dir}")
     except Exception as err:
         print(f"Error while working directory setup/cleanup: \n{err}")
     finally:
@@ -139,4 +140,3 @@ def before_scenario(context, scenario):
 
 def before_all(context):
     context.config.setup_logging()
-
