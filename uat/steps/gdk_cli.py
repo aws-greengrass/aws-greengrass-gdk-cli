@@ -28,4 +28,3 @@ def gdk_command_with_args_and_capture_mode(context, capture_output, commands=Non
     )
     context.last_cli_command_type = f"{commands[0]} {commands[1]}"
     context.last_cli_command_args = args
-

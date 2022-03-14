@@ -67,4 +67,3 @@ def update_artifact_uri(context, platform_type, search, replace):
     recipe_file = Path(cwd).joinpath(GG_RECIPE_YAML).resolve()
     assert recipe_file.exists(), f"{GG_RECIPE_YAML} does not exist"
     t_utils.replace_uri_in_recipe(recipe_file, platform_type, search, replace)
-
