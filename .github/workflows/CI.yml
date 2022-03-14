@@ -75,6 +75,7 @@ jobs:
           java-version: 1.8
       - name: Run UATs with code coverage
         run: |
+          coverage erase
           coverage run -a --source=gdk -m pytest -v -s uat --instrumented
           coverage run -a --source=gdk -m behave -v uat/ -D instrumented=true
           coverage xml --fail-under=77
