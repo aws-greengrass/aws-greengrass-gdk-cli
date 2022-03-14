@@ -115,7 +115,6 @@ class CommandTest(TestCase):
             "Arguments 'language' and 'repository' are conflicting and cannot be used together in a command."
             in cae.value.args[0]
         )
-        print(cae.value.args[0])
         assert mock_arguments_list.call_count == 1
 
     def test__identify_conflicting_args_in_command_without_conflicting_args(self):

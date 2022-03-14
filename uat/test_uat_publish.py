@@ -141,27 +141,25 @@ def test_publish_without_build_template_zip_with_bucket_arg(change_test_dir, gdk
 
 @pytest.mark.version(gt='1.1.0')
 def test_build_template_maven_multi_project_mixed_uris(change_test_dir, gdk_cli):
-    path_multi_mvn_project = Path(change_test_dir).joinpath("maven-publish-test").resolve()
+    path_multi_mvn_project = Path(change_test_dir).joinpath("maven-mixed-uris-publish-test").resolve()
     simple_zip_file = "maven-mixed-uris-publish-test.zip"
-    zip_file = "maven-mixed-uris-publish-test-" + t_utils.random_id() + ".zip"
     simple_component_name = "com.example.Multi.MixUris.Maven"
     component_name = simple_component_name + "." + t_utils.random_id()
     region = "us-east-1"
     s3_cl = t_utils.create_s3_client(region)
     account = t_utils.get_acc_num(region)
     bucket_prefix = "gdk-cli-uat"
-    bucket = f"{bucket_prefix}-{region}-{account}"
     s3_cl.download_file(
-        f"{bucket}",
-        f"do-not-delete-test-data/{simple_zip_file}",
-        str(Path(change_test_dir).joinpath(zip_file).resolve()),
+        f"gdk-github-workflow-cdk-test-data-{region}-{account}",
+        f"{simple_zip_file}",
+        str(Path(change_test_dir).joinpath(simple_zip_file).resolve()),
     )
     shutil.unpack_archive(
-        Path(change_test_dir).joinpath(zip_file),
-        path_multi_mvn_project,
+        Path(change_test_dir).joinpath(simple_zip_file),
+        change_test_dir,
         "zip",
     )
-    os.remove(Path(change_test_dir).joinpath(zip_file))
+    os.remove(Path(change_test_dir).joinpath(simple_zip_file))
     os.chdir(path_multi_mvn_project)
     assert Path(path_multi_mvn_project).joinpath("recipe.yaml").resolve().exists()
     config_file = Path(path_multi_mvn_project).joinpath("gdk-config.json").resolve()
@@ -172,8 +170,8 @@ def test_build_template_maven_multi_project_mixed_uris(change_test_dir, gdk_cli)
     )
 
     # Check if publish works as expected.
-    check_build_template = gdk_cli.run(["component", "publish"], capture_output=False)
-    assert check_build_template.returncode == 0
+    check_publish_template = gdk_cli.run(["component", "publish"], capture_output=False)
+    assert check_publish_template.returncode == 0
     assert Path(path_multi_mvn_project).joinpath("greengrass-build").resolve().exists()
     recipes_path = Path(path_multi_mvn_project).joinpath("greengrass-build").joinpath("recipes").resolve()
     t_utils.clean_up_aws_resources(component_name, t_utils.get_version_created(recipes_path, component_name), region)

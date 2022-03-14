@@ -337,7 +337,7 @@ class PublishCommandTest(TestCase):
         publish.project_config["account_number"] = "1234"
 
         with pytest.raises(Exception) as e:
-            print(publish.get_component_version_from_config())
+            publish.get_component_version_from_config()
 
         assert mock_get_next_version.call_count == 1
         assert e.value.args[0] == "some error"
@@ -716,7 +716,6 @@ class PublishCommandTest(TestCase):
             publish.create_bucket(bucket, region)
         assert mock_create_bucket.call_count == 1
         assert mock_check_in_same_region.called
-        print(e.value.args[0])
         assert "An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: fake message" == str(
             e.value.args[0]
         )
