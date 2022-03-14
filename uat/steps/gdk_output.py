@@ -1,4 +1,4 @@
-from behave import then, step
+from behave import given, then, step
 
 
 @given('cli is installed')
