@@ -1,11 +1,16 @@
 import os
 import re
 import tempfile
+import t_utils
 
 from behave import fixture, use_fixture
 from pathlib import Path
 from packaging.version import parse as version_parser
 from t_setup import GdkProcess, GdkInstrumentedProcess
+from steps.constants import (
+    GG_BUILD_DIR,
+    DEFAULT_AWS_REGION
+)
 
 # ------------------------------------------------------------------------
 # FIXTURES
@@ -140,3 +145,15 @@ def before_scenario(context, scenario):
 
 def before_all(context):
     context.config.setup_logging()
+
+
+def after_scenario(context, scenario):
+    if "last_component" in context and "last_cli_command_type" in context:
+        command_type = context.last_cli_command_type
+        if command_type == "component publish":
+            component_name = context.last_component
+            cwd = context.cwd if "cwd" in context else os.getcwd()
+            recipes_path = Path(cwd).joinpath(GG_BUILD_DIR).joinpath("recipes").resolve()
+            t_utils.clean_up_aws_resources(
+                component_name, t_utils.get_version_created(recipes_path, component_name), DEFAULT_AWS_REGION
+            )
