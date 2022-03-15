@@ -135,13 +135,13 @@ def test_build_template_gradle_multi_project(change_test_dir, gdk_cli):
     account = t_utils.get_acc_num(region)
 
     s3_cl.download_file(
-        f"gdk-cli-uat-{region}-{account}",
-        f"do-not-delete-test-data/{zip_file}",
+        f"gdk-github-workflow-cdk-test-data-{region}-{account}",
+        f"{zip_file}",
         str(Path(change_test_dir).joinpath(zip_file).resolve()),
     )
     shutil.unpack_archive(
         Path(change_test_dir).joinpath(zip_file),
-        path_multi_gradle_project,
+        change_test_dir,
         "zip",
     )
     os.remove(Path(change_test_dir).joinpath(zip_file))
@@ -168,13 +168,13 @@ def test_build_template_maven_multi_project(change_test_dir, gdk_cli):
     account = t_utils.get_acc_num(region)
 
     s3_cl.download_file(
-        f"gdk-cli-uat-{region}-{account}",
-        f"do-not-delete-test-data/{zip_file}",
+        f"gdk-github-workflow-cdk-test-data-{region}-{account}",
+        f"{zip_file}",
         str(Path(change_test_dir).joinpath(zip_file).resolve()),
     )
     shutil.unpack_archive(
         Path(change_test_dir).joinpath(zip_file),
-        path_multi_gradle_project,
+        change_test_dir,
         "zip",
     )
     os.remove(Path(change_test_dir).joinpath(zip_file))
