@@ -23,7 +23,7 @@ cd aws-greengrass-gdk-cli
 #### 2. Install CLI from code
 
 ```shell
-python3 -m pip install pip
+python3 -m pip install --upgrade pip
 pip install .
 ```
 
@@ -40,45 +40,39 @@ pip install -r test-requirements.txt
 #### 5. Running end-to-end test suite
 
 ```shell
-pytest -v -s uat
+behave uat
 ```
 
 ### Built-in options
 
-#### `--gdk-debug` option
+#### 1. `gdk-debug` option
 
 Pass this flag to emit debug logs from gdk cli during all test runs. Example:
 ```shell
-pytest -v -s uat --gdk-debug
+behave uat -D gdk-debug=true
 ```
 
-#### 1. `--gdk-debug` option
-
-Pass this flag to emit debug logs from gdk cli during all test runs. Example:
-```shell
-pytest -v -s uat --gdk-debug
-```
-
-#### 2. `--instrumented` option
+#### 2. `instrumented` option
 
 Pass this flag to in combination with coverage to track code coverage by the test suite.
 ```shell
-coverage run --source=gdk -m pytest -v -s uat --instrumented
+coverage run --source=gdk -m behave uat -D instrumented=true
 ```
 
 Note: The `coverage` is required to instrument the code.
 
-#### 3. `--target-version` option
+#### 3. `target-version` option
 Pass this flag to run test suite considering a specific gdk version.
+
 ```shell
-pytest -v -s uat --target-version 1.1.0
+behave uat -D target-version=1.1.0
 ```
 
 If not provided than target version defaults to `HEAD`, which makes version constraint evaluation to assume
 the tests are running against the most recent commit.
 
-#### 4. `@pytest.mark.version(...)` constraints
-`@pytest.mark.version(...)` is pytest marker to enforce version constraints for any test.
+#### 4. `@version(...)` constraints
+`@version(...)` is pytest marker to enforce version constraints for any test.
 
 The marker takes kwargs (key & values) to define constraints. These can be combined to create upper and
 lower bounds. Available key args are:
@@ -92,12 +86,12 @@ lower bounds. Available key args are:
 
 Examples:
 ```python
-    @pytest.mark.version(eq='1.1.0')
-    @pytest.mark.version(min='1.1.0') or @pytest.mark.version(ge='1.1.0')
-    @pytest.mark.version(max='1.1.0') or @pytest.mark.version(le='1.1.0')
-    @pytest.mark.version(gt='1.1.0')
-    @pytest.mark.version(lt='1.1.0')
-    @pytest.mark.version(min='1.0.0', max='1.1.0')
+    @version(eq='1.1.0')
+    @version(min='1.1.0') or @version(ge='1.1.0')
+    @version(max='1.1.0') or @version(le='1.1.0')
+    @version(gt='1.1.0')
+    @version(lt='1.1.0')
+    @version(min='1.0.0', max='1.1.0')
 ```
 
 
