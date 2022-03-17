@@ -3,16 +3,19 @@ name: Auto approve bot
 
 on:
   pull_request_target:
-    types: [ labeled, unlabeled, opened, synchronize, reopened, ready_for_review, review_requested ]
+    types: [ labeled, opened, synchronize, reopened, ready_for_review, review_requested ]
+
+permissions:
+  pull-requests: write
+  contents: write
 
 jobs:
   auto-approve:
-    if: contains(github.event.pull_request.labels.*.name, 'auto-approve')
     runs-on: ubuntu-latest
-
-    permissions:
-      pull-requests: write
-
+    if: contains(github.event.pull_request.labels.*.name, 'auto-approve')
+      && github.actor == 'dependabot[bot]'
+      && github.event.sender.login == 'dependabot[bot]'
+      && github.event.sender.type == 'Bot'
     steps:
       - name: auto approve
         uses: actions/github-script@0.2.0
