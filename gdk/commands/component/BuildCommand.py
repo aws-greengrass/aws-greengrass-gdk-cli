@@ -49,15 +49,20 @@ class BuildCommand(Command):
         # Create build directories
         self.create_gg_build_directories()
 
-        if build_system == "custom":
-            # Run custom command as is.
-            custom_build_command = component_build_config["custom_build_command"]
-            logging.info("Using custom build configuration to build the component.")
-            logging.info("Running the following command\n{}".format(custom_build_command))
-            sp.run(custom_build_command)
-        else:
-            logging.info(f"Using '{build_system}' build system to build the component.")
-            self.default_build_component()
+        try:
+            if build_system == "custom":
+                # Run custom command as is.
+                custom_build_command = component_build_config["custom_build_command"]
+                logging.info("Using custom build configuration to build the component.")
+                logging.info("Running the following command\n{}".format(custom_build_command))
+                sp.run(custom_build_command)
+            else:
+                logging.info(f"Using '{build_system}' build system to build the component.")
+                self.default_build_component()
+        except Exception as e:
+            logging.error("Failed to build the component. Cleaning build directory.")
+            utils.clean_dir(self.project_config["gg_build_directory"])
+            raise e
 
     def create_gg_build_directories(self):
         """
@@ -156,7 +161,10 @@ class BuildCommand(Command):
                 self._build_system_zip()
             else:
                 logging.info("Running the build command '{}'".format(" ".join(build_command)))
-                sp.run(build_command)
+                result = sp.run(build_command)
+
+                if result.returncode != 0:
+                    raise Exception()
         except Exception as e:
             raise Exception(f"Error building the component with the given build system.\n{e}")
 
