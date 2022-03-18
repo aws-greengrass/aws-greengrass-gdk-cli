@@ -247,7 +247,7 @@ class BuildCommand(Command):
         """
         build_system = self.project_config["component_build_config"]["build_system"]
         build_folder = self.supported_build_sytems[build_system]["build_folder"]
-        if build_system == "gradle":
+        if build_system == "gradle" or build_system == "gradlew":
             return self.get_build_folders(build_folder, "build.gradle").union(
                 self.get_build_folders(build_folder, "build.gradle.kts")
             )

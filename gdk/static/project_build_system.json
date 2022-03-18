@@ -24,6 +24,16 @@
             "libs"
         ]
     },
+    "gradlew": {
+        "build_command": [
+            "./gradlew",
+            "build"
+        ],
+        "build_folder": [
+            "build",
+            "libs"
+        ]
+    },
     "zip": {
         "build_command": [
             "zip"
