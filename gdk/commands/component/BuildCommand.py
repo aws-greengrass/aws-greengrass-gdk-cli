@@ -247,7 +247,8 @@ class BuildCommand(Command):
         build_system = self.project_config["component_build_config"]["build_system"]
         build_folder = self.supported_build_sytems[build_system]["build_folder"]
         if build_system == "gradle":
-            return self.get_build_folders(build_folder, "build.gradle")
+            return self.get_build_folders(build_folder, "build.gradle")\
+                .union(self.get_build_folders(build_folder, "build.gradle.kts"))
         elif build_system == "maven":
             return self.get_build_folders(build_folder, "pom.xml")
         return {Path(utils.current_directory).joinpath(*build_folder).resolve()}
@@ -256,7 +257,7 @@ class BuildCommand(Command):
         """
         Recursively identifies build folders in a project.
 
-        This function makes use of build configuration files (such as pom.xml and build.gradle) and build folder
+        This function makes use of build configuration files (such as pom.xml, build.gradle, and build.gradle.kts) and build folder
         directories (such as target, build/libs) to identify the module directory.
 
         Once the module directory is found, its build folder is added to the return list.
@@ -264,13 +265,13 @@ class BuildCommand(Command):
         Parameters
         ----------
             build_folder(string): Build folder of a build system(target, build/libs)
-            build_file(string): Build configuration file of a build system (pom.xml, build.gradle)
+            build_file(string): Build configuration file of a build system (pom.xml, build.gradle, build.gradle.kts)
 
         Returns
         -------
             paths(set): Set of build folder paths in a multi-module project.
         """
-        # Filter module directories which contain pom.xml or build.gradle build files.
+        # Filter module directories which contain pom.xml, build.gradle, build.gradle.kts build files.
         set_dirs_with_build_file = set(f.parent for f in Path(utils.current_directory).rglob(build_file))
         set_of_module_dirs = set()
         for module_dir in set_dirs_with_build_file:
