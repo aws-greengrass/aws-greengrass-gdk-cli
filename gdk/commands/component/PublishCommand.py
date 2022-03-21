@@ -49,6 +49,40 @@ class PublishCommand(Command):
             logging.error("Failed to publish new version of the component '{}'".format(self.project_config["component_name"]))
             raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
 
+    def get_bucket_encryption(self, bucket_name):
+        """
+        Identifies the default s3 bucket encryption for artifact upload
+
+        Raises an exception when the request is not successful.
+
+        Parameters
+        ----------
+            bucket_name(string): Name of the s3 bucket to pull default encryption from.
+
+        Returns
+        -------
+            encrypt(dict): encryption argument to use with artifact upload
+        """
+        try:
+            encrypt = {}
+            response = self.service_clients["s3_client"].get_bucket_encryption(
+                Bucket=bucket_name
+            )
+            logging.info(f"Getting default encryption for S3 Bucket {bucket_name}.")
+            sse_default = response['ServerSideEncryptionConfiguration']['Rules'][0][
+                'ApplyServerSideEncryptionByDefault']
+            if sse_default.get("SSEAlgorithm") == "AES256":
+                encrypt = {'ServerSideEncryption': sse_default["SSEAlgorithm"]}
+            elif sse_default.get("KMSMasterKeyID"):
+                encrypt = {
+                    "ServerSideEncryption": sse_default["SSEAlgorithm"],
+                    "SSEKMSKeyId": sse_default['KMSMasterKeyID']
+                }
+            return encrypt
+        except Exception as e:
+            logging.error("Failed to get default encryption key for S3 Bucket {}".format(bucket_name))
+            raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
+
     def upload_artifacts_s3(self, component_name, component_version):
         """
         Uploads all the artifacts from component artifacts build folder to s3 bucket.
@@ -67,6 +101,32 @@ class PublishCommand(Command):
         try:
             bucket = self.project_config["bucket"]
             region = self.project_config["region"]
+            encrypt = self.project_config.get("encrypt")
+            metadata = self.project_config.get("metadata")
+
+            # Encryption artifact setup
+            if (type(encrypt) is str) and (encrypt.lower() == 'true'):
+                logging.info("Using default encryption.")
+                extra_args = {'ServerSideEncryption': 'AES256'}
+            elif (type(encrypt) is str) and (encrypt.lower() == 'default'):
+                logging.info("Using default bucket encryption.")
+                kms_key_id = self.get_bucket_encryption(bucket_name=bucket)
+                extra_args = kms_key_id
+            elif (type(encrypt) is dict) and encrypt.get('kms_key_id'):
+                logging.info("Using KMS encryption.")
+                extra_args = {
+                    "ServerSideEncryption": encrypt.get('server_side_encryption'),
+                    "SSEKMSKeyId": encrypt.get('kms_key_id')
+                }
+            else:
+                logging.info("No encryption configuration found.")
+                extra_args = {}
+
+            # Metadata artifact setup
+            if metadata:
+                logging.info("Building metadata for S3 Artifact upload.")
+                extra_args.update({"Metadata": metadata})
+
             logging.info(
                 f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
                 " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
@@ -80,7 +140,7 @@ class PublishCommand(Command):
             for artifact in build_component_artifacts:
                 s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
                 logging.debug("Uploading artifact '{}' to the bucket '{}'.".format(artifact.resolve(), bucket))
-                self.service_clients["s3_client"].upload_file(str(artifact.resolve()), bucket, s3_file_path)
+                self.service_clients["s3_client"].upload_file(str(artifact.resolve()), bucket, s3_file_path, ExtraArgs=extra_args)
         except Exception as e:
             raise Exception("Error while uploading the artifacts to s3 during publish.\n{}".format(e))
 
