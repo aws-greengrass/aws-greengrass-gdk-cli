@@ -17,6 +17,7 @@
     "gradle": {
         "build_command": [
             "gradle",
+            "clean",
             "build"
         ],
         "build_folder": [
@@ -27,6 +28,7 @@
     "gradlew": {
         "build_command": [
             "./gradlew",
+            "clean",
             "build"
         ],
         "build_folder": [
