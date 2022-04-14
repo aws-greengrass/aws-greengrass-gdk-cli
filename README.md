@@ -30,14 +30,61 @@ Configure AWS CLI with your credentials as shown here - https://docs.aws.amazon.
 
 #### 3. Quick start wih HelloWorld component written in python
 
-1. Initializes the project directory with a HelloWorld Greengrassv2 component. 
+*Note: Following steps are focused as a quick start guide. For more detailed steps, refer [our documentation](https://docs.aws.amazon.com/greengrass/v2/developerguide/create-components.html#create-component-gdk-cli).*
 
-`gdk component init --template HelloWorld --language python`
+1. Initializes new project with a HelloWorld Greengrassv2 component.
 
-2. Build the artifacts and recipes of the component. 
+`gdk component init --template HelloWorld --language python -n HelloWorld`
+
+2. Change directory to `HelloWorld`.
+
+`cd HelloWorld`
+
+3. Update configuration in `gdk-config.json`
+   1. Config file `gdk-config.json` would have placeholders:
+   ```json
+    {
+        "component": {
+            "com.example.JavaHelloWorld": {
+                "author": "<PLACEHOLDER_AUTHOR>",
+                "version": "NEXT_PATCH",
+                "build": {
+                    "build_system": "maven"
+                },
+                "publish": {
+                    "bucket": "<PLACEHOLDER_BUCKET>",
+                    "region": "<PLACEHOLDER_REGION>"
+                }
+            }
+        },
+        "gdk_version": "1.0.0"
+    }
+   ```
+   2. Replace `<PLACEHOLDER_AUTHOR>` with your name, `<PLACEHOLDER_BUCKET>` with a s3 bucket name and `<PLACEHOLDER_REGION>` with an aws region.
+   3. After replace these value the `gdk-config.json` file should look similar to:
+   ```json
+    {
+        "component": {
+            "com.example.JavaHelloWorld": {
+                "author": "J. Doe",
+                "version": "NEXT_PATCH",
+                "build": {
+                    "build_system": "maven"
+                },
+                "publish": {
+                    "bucket": "my-s3-bucket",
+                    "region": "us-east-1"
+                }
+            }
+        },
+        "gdk_version": "1.0.0"
+    }
+   ```
+
+4. Build the artifacts and recipes of the component.
 
 `gdk component build`
 
-3. Creates new version of the component in your AWS account. 
+5. Creates new version of the component in your AWS account.
 
 `gdk component publish`
