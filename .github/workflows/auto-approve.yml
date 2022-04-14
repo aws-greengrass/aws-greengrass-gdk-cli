@@ -2,8 +2,11 @@
 name: Auto approve bot
 
 on:
-  pull_request_target:
-    types: [ labeled, opened, synchronize, reopened, ready_for_review, review_requested ]
+  # Only trigger, when the CI workflow succeeded
+  workflow_run:
+    workflows: [ "CI" ]
+    types:
+      - completed
 
 permissions:
   pull-requests: write
