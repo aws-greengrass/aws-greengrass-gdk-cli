@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
         os: [windows-latest, ubuntu-latest, macos-latest]
     permissions:
       id-token: write
