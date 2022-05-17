@@ -80,7 +80,41 @@ class PublishCommand(Command):
                 }
             return encrypt
         except Exception as e:
-            logging.error("Failed to get default encryption key for S3 Bucket {}".format(bucket_name))
+            logging.error("Error while getting default encryption key for S3 Bucket {}".format(bucket_name))
+            raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
+
+    def set_s3_artifact_encryption(self, encrypt, bucket):
+        """
+        Creates S3 Bucket encryption argument
+
+        Parameters
+        ----------
+            encrypt(string | dict): Encryption type and possible KMS Key ID or ARN
+            bucket(string): S3 Bucket Name, used to get default encryption
+
+        Returns
+        -------
+            None
+        """
+        try:
+            extra_args = {}
+            if (type(encrypt) is str) and (encrypt.lower() == 'true'):
+                logging.info("Using default encryption.")
+                extra_args = {'ServerSideEncryption': 'AES256'}
+            elif (type(encrypt) is str) and (encrypt.lower() == 'default'):
+                logging.info("Using default bucket encryption.")
+                extra_args = self.get_bucket_encryption(bucket_name=bucket)
+            elif (type(encrypt) is dict) and encrypt.get('kms_key_id'):
+                logging.info("Using KMS encryption.")
+                extra_args = {
+                    "ServerSideEncryption": encrypt.get('server_side_encryption'),
+                    "SSEKMSKeyId": encrypt.get('kms_key_id')
+                }
+            else:
+                logging.info("No encryption configuration found.")
+            return extra_args
+        except Exception as e:
+            logging.error("Error while setting encryption for S3 Bucket {}".format(bucket))
             raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
 
     def upload_artifacts_s3(self, component_name, component_version):
@@ -105,22 +139,7 @@ class PublishCommand(Command):
             metadata = self.project_config.get("metadata")
 
             # Encryption artifact setup
-            if (type(encrypt) is str) and (encrypt.lower() == 'true'):
-                logging.info("Using default encryption.")
-                extra_args = {'ServerSideEncryption': 'AES256'}
-            elif (type(encrypt) is str) and (encrypt.lower() == 'default'):
-                logging.info("Using default bucket encryption.")
-                kms_key_id = self.get_bucket_encryption(bucket_name=bucket)
-                extra_args = kms_key_id
-            elif (type(encrypt) is dict) and encrypt.get('kms_key_id'):
-                logging.info("Using KMS encryption.")
-                extra_args = {
-                    "ServerSideEncryption": encrypt.get('server_side_encryption'),
-                    "SSEKMSKeyId": encrypt.get('kms_key_id')
-                }
-            else:
-                logging.info("No encryption configuration found.")
-                extra_args = {}
+            extra_args = self.set_s3_artifact_encryption(encrypt=encrypt, bucket=bucket)
 
             # Metadata artifact setup
             if metadata:
