@@ -49,40 +49,6 @@ class PublishCommand(Command):
             logging.error("Failed to publish new version of the component '{}'".format(self.project_config["component_name"]))
             raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
 
-    def get_bucket_encryption(self, bucket_name):
-        """
-        Identifies the default s3 bucket encryption for artifact upload
-
-        Raises an exception when the request is not successful.
-
-        Parameters
-        ----------
-            bucket_name(string): Name of the s3 bucket to pull default encryption from.
-
-        Returns
-        -------
-            encrypt(dict): encryption argument to use with artifact upload
-        """
-        try:
-            encrypt = {}
-            response = self.service_clients["s3_client"].get_bucket_encryption(
-                Bucket=bucket_name
-            )
-            logging.info(f"Getting default encryption for S3 Bucket {bucket_name}.")
-            sse_default = response['ServerSideEncryptionConfiguration']['Rules'][0][
-                'ApplyServerSideEncryptionByDefault']
-            if sse_default.get("SSEAlgorithm") == "AES256":
-                encrypt = {'ServerSideEncryption': sse_default["SSEAlgorithm"]}
-            elif sse_default.get("KMSMasterKeyID"):
-                encrypt = {
-                    "ServerSideEncryption": sse_default["SSEAlgorithm"],
-                    "SSEKMSKeyId": sse_default['KMSMasterKeyID']
-                }
-            return encrypt
-        except Exception as e:
-            logging.error("Error while getting default encryption key for S3 Bucket {}".format(bucket_name))
-            raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
-
     def set_s3_artifact_encryption(self, encrypt, bucket):
         """
         Creates S3 Bucket encryption argument
@@ -98,13 +64,7 @@ class PublishCommand(Command):
         """
         try:
             extra_args = {}
-            if (type(encrypt) is str) and (encrypt.lower() == 'true'):
-                logging.info("Using default encryption.")
-                extra_args = {'ServerSideEncryption': 'AES256'}
-            elif (type(encrypt) is str) and (encrypt.lower() == 'default'):
-                logging.info("Using default bucket encryption.")
-                extra_args = self.get_bucket_encryption(bucket_name=bucket)
-            elif (type(encrypt) is dict) and encrypt.get('kms_key_id'):
+            if (type(encrypt) is dict) and encrypt.get('kms_key_id'):
                 logging.info("Using KMS encryption.")
                 extra_args = {
                     "ServerSideEncryption": encrypt.get('server_side_encryption'),
