@@ -4,21 +4,101 @@ from pathlib import Path
 
 import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
+from gdk.common import consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import yaml
 from botocore.exceptions import ClientError
 from gdk.commands.Command import Command
+import shutil
+import os
 
 
 class PublishCommand(Command):
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "publish")
 
-        self.project_config = project_utils.get_project_config_values()
-        self.service_clients = project_utils.get_service_clients(self.project_config["region"])
+        local = command_args["local"] if command_args["local"] != None else False
+        project_publish_directory = command_args["publish_dir"]
+        project_config_filename = command_args["gdk_config"] if command_args["gdk_config"] != None else consts.cli_project_config_file
+        project_build_directory = command_args["build_dir"] if command_args["build_dir"] != None else consts.greengrass_build_dir
+        project_recipe_filename = "{}/recipes/recipe.json".format(project_build_directory)
+
+        logging.debug("Local deployment          : {}".format(local))
+        logging.debug("Project publish directory : {}".format(project_config_filename))
+        logging.debug("Project config filename   : {}".format(project_config_filename))
+        logging.debug("Project build directory   : {}".format(project_build_directory))
+        logging.debug("Project recipe filename   : {}".format(project_recipe_filename))
+
+        self.project_config = project_utils.get_project_config_values(project_config_filename, project_recipe_filename, project_build_directory, project_publish_directory, local)
+
+        logging.debug("Project configuration: {}".format(self.project_config))
 
     def run(self):
+        if self.project_config["gg_local_deployment"]:
+            self.run_local()
+        else:
+            self.run_remote()
+
+    def run_local(self):
+        self.project_config["account_number"] = "123456789012"
+        
+        component_name = self.project_config["component_name"]
+        component_version = self.get_component_version_from_config()
+
+        logging.info("Publishing artifact '{}' with version '{}' locally".format(component_name, component_version))
+
+        build_directory = Path(self.project_config["gg_build_directory"])
+        publish_directory = Path(self.project_config["gg_publish_directory"])
+        build_recipes_directory = Path(self.project_config["gg_build_recipes_dir"])
+        build_artifacts_directory = Path(self.project_config["gg_build_artifacts_dir"])
+        publish_recipes_directory = Path(self.project_config["gg_publish_recipes_dir"])
+        publish_artifacts_directory = Path(self.project_config["gg_publish_artifacts_dir"])
+
+        if build_directory.resolve() == publish_directory.resolve():
+            logging.info("Local publish directory not provided or matching the build one, nothing to do.")
+            return
+
+        if self.project_config["gg_publish_directory"] is None or not publish_directory.is_dir():
+            raise RuntimeError("Invalid local component publish directory '{}'. Does it exist?".format(publish_directory.resolve()))
+
+        publish_recipe_file_name = self.update_and_create_recipe_file(self.project_config["component_name"], self.project_config["component_version"])
+
+        logging.debug("Recipe file to be published: {}".format(publish_recipe_file_name))
+
+        publish_recipe_file = Path(build_recipes_directory).joinpath(publish_recipe_file_name)
+
+        # Copy recipes
+
+        logging.debug("Cleanup destination directory '{}' before copying new recipes.".format(publish_recipes_directory.resolve()))
+        shutil.rmtree(publish_recipes_directory.resolve())
+        publish_recipes_directory.mkdir(parents=True, exist_ok=True)
+
+        destination_receipe_file = Path(publish_recipes_directory.resolve()).joinpath(publish_recipe_file.name)
+        logging.debug("Copying recipes file '{}' into '{}'".format(publish_recipe_file, destination_receipe_file))
+
+        if destination_receipe_file.exists():
+            os.remove(destination_receipe_file.resolve())
+
+        shutil.copy(publish_recipe_file.resolve(), destination_receipe_file.resolve())
+
+        # Copyt artifacts
+
+        logging.debug("Cleanup destination directory '{}' before copying new artifacts.".format(publish_artifacts_directory.resolve()))
+        shutil.rmtree(publish_artifacts_directory.resolve())
+        publish_artifacts_directory.mkdir(parents=True, exist_ok=True)
+
+        logging.debug("Copy artifact dir '{}' into '{}'".format(build_artifacts_directory.resolve(), publish_artifacts_directory.resolve()))
+        
+        shutil.copytree(build_artifacts_directory.resolve(), publish_artifacts_directory.resolve(), dirs_exist_ok=True)
+
+        logging.info("Component '{}' with version '{}' published locally.".format(component_name, component_version))
+
+    def run_remote(self):
+        logging.info("Publishing artifact remotely")
+
+        self.service_clients = project_utils.get_service_clients(self.project_config["region"])
+
         try:
             self.project_config["account_number"] = self.get_account_number()
             if self.arguments["bucket"]:
@@ -35,7 +115,7 @@ class PublishCommand(Command):
                 logging.warning(
                     f"The component '{component_name}' is not built.\nSo, building the component before publishing it."
                 )
-                component.build({})
+                component.build({}) # FIXME: review according to the provided recipe file as input
             logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
             logging.info("Uploading the component built artifacts to s3 bucket.")
             self.upload_artifacts_s3(component_name, component_version)
@@ -346,7 +426,7 @@ class PublishCommand(Command):
 
         # Update the version of the component in the recipe
         parsed_component_recipe["ComponentVersion"] = component_version
-        self.create_publish_recipe_file(component_name, component_version, parsed_component_recipe)
+        return self.create_publish_recipe_file(component_name, component_version, parsed_component_recipe)
 
     def create_publish_recipe_file(self, component_name, component_version, parsed_component_recipe):
         """
@@ -375,9 +455,12 @@ class PublishCommand(Command):
                         publish_recipe_file_name, self.project_config["gg_build_recipes_dir"]
                     )
                 )
+
                 if publish_recipe_file_name.endswith(".json"):
                     prf.write(json.dumps(parsed_component_recipe, indent=4))
                 else:
                     yaml.dump(parsed_component_recipe, prf)
+
+                return publish_recipe_file_name
             except Exception as e:
                 raise Exception("""Failed to create publish recipe file at '{}'.\n{}""".format(publish_recipe_file, e))

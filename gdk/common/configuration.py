@@ -9,7 +9,7 @@ import jsonschema
 from packaging.version import Version
 
 
-def get_configuration():
+def get_configuration(project_config_filename):
     """
     Loads the configuration from the greengrass project config file as a json object.
 
@@ -23,7 +23,7 @@ def get_configuration():
     -------
        config_data(dict): Greengrass project configuration as a dictionary object if the config is valid.
     """
-    project_config_file = _get_project_config_file()
+    project_config_file = _get_project_config_file(project_config_filename)
     with open(project_config_file, "r") as config_file:
         config_data = json.loads(config_file.read())
     try:
@@ -72,7 +72,7 @@ def validate_cli_version(config_data):
     )
 
 
-def _get_project_config_file():
+def _get_project_config_file(gdk_config_file_name):
     """
     Returns path of the config file present in the greengrass project directory.
 
@@ -88,7 +88,7 @@ def _get_project_config_file():
     -------
        config_file(pathlib.Path): Path of the config file.
     """
-    config_file = Path(utils.current_directory).joinpath(consts.cli_project_config_file).resolve()
+    config_file = Path(utils.current_directory).joinpath(gdk_config_file_name).resolve()
     if not utils.file_exists(config_file):
-        raise Exception(error_messages.CONFIG_FILE_NOT_EXISTS)
+        raise Exception(error_messages.CONFIG_FILE_NOT_EXISTS.format(gdk_config_file_name))
     return config_file

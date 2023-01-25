@@ -7,7 +7,6 @@ import gdk._version as version
 import requests
 from packaging.version import Version
 
-
 def get_static_file_path(file_name):
     """
     Returns the path of the file assuming that is in static directory.
@@ -128,7 +127,6 @@ def cli_version_check():
             f"New version of GDK CLI - {latest_cli_version} is available. Please update the cli using the command"
             f" `{update_command}`.\n"
         )
-
 
 error_line = "\n=============================== ERROR ===============================\n"
 help_line = "\n=============================== HELP ===============================\n"

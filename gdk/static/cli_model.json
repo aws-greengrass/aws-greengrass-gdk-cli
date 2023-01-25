@@ -79,6 +79,29 @@
         "help": "Initialize the project with a component template or repository from Greengrass Software Catalog."
     },
     "build": {
+        "arguments": {
+            "gdk-config": {
+                "name": [
+                    "-c",
+                    "--gdk-config"
+                ],
+                "help": "Specify alternative GDK configuration file."
+            },
+            "recipe": {
+                "name": [
+                    "-r",
+                    "--recipe"
+                ],
+                "help": "Specify alternative recipe file."
+            },
+            "build-dir": {
+                "name": [
+                    "-u",
+                    "--build-dir"
+                ],
+                "help": "Specify alternative component build directory."
+            }
+        },
         "help": "Build GreengrassV2 component artifacts and recipes from its source code."
     },
     "publish": {
@@ -90,6 +113,35 @@
                     "--bucket"
                 ],
                 "help": "Name of the s3 bucket to use for uploading component artifacts."
+            },
+            "gdk-config": {
+                "name": [
+                    "-c",
+                    "--gdk-config"
+                ],
+                "help": "Specify alternative GDK configuration file."
+            },
+            "build-dir": {
+                "name": [
+                    "-u",
+                    "--build-dir"
+                ],
+                "help": "Specify alternative component build directory."
+            },
+            "publish-dir": {
+                "name": [
+                    "-p",
+                    "--publish-dir"
+                ],
+                "help": "Specify local component publish directory."
+            },
+            "local": {
+                "name": [
+                    "-l",
+                    "--local"
+                ],
+                "action": "store_true",
+                "help": "Publish component locally to build directory."
             }
         }
     },

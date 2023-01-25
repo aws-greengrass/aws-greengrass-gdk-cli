@@ -30,7 +30,7 @@ def get_supported_component_builds():
     return None
 
 
-def get_recipe_file():
+def get_recipe_file(project_recipe_filename):
     """
     Finds recipe file based on component name and its extension.
 
@@ -48,21 +48,30 @@ def get_recipe_file():
     -------
         recipe_file(Path): Path of the identified recipe file.
     """
-    # Search for json files in current directory that contain component name and ends in .json.
-    logging.debug("Looking for recipe file in the project directory.")
-    json_file = list(Path(utils.current_directory).glob("recipe.json"))
-    yaml_file = list(Path(utils.current_directory).glob("recipe.yaml"))
+    
+    if project_recipe_filename is None:
+        # In case of missing recipe filename as argument, let's look for default ones
+        logging.debug("Looking for default recipe file name (recipe.json or recipe.yaml)")
 
-    if not json_file and not yaml_file:
-        logging.error("Could not find 'recipe.json' or 'recipe.yaml' in the project directory.")
-        raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
+        json_file = list(Path(utils.current_directory).glob("recipe.json"))
+        yaml_file = list(Path(utils.current_directory).glob("recipe.yaml"))
 
-    if json_file and yaml_file:
-        logging.error("Found both 'recipe.json' and 'recipe.yaml' in the given project directory.")
-        raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
+        if not json_file and not yaml_file:
+            logging.error("Could not find 'recipe.json' or 'recipe.yaml' in the project directory.")
+            raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
 
-    recipe_file = (json_file + yaml_file)[0].resolve()
-    logging.info("Found component recipe file '{}' in the  project directory.".format(recipe_file.name))
+        if json_file and yaml_file:
+            logging.error("Found both 'recipe.json' and 'recipe.yaml' in the given project directory.")
+            raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
+
+        recipe_file = (json_file + yaml_file)[0].resolve()
+    else:
+        # Try to use the provided recipe file name
+        logging.debug("Using provided recipe file '{}'".format(project_recipe_filename))
+        recipe_file = Path(project_recipe_filename).resolve()
+
+    logging.info("Found component recipe file '{}'".format(recipe_file.absolute()))
+
     return recipe_file
 
 
@@ -94,11 +103,11 @@ def parse_recipe_file(component_recipe_file):
             raise Exception("""Unable to parse the recipe file - {}.\n{}""".format(component_recipe_file.name, e))
 
 
-def get_project_config_values():
+def get_project_config_values(project_config_filename, project_recipe_filename, project_build_directory, project_publish_directory, local_deployment):
 
     # Get component configuration from the greengrass project config file.
-    logging.info("Getting project configuration from {}".format(consts.cli_project_config_file))
-    project_config = config_actions.get_configuration()["component"]
+    logging.info("Getting project configuration from {}".format(project_config_filename))
+    project_config = config_actions.get_configuration(project_config_filename)["component"]
 
     # Since there's only one key in the component configuration, use next() instead of looping in.
     component_name = next(iter(project_config))
@@ -110,19 +119,31 @@ def get_project_config_values():
     region = component_config["publish"]["region"]
 
     # Build directories
-    gg_build_directory = Path(utils.current_directory).joinpath(consts.greengrass_build_dir).resolve()
+    logging.info("Build directory: '{}'".format(project_build_directory))
+    gg_build_directory = Path(project_build_directory).resolve()
     gg_build_artifacts_dir = Path(gg_build_directory).joinpath("artifacts").resolve()
     gg_build_recipes_dir = Path(gg_build_directory).joinpath("recipes").resolve()
     gg_build_component_artifacts_dir = Path(gg_build_artifacts_dir).joinpath(component_name, component_version).resolve()
 
+    # Publish directories
+    gg_publish_directory = Path(project_publish_directory if project_publish_directory != None else gg_build_directory).resolve()
+    logging.info("Publish directory: '{}'".format(gg_publish_directory))
+    gg_publish_artifacts_dir = Path(gg_publish_directory).joinpath("artifacts").resolve()
+    gg_publish_recipes_dir = Path(gg_publish_directory).joinpath("recipes").resolve()
+    gg_publish_component_artifacts_dir = Path(gg_publish_artifacts_dir).joinpath(component_name, component_version).resolve()
+
+    # Local or remote deployment
+    gg_local_deployment = local_deployment
+
     # Get recipe file
-    component_recipe_file = get_recipe_file()
+    component_recipe_file = get_recipe_file(project_recipe_filename)
 
     # Get parsed recipe file
     parsed_component_recipe = parse_recipe_file(component_recipe_file)
 
     # Create dictionary with all the above values
     vars = {}
+    vars["project_config_filename"] = project_config_filename
     vars["component_name"] = component_name
     vars["component_version"] = component_version
     vars["component_author"] = component_author
@@ -133,6 +154,11 @@ def get_project_config_values():
     vars["gg_build_artifacts_dir"] = gg_build_artifacts_dir
     vars["gg_build_recipes_dir"] = gg_build_recipes_dir
     vars["gg_build_component_artifacts_dir"] = gg_build_component_artifacts_dir
+    vars["gg_publish_directory"] = gg_publish_directory
+    vars["gg_publish_artifacts_dir"] = gg_publish_artifacts_dir
+    vars["gg_publish_recipes_dir"] = gg_publish_recipes_dir
+    vars["gg_publish_component_artifacts_dir"] = gg_publish_component_artifacts_dir
+    vars["gg_local_deployment"] = gg_local_deployment
     vars["component_recipe_file"] = component_recipe_file
     vars["parsed_component_recipe"] = parsed_component_recipe
     return vars

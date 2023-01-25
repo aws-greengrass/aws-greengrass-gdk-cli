@@ -1,6 +1,6 @@
 # FILE
 CONFIG_FILE_NOT_EXISTS = (
-    "Config file doesn't exist. Please initialize the project using a template or a repository before using gdk commands."
+    "Config file '{}' doesn't exist. Please initialize the project using a template or a repository before using gdk commands."
 )
 CONFIG_SCHEMA_FILE_NOT_EXISTS = "Configuration validation failed. Config schema file doesn't exist."
 PROJECT_RECIPE_FILE_NOT_FOUND = (

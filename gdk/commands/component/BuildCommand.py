@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import platform
 import shutil
 import subprocess as sp
@@ -16,7 +17,18 @@ from gdk.commands.Command import Command
 class BuildCommand(Command):
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "build")
-        self.project_config = project_utils.get_project_config_values()
+        
+        logging.debug("Command '{}' arguments: {}".format(self.name, command_args))
+        
+        project_config_filename = command_args["gdk_config"] if command_args["gdk_config"] != None else consts.cli_project_config_file
+        project_build_directory = command_args["build_dir"] if command_args["build_dir"] != None else "{}/{}".format(utils.current_directory, consts.greengrass_build_dir)
+        project_recipe_filename = command_args["recipe"] if command_args["recipe"] != None else None
+
+        logging.debug("Project config filename: {}".format(project_config_filename))
+        logging.debug("Project build directory: {}".format(project_build_directory))
+        logging.debug("Project recipe filename: {}".format(project_recipe_filename))
+
+        self.project_config = project_utils.get_project_config_values(project_config_filename, project_recipe_filename, project_build_directory, None, None)
         self.supported_build_sytems = project_utils.get_supported_component_builds()
 
     def run(self):
@@ -74,7 +86,7 @@ class BuildCommand(Command):
         # Clean build directory if it exists already.
         utils.clean_dir(self.project_config["gg_build_directory"])
 
-        logging.debug("Creating '{}' directory with artifacts and recipes.".format(consts.greengrass_build_dir))
+        logging.debug("Creating '{}' directory with artifacts and recipes.".format(self.project_config["gg_build_directory"]))
         # Create build artifacts and recipe directories
         Path.mkdir(self.project_config["gg_build_recipes_dir"], parents=True, exist_ok=True)
         Path.mkdir(self.project_config["gg_build_component_artifacts_dir"], parents=True, exist_ok=True)
@@ -143,11 +155,12 @@ class BuildCommand(Command):
             None
         """
         try:
+            project_config_filename = self.project_config["project_config_filename"]
             build_system = self.project_config["component_build_config"]["build_system"]
             build_command = self.get_build_cmd_from_platform(build_system)
             logging.warning(
                 f"This component is identified as using '{build_system}' build system. If this is incorrect, please exit and"
-                f" specify custom build command in the '{consts.cli_project_config_file}'."
+                f" specify custom build command in the '{project_config_filename}'."
             )
             if build_system == "zip":
                 logging.info("Zipping source code files of the component.")
@@ -222,6 +235,9 @@ class BuildCommand(Command):
             consts.cli_project_config_file,
             consts.greengrass_build_dir,
             self.project_config["component_recipe_file"].name,
+            self.project_config["project_config_filename"],
+            self.project_recipe_filename,
+            self.project_config["gg_build_directory"].name,
             "test*",
             ".*",
             "node_modules",
@@ -408,7 +424,14 @@ class BuildCommand(Command):
             )
         )
         parsed_component_recipe = self.project_config["parsed_component_recipe"]
-        component_recipe_file_name = self.project_config["component_recipe_file"].name
+
+        # Standardize output recipe filename in case of custom input
+        logging.debug("File name: {}".format(self.project_config["component_recipe_file"].name))
+        file_ext = os.path.splitext(self.project_config["component_recipe_file"].name)
+        logging.debug("File split: {}".format(file_ext))
+        component_recipe_file_name = "recipe{}".format(file_ext[1])
+        logging.debug("Final standardized recipe filename based on extention: {}".format(component_recipe_file_name))
+
         parsed_component_recipe["ComponentName"] = self.project_config["component_name"]
         parsed_component_recipe["ComponentVersion"] = self.project_config["component_version"]
         parsed_component_recipe["ComponentPublisher"] = self.project_config["component_author"]
