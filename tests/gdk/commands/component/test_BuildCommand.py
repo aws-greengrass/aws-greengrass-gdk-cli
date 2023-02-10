@@ -3,8 +3,9 @@ from shutil import Error
 from unittest import TestCase
 from unittest.mock import mock_open, patch
 
-import gdk.common.utils as utils
 import pytest
+
+import gdk.common.utils as utils
 from gdk.commands.component.BuildCommand import BuildCommand
 from gdk.common.exceptions import error_messages
 
@@ -848,7 +849,7 @@ class BuildCommandTest(TestCase):
         mock_get_build_folders.assert_any_call(["target"], "pom.xml")
 
     def test_get_build_folder_by_build_system_gradle(self):
-        dummy_paths = [Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])]
+        dummy_paths = {Path("/").joinpath("path1"), Path("/").joinpath(*["path1", "path2"])}
         mock_get_build_folders = self.mocker.patch.object(BuildCommand, "get_build_folders", return_value=dummy_paths)
 
         build = BuildCommand({})
@@ -856,6 +857,7 @@ class BuildCommandTest(TestCase):
         gradle_build_paths = build._get_build_folder_by_build_system()
         assert gradle_build_paths == dummy_paths
         mock_get_build_folders.assert_any_call(["build", "libs"], "build.gradle")
+        mock_get_build_folders.assert_any_call(["build", "libs"], "build.gradle.kts")
 
     def test_get_build_folders_maven(self):
 

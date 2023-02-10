@@ -5,11 +5,12 @@ import shutil
 import subprocess as sp
 from pathlib import Path
 
+import yaml
+
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
-import yaml
 from gdk.commands.Command import Command
 
 
@@ -247,8 +248,9 @@ class BuildCommand(Command):
         build_system = self.project_config["component_build_config"]["build_system"]
         build_folder = self.supported_build_sytems[build_system]["build_folder"]
         if build_system == "gradle":
-            return self.get_build_folders(build_folder, "build.gradle")\
-                .union(self.get_build_folders(build_folder, "build.gradle.kts"))
+            return self.get_build_folders(build_folder, "build.gradle").union(
+                self.get_build_folders(build_folder, "build.gradle.kts")
+            )
         elif build_system == "maven":
             return self.get_build_folders(build_folder, "pom.xml")
         return {Path(utils.current_directory).joinpath(*build_folder).resolve()}
@@ -257,8 +259,8 @@ class BuildCommand(Command):
         """
         Recursively identifies build folders in a project.
 
-        This function makes use of build configuration files (such as pom.xml, build.gradle, and build.gradle.kts) and build folder
-        directories (such as target, build/libs) to identify the module directory.
+        This function makes use of build configuration files (such as pom.xml, build.gradle, and build.gradle.kts)
+        and build folder directories (such as target, build/libs) to identify the module build directories.
 
         Once the module directory is found, its build folder is added to the return list.
 
