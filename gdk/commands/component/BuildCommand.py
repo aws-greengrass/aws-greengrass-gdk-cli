@@ -2,6 +2,7 @@ import json
 import logging
 import platform
 import shutil
+import yaml
 import subprocess as sp
 from pathlib import Path
 
@@ -12,6 +13,7 @@ import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 from gdk.commands.Command import Command
+from gdk.build_system.BuildSystem import BuildSystem
 
 
 class BuildCommand(Command):
@@ -160,42 +162,8 @@ class BuildCommand(Command):
             raise Exception(f"Error building the component with the given build system.\n{e}")
 
     def _build_system_zip(self):
-        """
-        Builds the component as a zip file.
-
-        Copies over necessary files by excluding certain files to a build folder identied for zip build system
-        (supported_component_builds.json has the build folder info).
-        This build folder is zipped completely as a component zip artifact.
-        Raises an exception if there's an error in the process of zippings.
-
-        Parameters
-        ----------
-            None
-
-        Returns
-        -------
-            None
-        """
-        try:
-            zip_build = next(iter(self._get_build_folder_by_build_system()))  # Only one zip-build folder in the set
-            artifacts_zip_build = Path(zip_build).joinpath(utils.current_directory.name).resolve()
-            utils.clean_dir(zip_build)
-            logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
-            shutil.copytree(utils.current_directory, artifacts_zip_build, ignore=self._ignore_files_during_zip)
-
-            # Get build file name without extension. This will be used as name of the archive.
-            archive_file = utils.current_directory.name
-            logging.debug(
-                "Creating an archive named '{}.zip' in '{}' folder with the files in '{}' folder.".format(
-                    archive_file, zip_build.name, artifacts_zip_build.name
-                )
-            )
-            archive_file_name = Path(zip_build).joinpath(archive_file).resolve()
-            shutil.make_archive(archive_file_name, "zip", root_dir=artifacts_zip_build)
-            logging.debug("Archive complete.")
-
-        except Exception as e:
-            raise Exception("""Failed to zip the component in default build mode.\n{}""".format(e))
+        # Delegate to avoid breaking tests - TODO: We need to avoid testing private methods
+        BuildSystem().build("zip")
 
     def _ignore_files_during_zip(self, path, names):
         """
@@ -217,6 +185,7 @@ class BuildCommand(Command):
         -------
             ignore_list(list): List of files or directories to ignore during zip.
         """
+        # TODO: Nuke this - improve test that is testing this private method
         # TODO: Identify individual files in recipe that are not same as zip and exclude them during zip.
 
         ignore_list = [
