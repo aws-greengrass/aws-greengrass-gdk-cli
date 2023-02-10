@@ -15,8 +15,8 @@ class Zip:
     This build folder is zipped completely as a component zip artifact.
     Raises an exception if there's an error in the process of zippings.
     """
-    def __init__(self):
-        pass
+    def __init__(self, build_folder):
+        self.build_folder = build_folder
 
     def __str__(self):
         return "zip"
@@ -26,7 +26,7 @@ class Zip:
 
     def _build_system_zip(self):
         try:
-            zip_build = next(iter(self._get_build_folder_by_build_system()))  # Only one zip-build folder in the set
+            zip_build = next(iter(self.build_folder))  # Only one zip-build folder in the set
             artifacts_zip_build = Path(zip_build).joinpath(utils.current_directory.name).resolve()
             utils.clean_dir(zip_build)
             logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))

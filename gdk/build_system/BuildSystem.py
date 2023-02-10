@@ -8,13 +8,12 @@ class BuildSystem:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(BuildSystem, cls).__new__(cls)
+            cls._instance.systems = {}
         return cls._instance
-
-    def __init__(self):
-        self.systems = {}
 
     def register(self, system):
         self.systems[system.__str__()] = system
+        print(self.systems)
 
     def build(self, system_type):
         system = self.systems.get(system_type)

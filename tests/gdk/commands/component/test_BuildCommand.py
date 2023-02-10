@@ -6,6 +6,7 @@ from unittest.mock import mock_open, patch
 import pytest
 
 import gdk.common.utils as utils
+from gdk.build_system.Zip import Zip
 from gdk.commands.component.BuildCommand import BuildCommand
 from gdk.common.exceptions import error_messages
 
@@ -266,7 +267,7 @@ class BuildCommandTest(TestCase):
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
         mock_copytree = self.mocker.patch("shutil.copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
-        mock_ignore_files_during_zip = self.mocker.patch.object(BuildCommand, "_ignore_files_during_zip", return_value=[])
+        mock_ignore_files_during_zip = self.mocker.patch.object(Zip, "_ignore_files_during_zip", return_value=[])
         mock_make_archive = self.mocker.patch("shutil.make_archive")
 
         build_sys = {
@@ -324,7 +325,7 @@ class BuildCommandTest(TestCase):
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
         mock_copytree = self.mocker.patch("shutil.copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
-        mock_ignore_files_during_zip = self.mocker.patch.object(BuildCommand, "_ignore_files_during_zip", return_value=[])
+        mock_ignore_files_during_zip = self.mocker.patch.object(Zip, "_ignore_files_during_zip", return_value=[])
         mock_make_archive = self.mocker.patch("shutil.make_archive", side_effect=Error("some error"))
 
         build_sys = {
@@ -364,7 +365,7 @@ class BuildCommandTest(TestCase):
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
         mock_copytree = self.mocker.patch("shutil.copytree", side_effect=Error("some error"))
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
-        mock_ignore_files_during_zip = self.mocker.patch.object(BuildCommand, "_ignore_files_during_zip", return_value=[])
+        mock_ignore_files_during_zip = self.mocker.patch.object(Zip, "_ignore_files_during_zip", return_value=[])
 
         build_sys = {
             "zip": {
@@ -397,12 +398,11 @@ class BuildCommandTest(TestCase):
             BuildCommand,
             "_get_build_folder_by_build_system",
             return_value=zip_build_path,
-            side_effect=Error("some error"),
         )
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
         mock_copytree = self.mocker.patch("shutil.copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
-        mock_ignore_files_during_zip = self.mocker.patch.object(BuildCommand, "_ignore_files_during_zip", return_value=[])
+        mock_ignore_files_during_zip = self.mocker.patch.object(Zip, "_ignore_files_during_zip", return_value=[])
         mock_make_archive = self.mocker.patch("shutil.make_archive")
 
         build_sys = {
