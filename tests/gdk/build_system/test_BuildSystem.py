@@ -1,7 +1,7 @@
 import pytest
 from unittest import TestCase
 
-from gdk.build_system.BuildSystem import BuildSystem; 
+from gdk.build_system.BuildSystem import BuildSystem
 
 
 class BuildSystemTests(TestCase):
@@ -25,13 +25,12 @@ class BuildSystemTests(TestCase):
                 return True
 
         build_system = BuildSystem()
-        build_system.register(FakeSystem()) 
-        
-        assert True == build_system.build("fake")
+        build_system.register(FakeSystem())
 
+        assert build_system.build("fake") is True
 
     def test_build_system_unregistered_module(self):
 
         with pytest.raises(TypeError):
             build_system = BuildSystem()
-            build_system.build("fake") 
+            build_system.build("fake")

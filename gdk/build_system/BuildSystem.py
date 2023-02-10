@@ -14,8 +14,7 @@ class BuildSystem:
         self.systems = {}
 
     def register(self, system):
-        self.systems[system.__str__()] = system;
-
+        self.systems[system.__str__()] = system
 
     def build(self, system_type):
         system = self.systems.get(system_type)
@@ -24,5 +23,3 @@ class BuildSystem:
             raise TypeError(f"system type {system_type} is not currently supported")
 
         return system.build()
-
-

@@ -1,13 +1,9 @@
-
-
-
 import shutil
 import logging
 from pathlib import Path
 
 import gdk.common.utils as utils
 import gdk.common.consts as consts
-
 
 
 class Zip:
@@ -19,17 +15,14 @@ class Zip:
     This build folder is zipped completely as a component zip artifact.
     Raises an exception if there's an error in the process of zippings.
     """
-    
     def __init__(self):
         pass
 
     def __str__(self):
-     return "zip"
-
+        return "zip"
 
     def build(self):
         self._build_system_zip()
-
 
     def _build_system_zip(self):
         try:
@@ -52,7 +45,6 @@ class Zip:
 
         except Exception as e:
             raise Exception("""Failed to zip the component in default build mode.\n{}""".format(e))
-
 
     def _ignore_files_during_zip(self, path, names):
         """
