@@ -27,7 +27,7 @@ class BuildSystemTests(TestCase):
         build_system = BuildSystem()
         build_system.register(FakeSystem())
 
-        assert True == build_system.build("fake")
+        assert build_system.build("fake") is True
 
     def test_build_system_unregistered_module(self):
 
