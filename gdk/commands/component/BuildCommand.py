@@ -14,6 +14,7 @@ import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 from gdk.commands.Command import Command
 from gdk.build_system.BuildSystem import BuildSystem
+from gdk.build_system.Zip import Zip
 
 
 class BuildCommand(Command):
@@ -163,6 +164,8 @@ class BuildCommand(Command):
 
     def _build_system_zip(self):
         # Delegate to avoid breaking tests - TODO: We need to avoid testing private methods
+        build_system = BuildSystem()
+        build_system.register(Zip())
         BuildSystem().build("zip")
 
     def _ignore_files_during_zip(self, path, names):
