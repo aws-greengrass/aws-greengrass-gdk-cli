@@ -19,7 +19,7 @@ class BuildSystemTests(TestCase):
                 pass
 
             def __str__(self):
-                return "fake_sys"
+                return "fake"
 
             def build(self):
                 return True
@@ -27,7 +27,7 @@ class BuildSystemTests(TestCase):
         build_system = BuildSystem()
         build_system.register(FakeSystem())
 
-        assert build_system.build("fake_sys") is True
+        assert True == build_system.build("fake")
 
     def test_build_system_unregistered_module(self):
 
