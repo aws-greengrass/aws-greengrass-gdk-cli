@@ -91,3 +91,15 @@ Feature: gdk component build works
     When we quietly run gdk component build
     Then command was successful
     And we verify component build files
+
+
+  @version(gt='1.1.0')
+  @change_cwd
+  Scenario: build gradle kotlin multi project
+    Given we have cli installed
+    And we setup gdk project gradle-kotlin-build-test from s3
+    And we verify gdk project files
+    And change component name to com.example.Multi.Gradle.Kotlin
+    When we quietly run gdk component build
+    Then command was successful
+    And we verify component build files
