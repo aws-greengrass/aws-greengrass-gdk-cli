@@ -15,23 +15,23 @@ class Zip:
     This build folder is zipped completely as a component zip artifact.
     Raises an exception if there's an error in the process of zippings.
     """
-    def __init__(self, project_config, build_folder):
-        self.build_folder = build_folder
+    def __init__(self, project_config, build_folders):
+        self.build_folders = build_folders
         self.project_config = project_config
 
     def __str__(self):
         return "zip"
 
-    def build(self):
-        self._build_system_zip()
+    def _get_build_options(self) -> dict:
+        return self.project_config["component_build_config"].get("options", dict())
 
-    def _build_system_zip(self):
+    def build(self):
         try:
-            zip_build = next(iter(self.build_folder))  # Only one zip-build folder in the set
+            zip_build = next(iter(self.build_folders))  # Only one zip-build folder in the set
             artifacts_zip_build = Path(zip_build).joinpath(utils.current_directory.name).resolve()
             utils.clean_dir(zip_build)
             logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
-            shutil.copytree(utils.current_directory, artifacts_zip_build, ignore=self._ignore_files_during_zip)
+            shutil.copytree(utils.current_directory, artifacts_zip_build, ignore=shutil.ignore_patterns(*self.ignore_list()))
 
             # Get build file name without extension. This will be used as name of the archive.
             archive_file = utils.current_directory.name
@@ -47,7 +47,7 @@ class Zip:
         except Exception as e:
             raise Exception("""Failed to zip the component in default build mode.\n{}""".format(e))
 
-    def _ignore_files_during_zip(self, path, names):
+    def ignore_list(self) -> list:
         """
         Creates a list of files or directories to ignore while copying a directory.
 
@@ -67,14 +67,21 @@ class Zip:
         -------
             ignore_list(list): List of files or directories to ignore during zip.
         """
-        # TODO: Identify individual files in recipe that are not same as zip and exclude them during zip.
+        options = self._get_build_options()
 
         ignore_list = [
             consts.cli_project_config_file,
             consts.greengrass_build_dir,
             self.project_config["component_recipe_file"].name,
-            "test*",
-            ".*",
-            "node_modules",
         ]
+
+        if not options:
+            ignore_list.append(*[
+                "test*",
+                ".*",
+                "node_modules",
+            ])
+        else:
+            ignore_list.append(*options.get("excludes", []))
+
         return ignore_list
