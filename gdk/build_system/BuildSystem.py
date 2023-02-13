@@ -13,7 +13,6 @@ class BuildSystem:
 
     def register(self, system):
         self.systems[system.__str__()] = system
-        print(self.systems)
 
     def build(self, system_type):
         system = self.systems.get(system_type)
