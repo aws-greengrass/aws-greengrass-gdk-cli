@@ -6,8 +6,6 @@ import yaml
 import subprocess as sp
 from pathlib import Path
 
-import yaml
-
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
