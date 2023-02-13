@@ -64,21 +64,58 @@
                                     "build_system"
                                 ]
                             },
-                            "if": {
-                                "properties": {
-                                    "build_system": {
-                                        "const": "custom"
+                            "allOf": [
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "build_system": {
+                                                "const": "zip"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "options": {
+                                                "type": "object",
+                                                "description": "configuraiton options for the zip build system",
+                                                "anyOf": [
+                                                    {"required": ["includes"]},
+                                                    {"required": ["excludes"]}
+                                                ],
+                                                "properties": {
+                                                    "includes": {
+                                                        "type": "array",
+                                                        "description": "regex patterns of files to match and include on your zip",
+                                                        "minItems": 1
+                                                    },
+                                                    "excludes": {
+                                                        "type": "array",
+                                                        "description": "regex patterns of files to exclude",
+                                                        "minItems": 1
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "build_system": {
+                                                "const": "custom"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "custom_build_command": {}
+                                        },
+                                        "required": [
+                                            "custom_build_command"
+                                        ]
                                     }
                                 }
-                            },
-                            "then": {
-                                "properties": {
-                                    "custom_build_command": {}
-                                },
-                                "required": [
-                                    "custom_build_command"
-                                ]
-                            }
+                            ]
                         },
                         "publish": {
                             "type": "object",
