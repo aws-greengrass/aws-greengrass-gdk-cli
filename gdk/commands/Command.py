@@ -1,7 +1,6 @@
 import logging
 from abc import abstractmethod
 
-import gdk
 from gdk.common.exceptions.CommandError import ConflictingArgumentsError
 
 
@@ -79,8 +78,10 @@ class Command:
           _non_conflicting_args_map(dict): A dictionary object formed with argument as a key and a set of its non-conflicting
           args as value.
         """
+        from gdk.CLIParser import cli_tool
+
         _non_conflicting_args_map = {}
-        cli_model = gdk.CLIParser.cli_tool.cli_model
+        cli_model = cli_tool.cli_model
         if self.name in cli_model and "conflicting_arg_groups" in cli_model[self.name]:
             c_arg_groups = cli_model[self.name]["conflicting_arg_groups"]
             for c_group in c_arg_groups:
