@@ -165,7 +165,7 @@ class BuildCommand(Command):
     def _build_system_zip(self):
         # Delegate to avoid breaking tests - TODO: We need to avoid testing private methods
         build_system = BuildSystem()
-        build_system.register(Zip(self._get_build_folder_by_build_system()))
+        build_system.register(Zip(self.project_config, self._get_build_folder_by_build_system()))
         build_system.build("zip")
 
     def _ignore_files_during_zip(self, path, names):

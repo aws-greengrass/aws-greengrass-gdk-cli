@@ -15,8 +15,9 @@ class Zip:
     This build folder is zipped completely as a component zip artifact.
     Raises an exception if there's an error in the process of zippings.
     """
-    def __init__(self, build_folder):
+    def __init__(self, project_config, build_folder):
         self.build_folder = build_folder
+        self.project_config = project_config
 
     def __str__(self):
         return "zip"
