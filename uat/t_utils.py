@@ -1,10 +1,10 @@
 import json
-import yaml
 import random
 import string
 from pathlib import Path
 
 import boto3
+import yaml
 
 
 def update_config(config_file, component_name, region, bucket, author, version="NEXT_PATCH", old_component_name=None):
@@ -17,6 +17,15 @@ def update_config(config_file, component_name, region, bucket, author, version="
         config["component"][component_name]["publish"]["region"] = region
         config["component"][component_name]["publish"]["bucket"] = bucket
         config["component"][component_name]["version"] = version
+    with open(str(config_file), "w") as f:
+        f.write(json.dumps(config, indent=4))
+
+
+def update_config_build_sytem(config_file, component_name, build_system):
+    # Update gdk-config file mandatory field like region.
+    with open(str(config_file), "r") as f:
+        config = json.loads(f.read())
+        config["component"][component_name]["build"]["build_sytem"] = build_system
     with open(str(config_file), "w") as f:
         f.write(json.dumps(config, indent=4))
 
@@ -87,4 +96,4 @@ def get_acc_num(region):
 def random_id():
     size = 6
     chars = string.ascii_uppercase + string.digits
-    return ''.join(random.choice(chars) for _ in range(size))
+    return "".join(random.choice(chars) for _ in range(size))

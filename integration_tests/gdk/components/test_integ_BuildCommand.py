@@ -3,13 +3,16 @@ from pathlib import Path
 from shutil import Error
 from unittest.mock import mock_open, patch
 
+import pytest
+
 import gdk.CLIParser as CLIParser
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.parse_args_actions as parse_args_actions
 import gdk.common.utils as utils
-import pytest
 from gdk.commands.component.BuildCommand import BuildCommand
+
+gradle_build_command = ["gradle", "clean", "build"]
 
 
 @pytest.fixture()
@@ -289,7 +292,7 @@ def test_build_run_default_gradle_yaml_artifact_not_found(mocker, supported_buil
             assert not mock_file.called
             mock_yaml_dump.call_count == 0
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["gradle", "build"])  # called gradle build command
+    mock_subprocess_run.assert_called_with(gradle_build_command)  # called gradle build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in gralde
@@ -410,7 +413,7 @@ def test_build_run_default_gradle_yaml_artifact_found_build(mocker, supported_bu
         mock_file.assert_any_call(file_name, "w")
         mock_yaml_dump.call_count == 0
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["gradle", "build"])  # called gradle build command
+    mock_subprocess_run.assert_called_with(gradle_build_command)  # called gradle build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in gralde
@@ -448,7 +451,7 @@ def test_build_run_default_gradle_yaml_error_creating_recipe(mocker, supported_b
             mock_yaml_dump.call_count == 1
         assert "Failed to create build recipe file at" in e.value.args[0]
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["gradle", "build"])  # called gradle build command
+    mock_subprocess_run.assert_called_with(gradle_build_command)  # called gradle build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_is_artifact_in_build.call_count == 1
