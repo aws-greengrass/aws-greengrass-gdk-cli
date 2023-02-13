@@ -1,3 +1,5 @@
+from faker import Faker
+from faker.providers import color
 import pytest
 from unittest import TestCase
 
@@ -33,22 +35,15 @@ class ZipConfigurationTests(TestCase):
         options = None
         validate_configuration(self.configuration_base(options))
 
-        options = {"includes": ["src/*.ts"]}
-        validate_configuration(self.configuration_base(options))
-
-        options = {"excludes": ["src/*.js"]}
-        validate_configuration(self.configuration_base(options))
-
-        options = {"includes": ["src/*.ts"], "excludes": ["src/*.js"]}
+        options = {"exclude": ["*.ts"]}
         validate_configuration(self.configuration_base(options))
 
     def test_invalid_configuration_options(self):
-        with pytest.raises(Exception):
-            options = {"includes": []}
-            validate_configuration(self.configuration_base(options))
+        fake = Faker()
+        fake.add_provider(color)
 
         with pytest.raises(Exception):
-            options = {"excludes": []}
+            options = {"exclude": []}
             validate_configuration(self.configuration_base(options))
 
         with pytest.raises(Exception):
@@ -56,5 +51,6 @@ class ZipConfigurationTests(TestCase):
             validate_configuration(self.configuration_base(options))
 
         with pytest.raises(Exception):
-            options = {"foo": "bar"}
+            options = dict()
+            options[fake.color_name] = fake.color_name
             validate_configuration(self.configuration_base(options))

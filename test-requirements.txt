@@ -13,3 +13,4 @@ coverage
 pytest-mock
 behave
 behave-html-formatter
+Faker

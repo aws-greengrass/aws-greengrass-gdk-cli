@@ -78,17 +78,9 @@
                                             "options": {
                                                 "type": "object",
                                                 "description": "configuraiton options for the zip build system",
-                                                "anyOf": [
-                                                    {"required": ["includes"]},
-                                                    {"required": ["excludes"]}
-                                                ],
+                                                "required": ["exclude"],
                                                 "properties": {
-                                                    "includes": {
-                                                        "type": "array",
-                                                        "description": "regex patterns of files to match and include on your zip",
-                                                        "minItems": 1
-                                                    },
-                                                    "excludes": {
+                                                    "exclude": {
                                                         "type": "array",
                                                         "description": "regex patterns of files to exclude",
                                                         "minItems": 1
