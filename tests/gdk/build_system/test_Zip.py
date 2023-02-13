@@ -11,23 +11,38 @@ class ZipTests(TestCase):
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
 
+    def setUp(self):
+        self.build_folder = Path(Path(".").resolve()).joinpath('zip-build')
+
     def project_config(self, build_options: dict):
         return arrange_project_config({
             "component_build_config": {
                 "build_system": "zip",
                 "options": build_options
-            }
+            },
+            "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.json")
         })
 
-    def test_zip_build_with_excludes_option_only(self):
+    def test_zip_ignore_list_with_exclude_option(self):
         # Given
-        config = self.project_config({"excludes": [".env"]})
-        build_folder = Path(Path(".").resolve()).joinpath('zip-build')
+        build_options = {"excludes": [".env"]}
+        config = self.project_config(build_options)
 
         # When
-        zip = Zip(config, {build_folder})
+        zip = Zip(config, {self.build_folder})
 
         # Then
-        ignore_list = zip.ignore_list(None, None)
-        assert len(ignore_list) > 0
-        assert ".env" in ignore_list
+        assert ["gdk-config.json", "greengrass-build",
+                "recipe.json", ".env"] == zip.get_ignored_file_patterns()
+
+    def test_zip_ignore_list_without_exclude_option(self):
+        # Given
+        build_options = dict()
+        config = self.project_config(build_options)
+
+        # When
+        zip = Zip(config, {self.build_folder})
+
+        # Then
+        assert ["gdk-config.json", "greengrass-build", "recipe.json",
+                "test*", ".*", "node_modules"] == zip.get_ignored_file_patterns()

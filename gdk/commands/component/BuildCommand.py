@@ -166,39 +166,6 @@ class BuildCommand(Command):
         build_system.register(Zip(self.project_config, self._get_build_folder_by_build_system()))
         build_system.build("zip")
 
-    def _ignore_files_during_zip(self, path, names):
-        """
-        Creates a list of files or directories to ignore while copying a directory.
-
-        Helper function to create custom list of files/directories to ignore. Here, we exclude,
-        1. project config file -> gdk-config.json
-        2. greengrass-build directory
-        3. recipe file
-        4. tests folder
-        5. node_modules
-        6. hidden files
-
-        Parameters
-        ----------
-            path,names
-
-        Returns
-        -------
-            ignore_list(list): List of files or directories to ignore during zip.
-        """
-        # TODO: Nuke this - improve test that is testing this private method
-        # TODO: Identify individual files in recipe that are not same as zip and exclude them during zip.
-
-        ignore_list = [
-            consts.cli_project_config_file,
-            consts.greengrass_build_dir,
-            self.project_config["component_recipe_file"].name,
-            "test*",
-            ".*",
-            "node_modules",
-        ]
-        return ignore_list
-
     def _get_build_folder_by_build_system(self):
         """
         Returns build folder name specific to the build system. This folder contains component artifacts after the build
