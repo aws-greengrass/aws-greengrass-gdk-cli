@@ -6,6 +6,7 @@
     "required": [
         "maven",
         "gradle",
+        "gradlew",
         "zip"
     ],
     "properties": {
@@ -26,6 +27,21 @@
             }
         },
         "gradle": {
+            "type": "object",
+            "required": [
+                "build_command",
+                "build_folder"
+            ],
+            "properties": {
+                "build_command": {
+                    "$ref": "#/$defs/build_command"
+                },
+                "build_folder": {
+                    "$ref": "#/$defs/build_folder"
+                }
+            }
+        },
+        "gradlew": {
             "type": "object",
             "required": [
                 "build_command",

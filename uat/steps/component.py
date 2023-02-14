@@ -61,6 +61,14 @@ def update_component_config(context, component_name):
     context.last_component = unique_component_name
 
 
+@step('change build system to {build_system}')
+def update_component_config_build_system(context, build_system):
+    cwd = context.cwd if "cwd" in context else os.getcwd()
+    config_file = Path(cwd).joinpath(GG_CONFIG_JSON).resolve()
+    assert config_file.exists(), f"{GG_CONFIG_JSON} does not exist"
+    t_utils.update_config_build_sytem(config_file, context.last_component, build_system)
+
+
 @step('change artifact uri for {platform_type} platform from {search} to {replace}')
 def update_artifact_uri(context, platform_type, search, replace):
     cwd = context.cwd if "cwd" in context else os.getcwd()
