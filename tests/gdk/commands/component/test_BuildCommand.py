@@ -469,7 +469,7 @@ class BuildCommandTest(TestCase):
         assert build_command == ["mvn", "clean", "package"]
 
         build_command = build.get_build_cmd_from_platform("gradle")
-        assert build_command == ["gradle", "build"]
+        assert build_command == ["gradle", "clean", "build"]
 
         build_command = build.get_build_cmd_from_platform("zip")
         assert build_command == ["zip"]
@@ -485,7 +485,7 @@ class BuildCommandTest(TestCase):
         assert build_command == ["mvn.cmd", "clean", "package"]
 
         build_command = build.get_build_cmd_from_platform("gradle")
-        assert build_command == ["gradle", "build"]
+        assert build_command == ["gradle", "clean", "build"]
 
         build_command = build.get_build_cmd_from_platform("zip")
         assert build_command == ["zip"]
