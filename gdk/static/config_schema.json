@@ -78,14 +78,14 @@
                                             "options": {
                                                 "type": "object",
                                                 "description": "configuraiton options for the zip build system",
-                                                "required": ["exclude"],
                                                 "properties": {
                                                     "exclude": {
                                                         "type": "array",
                                                         "description": "regex patterns of files to exclude",
                                                         "minItems": 1
                                                     }
-                                                }
+                                                },
+                                                "additionalProperties": false
                                             }
                                         }
                                     }
