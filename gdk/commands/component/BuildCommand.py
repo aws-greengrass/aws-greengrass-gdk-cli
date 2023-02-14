@@ -2,17 +2,18 @@ import json
 import logging
 import platform
 import shutil
-import yaml
 import subprocess as sp
 from pathlib import Path
+
+import yaml
 
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
-from gdk.commands.Command import Command
 from gdk.build_system.BuildSystem import BuildSystem
 from gdk.build_system.Zip import Zip
+from gdk.commands.Command import Command
 
 
 class BuildCommand(Command):
@@ -54,7 +55,7 @@ class BuildCommand(Command):
             custom_build_command = component_build_config["custom_build_command"]
             logging.info("Using custom build configuration to build the component.")
             logging.info("Running the following command\n{}".format(custom_build_command))
-            sp.run(custom_build_command)
+            sp.run(custom_build_command, check=True)
         else:
             logging.info(f"Using '{build_system}' build system to build the component.")
             self.default_build_component()
@@ -156,7 +157,7 @@ class BuildCommand(Command):
                 self._build_system_zip()
             else:
                 logging.info("Running the build command '{}'".format(" ".join(build_command)))
-                sp.run(build_command)
+                sp.run(build_command, check=True)
         except Exception as e:
             raise Exception(f"Error building the component with the given build system.\n{e}")
 

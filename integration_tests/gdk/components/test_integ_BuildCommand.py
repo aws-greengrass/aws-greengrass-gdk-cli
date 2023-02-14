@@ -181,7 +181,7 @@ def test_build_run_default_maven_yaml(mocker, supported_build_system, rglob_buil
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
         mock_file.assert_any_call(file_name, "w")
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["mvn", "clean", "package"])  # called maven build command
+    mock_subprocess_run.assert_called_with(["mvn", "clean", "package"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
@@ -217,7 +217,7 @@ def test_build_run_default_maven_yaml_windows(mocker, supported_build_system, rg
         mock_file.assert_any_call(file_name, "w")
         mock_yaml_dump.call_count == 1
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["mvn.cmd", "clean", "package"])  # called maven build command
+    mock_subprocess_run.assert_called_with(["mvn.cmd", "clean", "package"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
@@ -251,7 +251,7 @@ def test_build_run_default_maven_yaml_error(mocker, supported_build_system, rglo
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build", "-d"]))
     assert "error with maven build cmd" in e.value.args[0]
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["mvn.cmd", "clean", "package"])  # called maven build command
+    mock_subprocess_run.assert_called_with(["mvn.cmd", "clean", "package"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
@@ -292,7 +292,7 @@ def test_build_run_default_gradle_yaml_artifact_not_found(mocker, supported_buil
             assert not mock_file.called
             mock_yaml_dump.call_count == 0
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(gradle_build_command)  # called gradle build command
+    mock_subprocess_run.assert_called_with(gradle_build_command, check=True)  # called gradle build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in gralde
@@ -376,7 +376,7 @@ def test_build_run_custom(mocker, supported_build_system, rglob_build_file):
         assert not mock_file.called
         mock_yaml_dump.call_count == 0
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["some-command"])  # called maven build command
+    mock_subprocess_run.assert_called_with(["some-command"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_is_artifact_in_build.call_count == 0  # only one artifact in project_config. Not vailable in build
@@ -413,7 +413,7 @@ def test_build_run_default_gradle_yaml_artifact_found_build(mocker, supported_bu
         mock_file.assert_any_call(file_name, "w")
         mock_yaml_dump.call_count == 0
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(gradle_build_command)  # called gradle build command
+    mock_subprocess_run.assert_called_with(gradle_build_command, check=True)  # called gradle build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in gralde
@@ -451,7 +451,7 @@ def test_build_run_default_gradle_yaml_error_creating_recipe(mocker, supported_b
             mock_yaml_dump.call_count == 1
         assert "Failed to create build recipe file at" in e.value.args[0]
     assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(gradle_build_command)  # called gradle build command
+    mock_subprocess_run.assert_called_with(gradle_build_command, check=True)  # called gradle build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_is_artifact_in_build.call_count == 1
