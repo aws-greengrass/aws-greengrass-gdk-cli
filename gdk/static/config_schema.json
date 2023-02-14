@@ -77,7 +77,7 @@
                                         "properties": {
                                             "options": {
                                                 "type": "object",
-                                                "description": "configuraiton options for the zip build system",
+                                                "description": "configuration options for the zip build system",
                                                 "properties": {
                                                     "exclude": {
                                                         "type": "array",
