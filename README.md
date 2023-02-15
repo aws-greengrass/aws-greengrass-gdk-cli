@@ -88,3 +88,17 @@ Configure AWS CLI with your credentials as shown here - https://docs.aws.amazon.
 5. Creates new version of the component in your AWS account.
 
 `gdk component publish`
+
+#### 4. Local deployment for local tests
+
+1. Build the component specifing also the gdk-config.json file, the recipe.json file and the build folder:
+
+`gdk component build -d -c gdk-config.json -r recipe.json -u greengrass-build`
+
+2. Push the component locally to a custom folder:
+
+`gdk component push -u greengrass-build -e file:///tmp/gg`
+
+1. One you have done local tests, publish component on cloud retrieving the built artifact from local folder:
+
+`gdk component publish -d -c gdk-config.json -u /tmp/gg -n <component_name> -w <component_version>`.
