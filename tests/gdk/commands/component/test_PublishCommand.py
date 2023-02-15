@@ -496,20 +496,24 @@ class PublishCommandTest(TestCase):
         assert not mock_create_bucket.called
         assert not mock_upload_file.called
 
-    def test_upload_artifacts(self):
+    def test_upload_artifacts_with_extra_args(self):
         publish = PublishCommand({})
         mock_client = self.mocker.patch("boto3.client", return_value=None)
         publish.service_clients = {"s3_client": mock_client}
         mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello.py")])
         mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=None)
         mock_upload_file = self.mocker.patch("boto3.client.upload_file", return_value=None)
+        self.mock_get_proj_config.return_value["s3_upload_file_args"] = {"Metadata": {"key": "value"}}
         publish.upload_artifacts_s3("name", "1.0.0")
         assert mock_iter_dir.call_count == 1
         assert mock_create_bucket.call_count == 1
         assert mock_upload_file.call_count == 1
         s3_file_path = "name/1.0.0/hello.py"
         mock_upload_file.assert_any_call(
-            str(Path("hello.py").resolve()), self.mock_get_proj_config.return_value["bucket"], s3_file_path
+            str(Path("hello.py").resolve()),
+            self.mock_get_proj_config.return_value["bucket"],
+            s3_file_path,
+            ExtraArgs={"Metadata": {"key": "value"}},
         )
 
     def test_upload_artifacts_region_us_east_1(self):
@@ -526,7 +530,7 @@ class PublishCommandTest(TestCase):
         assert mock_upload_file.call_count == 1
         s3_file_path = "name/1.0.0/hello.py"
         mock_upload_file.assert_any_call(
-            str(Path("hello.py").resolve()), self.mock_get_proj_config.return_value["bucket"], s3_file_path
+            str(Path("hello.py").resolve()), self.mock_get_proj_config.return_value["bucket"], s3_file_path, ExtraArgs=None
         )
 
     def test_upload_artifacts_exception(self):
@@ -548,7 +552,7 @@ class PublishCommandTest(TestCase):
         assert mock_upload_file.call_count == 1
         s3_file_path = "name/1.0.0/hello.py"
         mock_upload_file.assert_any_call(
-            str(Path("hello.py").resolve()), self.mock_get_proj_config.return_value["bucket"], s3_file_path
+            str(Path("hello.py").resolve()), self.mock_get_proj_config.return_value["bucket"], s3_file_path, ExtraArgs=None
         )
 
     def test_publish_run_not_build(self):
