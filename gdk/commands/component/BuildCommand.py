@@ -22,13 +22,23 @@ class BuildCommand(Command):
         
         project_config_filename = command_args["gdk_config"] if command_args["gdk_config"] != None else consts.cli_project_config_file
         project_build_directory = command_args["build_dir"] if command_args["build_dir"] != None else "{}/{}".format(utils.current_directory, consts.greengrass_build_dir)
-        project_recipe_filename = command_args["recipe"] if command_args["recipe"] != None else None
+        project_recipe_filename = command_args["recipe"] if command_args["recipe"] != None else project_utils.find_recipe_file_in_path("recipe", utils.current_directory)
 
         logging.debug("Project config filename: {}".format(project_config_filename))
         logging.debug("Project build directory: {}".format(project_build_directory))
         logging.debug("Project recipe filename: {}".format(project_recipe_filename))
 
-        self.project_config = project_utils.get_project_config_values(project_config_filename, project_recipe_filename, project_build_directory, None, None)
+        logging.debug("Loading project configuration values")
+        self.project_config = project_utils.get_project_config_values(project_config_filename, project_build_directory)
+
+        logging.debug("Loading recipe values")
+        recipe_values = project_utils.get_project_recipe_values(project_recipe_filename)
+
+        logging.debug("Merging recipe into project configuration value")
+        self.project_config.update(recipe_values)
+
+        logging.debug("Project configuration: {}".format(self.project_config))
+
         self.supported_build_sytems = project_utils.get_supported_component_builds()
 
     def run(self):

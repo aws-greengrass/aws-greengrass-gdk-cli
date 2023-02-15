@@ -10,7 +10,8 @@
             "init",
             "build",
             "publish",
-            "list"
+            "list",
+            "push"
         ],
         "help": "Initialize, build and publish GreengrassV2 components using this command."
     },
@@ -128,20 +129,46 @@
                 ],
                 "help": "Specify alternative component build directory."
             },
-            "publish-dir": {
+            "component-name": {
                 "name": [
-                    "-p",
-                    "--publish-dir"
+                    "-n",
+                    "--component-name"
                 ],
-                "help": "Specify local component publish directory."
+                "help": "Specify alternative component name to be used with alternative publish location."
             },
-            "local": {
+            "component-version": {
                 "name": [
-                    "-l",
-                    "--local"
+                    "-w",
+                    "--component-version"
                 ],
-                "action": "store_true",
-                "help": "Publish component locally to build directory."
+                "help": "Specify alternative component version to be used with alternative publish location."
+            }
+        }
+    },
+    "push": {
+        "help": "Push a built component into an specific location for further processing.",
+        "arguments": {
+            "gdk-config": {
+                "name": [
+                    "-c",
+                    "--gdk-config"
+                ],
+                "help": "Specify alternative GDK configuration file."
+            },
+            "build-dir": {
+                "name": [
+                    "-u",
+                    "--build-dir"
+                ],
+                "help": "Specify alternative component build directory."
+            },
+            "destination": {
+                "name": [
+                    "-e",
+                    "--destination"
+                ],
+                "help": "Specify local component publish directory.",
+                "required": true
             }
         }
     },
