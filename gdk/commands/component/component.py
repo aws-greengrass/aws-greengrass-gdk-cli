@@ -24,6 +24,14 @@ def publish(d_args):
     except Exception as e:
         raise Exception(f"Could not publish the component due to the following error.\n{e}")
 
+def push(d_args):
+    from gdk.commands.component.PushCommand import PushCommand
+
+    try:
+        PushCommand(d_args).run()
+    except Exception as e:
+        raise Exception(f"Could not publish the component due to the following error.\n{e}")
+
 
 def list(d_args):
     from gdk.commands.component.ListCommand import ListCommand

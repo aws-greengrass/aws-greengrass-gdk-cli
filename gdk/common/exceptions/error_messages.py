@@ -44,3 +44,8 @@ BUILD_FAILED = "Failed to build the component with the given project configurati
 
 # PUBLISH COMMAND
 PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."
+
+# PUSH COMMAND
+
+PUSH_UNSUPPORTED_LOCATION_TYPE = "Unsupported location type provided."
+PUSH_INVALID_PATH_VALUE = "Invalid location value provided."

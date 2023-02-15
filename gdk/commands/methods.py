@@ -13,5 +13,9 @@ def _gdk_component_publish(d_args):
     component.publish(d_args)
 
 
+def _gdk_component_push(d_args):
+    component.push(d_args)
+
+
 def _gdk_component_list(d_args):
     component.list(d_args)
