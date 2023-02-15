@@ -22,7 +22,7 @@ class BuildCommand(Command):
         
         project_config_filename = command_args["gdk_config"] if command_args["gdk_config"] != None else consts.cli_project_config_file
         project_build_directory = command_args["build_dir"] if command_args["build_dir"] != None else "{}/{}".format(utils.current_directory, consts.greengrass_build_dir)
-        project_recipe_filename = command_args["recipe"] if command_args["recipe"] != None else project_utils.find_recipe_file_in_path("recipe", utils.current_directory)
+        project_recipe_filename = project_utils.find_recipe_file_in_path(command_args["recipe"] if command_args["recipe"] != None else "recipe", utils.current_directory)
 
         logging.debug("Project config filename: {}".format(project_config_filename))
         logging.debug("Project build directory: {}".format(project_build_directory))
