@@ -108,7 +108,7 @@ def get_project_config_values():
     component_build_config = component_config["build"]
     bucket = component_config["publish"]["bucket"]
     region = component_config["publish"]["region"]
-    s3_upload_file_args = component_config["publish"].get("s3_upload_file_args")
+    options = component_config["publish"].get("options", dict())
 
     # Build directories
     gg_build_directory = Path(utils.current_directory).joinpath(consts.greengrass_build_dir).resolve()
@@ -130,7 +130,7 @@ def get_project_config_values():
     vars["component_build_config"] = component_build_config
     vars["bucket"] = bucket
     vars["region"] = region
-    vars["s3_upload_file_args"] = s3_upload_file_args
+    vars["options"] = options
     vars["gg_build_directory"] = gg_build_directory
     vars["gg_build_artifacts_dir"] = gg_build_artifacts_dir
     vars["gg_build_recipes_dir"] = gg_build_recipes_dir

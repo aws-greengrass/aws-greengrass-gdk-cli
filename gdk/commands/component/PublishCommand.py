@@ -67,8 +67,8 @@ class PublishCommand(Command):
         try:
             bucket = self.project_config["bucket"]
             region = self.project_config["region"]
-            s3_upload_file_args = self.project_config.get("s3_upload_file_args")
-
+            options = self.project_config["options"]
+            s3_upload_file_args = options.get("file_upload_args", dict())
             logging.info(
                 f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
                 " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
