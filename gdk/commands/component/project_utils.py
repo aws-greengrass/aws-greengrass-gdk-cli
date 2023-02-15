@@ -8,6 +8,7 @@ import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import yaml
+import re
 
 
 def get_supported_component_builds():
@@ -30,9 +31,11 @@ def get_supported_component_builds():
     return None
 
 def find_recipe_file_in_path(recipe_name, recipe_path):
-    logging.debug("Looking for recipe file into {}".format(recipe_path))
+    logging.debug("Looking for recipe '{}' file into {}".format(recipe_name, recipe_path))
 
-    if "." in recipe_name:
+    extentions = re.compile("[\.json|\.yaml|\.yml]$")
+
+    if extentions.search(recipe_name):
         logging.debug("Seems like provided recipe name has extention, check for this file directly")
         recipe_file = Path(recipe_path).joinpath(recipe_name).resolve()
     else:
