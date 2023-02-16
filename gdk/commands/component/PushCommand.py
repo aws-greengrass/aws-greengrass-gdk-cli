@@ -55,65 +55,7 @@ class PushCommand(Command):
             raise Exception(error_messages.PUSH_UNSUPPORTED_LOCATION_TYPE)
 
     def push_to_s3(self, bucket_name, bucket_path):
-        logging.info("S3 location selected: '{}{}'".format(bucket_name, bucket_path))
-
-        component_name = self.project_config["component_name"]
-
-        bucket_path = str(bucket_path).removeprefix("/")
-
-        s3client = self.service_clients["s3_client"]
-
-        paginator = s3client.get_paginator('list_objects_v2')
-
-        response_iterator = paginator.paginate(
-            Bucket=bucket_name,
-            Delimiter='/',
-            Prefix=bucket_path
-        )
-
-        logging.info("Searching for subfolder '{}' into bucket '{}' with prefix '{}'".format(component_name, bucket_name, bucket_path))
-        logging.debug("Paginator type: {}".format(type(response_iterator)))
-
-        search_filter = "CommonPrefixes[].Prefix".format(component_name)
-
-        logging.debug("Filtering search with '{}'".format(search_filter))
-
-        filtered_iterator = response_iterator.search(search_filter)
-
-        boolComponentFound = False
-        for elem in filtered_iterator:
-            boolComponentFound = True
-
-            logging.debug("Item: {}".format(elem))
-
-            if "CommonPrefixes" in elem:
-                common_prefixes = elem["CommonPrefixes"]
-                for f in common_prefixes:
-                    logging.debug(" >>> Folder: {}".format(f["Prefix"]))
-
-            if "Contents" in elem:
-                contents = elem["Contents"]
-                for c in contents:
-                    logging.debug(" >>> Object: {}".format(c["Key"]))
-
-        logging.debug("There is an item folder alread" if boolComponentFound else "No folder found")
-
-        # for prefix in result.search('CommonPrefixes'):
-        #     print(prefix.get('Prefix'))
-
-        # bucket_objects_list_request = s3client.list_objects_v2(Bucket = bucket_name)
-
-        # for obj in bucket_objects_list_request["Contents"]:
-        #     logging.debug("Object {}: {}".format(obj.Key, obj))
-
-        # if "Buckets" in bucket_list_request:
-        #     bucket_list = bucket_list_request["Buckets"]
-        #     for b in bucket_list:
-        #         logging.debug("Bucket name: {}".format(b["Name"]))
-        # else:
-        #     logging.info("No buckets found")
-
-        raise RuntimeError("S3 pushin feature to be implemented")
+        raise RuntimeError("S3 pushing feature to be implemented")
 
     def push_to_local(self, location):
         logging.info("Local location selected: '{}'".format(location))
