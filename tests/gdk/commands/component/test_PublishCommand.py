@@ -632,23 +632,17 @@ class PublishCommandTest(TestCase):
             return_value=None,
             side_effect=HTTPError("some error"),
         )
-        mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        mock_update_and_create_recipe_file = self.mocker.patch.object(
-            PublishCommand, "update_and_create_recipe_file", return_value=None
-        )
-        mock_create_gg_component = self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
+        mock_project_built = self.mocker.patch.object(PublishCommand, "is_project_built", return_value=None)
         publish = PublishCommand({"bucket": None})
         publish.project_config["bucket"] = "default"
         with pytest.raises(Exception) as e:
             publish.run()
+        assert mock_project_built.call_count == 1
         assert publish.project_config["account_number"] == "1234"
         assert publish.project_config["bucket"] == "default-us-east-1-1234"
         assert e.value.args[0] == "{}\n{}".format(error_messages.PUBLISH_FAILED, "some error")
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
-        assert mock_upload_artifacts_s3.call_count == 0
-        assert mock_update_and_create_recipe_file.call_count == 0
-        assert mock_create_gg_component.call_count == 0
 
     def test_create_bucket_exception_bucket_exists(self):
         bucket = "test-bucket"

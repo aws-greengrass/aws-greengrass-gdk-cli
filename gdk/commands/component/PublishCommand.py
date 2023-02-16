@@ -20,34 +20,66 @@ class PublishCommand(Command):
 
     def run(self):
         try:
-            self.project_config["account_number"] = self.get_account_number()
-            if self.arguments["bucket"]:
-                self.project_config["bucket"] = self.arguments["bucket"]
-            else:
-                self.project_config["bucket"] = "{}-{}-{}".format(
-                    self.project_config["bucket"], self.project_config["region"], self.project_config["account_number"]
-                )
-
+            self.is_project_built()
+            self._update_project_config_values()
             component_name = self.project_config["component_name"]
-            component_version = self.get_component_version_from_config()
-            logging.debug(f"Checking if the component '{component_name}' is built.")
-            if not utils.dir_exists(self.project_config["gg_build_component_artifacts_dir"]):
-                logging.warning(
-                    f"The component '{component_name}' is not built.\nSo, building the component before publishing it."
-                )
-                component.build({})
-            logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
-            logging.info("Uploading the component built artifacts to s3 bucket.")
-            self.upload_artifacts_s3(component_name, component_version)
-
-            logging.info(f"Updating the component recipe {component_name}-{component_version}.")
-            self.update_and_create_recipe_file(component_name, component_version)
-
-            logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
-            self.create_gg_component(component_name, component_version)
+            component_version = self.project_config["component_version"]
+            self._publish_component_version(component_name, component_version)
         except Exception as e:
             logging.error("Failed to publish new version of the component '{}'".format(self.project_config["component_name"]))
             raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
+
+    def is_project_built(self):
+        # TODO: This method should just warn and proceed. It should not build the component.
+        component_name = self.project_config["component_name"]
+        logging.debug(f"Checking if the component '{component_name}' is built.")
+        if not utils.dir_exists(self.project_config["gg_build_component_artifacts_dir"]):
+            logging.warning(
+                f"The component '{component_name}' is not built.\nSo, building the component before publishing it."
+            )
+            component.build({})
+
+    def _update_project_config_values(self):
+        """'
+        Resolve the publish configuration provided in the gdk config file with the CLI arguments passed to the publish command.
+        Arguments provided in the `gdk component publish` commands take precedence over the gdk-config values.
+
+        Parameters
+        ----------
+            None
+
+        Returns
+        -------
+            None
+        """
+        self._update_account_number()
+        self._update_bucket()
+        self._update_component_version()
+
+    def _update_account_number(self):
+        self.project_config["account_number"] = self.get_account_number()
+
+    def _update_bucket(self):
+        if self.arguments["bucket"]:
+            self.project_config["bucket"] = self.arguments["bucket"]
+        else:
+            self.project_config["bucket"] = "{}-{}-{}".format(
+                self.project_config["bucket"], self.project_config["region"], self.project_config["account_number"]
+            )
+
+    def _update_component_version(self):
+        self.project_config["component_version"] = self.get_component_version_from_config()
+
+    def _publish_component_version(self, component_name, component_version):
+        logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
+        logging.info("Uploading the component built artifacts to s3 bucket.")
+        self.upload_artifacts_s3(component_name, component_version)
+
+        logging.info(f"Updating the component recipe {component_name}-{component_version}.")
+        self.update_and_create_recipe_file(component_name, component_version)
+
+        logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
+        self.create_gg_component(component_name, component_version)
 
     def upload_artifacts_s3(self, component_name, component_version):
         """
@@ -350,7 +382,7 @@ class PublishCommand(Command):
 
     def create_publish_recipe_file(self, component_name, component_version, parsed_component_recipe):
         """
-        Creates a new recipe file(json or yaml) with anme `<component_name>-<component_version>.extension` in the component
+        Creates a new recipe file(json or yaml) with name `<component_name>-<component_version>.extension` in the component
         recipes build directory.
 
         This recipe is updated with the component version calculated and artifact URIs of the artifacts.
