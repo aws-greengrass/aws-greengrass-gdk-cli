@@ -36,7 +36,7 @@ class ListCommand(Command):
             raise Exception(error_messages.LISTING_COMPONENTS_FAILED)
 
         try:
-            return response.json().keys()
+            return response.json()
         except Exception as e:
             logging.error(e, exc_info=True)
             return []

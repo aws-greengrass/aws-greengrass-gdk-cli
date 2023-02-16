@@ -30,7 +30,7 @@ class ListCommandTest(TestCase):
         self.mocker.patch.object(ListCommand, "__init__", return_value=None)
         list = ListCommand({})
         templates_list = list.get_component_list_from_github(url)
-        assert templates_list == res_json.keys()
+        assert templates_list == res_json
         assert mock_template_list.call_count == 1
 
     def test_get_component_list_from_github_invalid_json(self):
