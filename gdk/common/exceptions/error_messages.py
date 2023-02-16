@@ -1,6 +1,6 @@
 # FILE
 CONFIG_FILE_NOT_EXISTS = (
-    "Config file doesn't exist. Please initialize the project using a template or a repository before using gdk commands."
+    "Config file '{}' doesn't exist. Please initialize the project using a template or a repository before using gdk commands."
 )
 CONFIG_SCHEMA_FILE_NOT_EXISTS = "Configuration validation failed. Config schema file doesn't exist."
 PROJECT_RECIPE_FILE_NOT_FOUND = (
@@ -44,3 +44,8 @@ BUILD_FAILED = "Failed to build the component with the given project configurati
 
 # PUBLISH COMMAND
 PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."
+
+# PUSH COMMAND
+
+PUSH_UNSUPPORTED_LOCATION_TYPE = "Unsupported location type provided."
+PUSH_INVALID_PATH_VALUE = "Invalid location value provided."

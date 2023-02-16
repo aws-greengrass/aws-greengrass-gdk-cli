@@ -7,7 +7,6 @@ import gdk._version as version
 import requests
 from packaging.version import Version
 
-
 def get_static_file_path(file_name):
     """
     Returns the path of the file assuming that is in static directory.
@@ -129,7 +128,6 @@ def cli_version_check():
             f" `{update_command}`.\n"
         )
 
-
 error_line = "\n=============================== ERROR ===============================\n"
 help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()
@@ -137,3 +135,4 @@ doc_link_device_role = "https://docs.aws.amazon.com/greengrass/v2/developerguide
 cli_version = version.__version__
 latest_cli_version_file = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-gdk-cli/main/gdk/_version.py"
 s3_prefix = "s3://"
+file_prefix = "file://"
