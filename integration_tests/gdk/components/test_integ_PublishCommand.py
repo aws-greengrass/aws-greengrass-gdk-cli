@@ -386,6 +386,7 @@ def project_config():
         "component_author": "abc",
         "bucket": "default",
         "region": "us-east-1",
+        "options": {},
         "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
         "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
         "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
