@@ -1,4 +1,6 @@
+import re
 import logging
+from typing import Iterable
 
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
@@ -15,7 +17,7 @@ class ListCommand(Command):
             logging.info("Listing all the available component templates from Greengrass Software Catalog.")
             li = self.get_component_list_from_github(consts.templates_list_url)
             logging.info("Found '{}' component templates to display.".format(len(li)))
-            self.display_list(li)
+            self.display_list(li, transform=self._map_template_name)
             return
         elif "repository" in self.arguments and self.arguments["repository"]:
             logging.info("Listing all the available component repositories from Greengrass Software Catalog.")
@@ -25,27 +27,36 @@ class ListCommand(Command):
             return
         raise Exception(error_messages.LIST_WITH_INVALID_ARGS)
 
-    def get_component_list_from_github(self, url):
-        comp_list_response = requests.get(url)
-        if comp_list_response.status_code != 200:
-            try:
-                comp_list_response.raise_for_status()
-            except Exception as e:
-                logging.error(e)
-                raise e
-            finally:
-                raise Exception(error_messages.LISTING_COMPONENTS_FAILED)
+    def get_component_list_from_github(self, url) -> list:
+        response = requests.get(url)
         try:
-            comp_list = comp_list_response.json()
-            return comp_list
+            response.raise_for_status()
+        except Exception as e:
+            logging.error(e)
+            raise Exception(error_messages.LISTING_COMPONENTS_FAILED)
+
+        try:
+            return response.json()
         except Exception as e:
             logging.error(e, exc_info=True)
             return []
 
-    def display_list(self, components):
+    def _map_template_name(self, template_name: str) -> str:
+        """
+        Maps the raw name into the <name> (language) format.
+
+        Repository template names are postfixed by the `-<programming-language>`. For example
+        HelloWorld-python, HelloWorld-java.
+        """
+        try:
+            language = re.search(r'\b(java|python)\b', template_name).group(1)
+            template_name = re.sub(r'\b\-(java|python)\b', '', template_name)
+            return f"{template_name} ({language})"
+        except Exception:
+            return template_name
+
+    def display_list(self, component_names: Iterable[str], transform=lambda x: x):
         # TODO: Add short description of what each component is for?
-        i = 1
-        for component in components:
+        for count, component_name in enumerate(component_names):
             # Do not use logging here.
-            print(f"{i}. {component}")
-            i += 1
+            print(f"{count + 1}. {transform(component_name)}")
