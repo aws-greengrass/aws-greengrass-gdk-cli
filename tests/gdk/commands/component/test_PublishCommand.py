@@ -632,7 +632,7 @@ class PublishCommandTest(TestCase):
             return_value=None,
             side_effect=HTTPError("some error"),
         )
-        mock_project_built = self.mocker.patch.object(PublishCommand, "is_project_built", return_value=None)
+        mock_project_built = self.mocker.patch.object(PublishCommand, "try_build", return_value=None)
         publish = PublishCommand({"bucket": None})
         publish.project_config["bucket"] = "default"
         with pytest.raises(Exception) as e:

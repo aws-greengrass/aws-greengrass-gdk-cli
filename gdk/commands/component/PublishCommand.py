@@ -20,7 +20,7 @@ class PublishCommand(Command):
 
     def run(self):
         try:
-            self.is_project_built()
+            self.try_build()
             self._update_project_config_values()
             component_name = self.project_config["component_name"]
             component_version = self.project_config["component_version"]
@@ -29,7 +29,7 @@ class PublishCommand(Command):
             logging.error("Failed to publish new version of the component '{}'".format(self.project_config["component_name"]))
             raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
 
-    def is_project_built(self):
+    def try_build(self):
         # TODO: This method should just warn and proceed. It should not build the component.
         component_name = self.project_config["component_name"]
         logging.debug(f"Checking if the component '{component_name}' is built.")
@@ -40,7 +40,7 @@ class PublishCommand(Command):
             component.build({})
 
     def _update_project_config_values(self):
-        """'
+        """
         Resolve the publish configuration provided in the gdk config file with the CLI arguments passed to the publish command.
         Arguments provided in the `gdk component publish` commands take precedence over the gdk-config values.
 
