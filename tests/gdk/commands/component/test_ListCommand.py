@@ -1,8 +1,8 @@
+import pytest
 from unittest import TestCase
 
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
-import pytest
 from gdk.commands.component.ListCommand import ListCommand
 from urllib3.exceptions import HTTPError
 
@@ -11,6 +11,10 @@ class ListCommandTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
+
+    @pytest.fixture(autouse=True)
+    def capsys(self, capsys):
+        self.capsys = capsys
 
     def test_display_list(self):
         components = [1, 2, 4]
@@ -52,14 +56,26 @@ class ListCommandTest(TestCase):
         assert mock_template_list.call_count == 1
 
     def test_run_template(self):
-        mock_get_component_list_from_github = self.mocker.patch.object(
-            ListCommand, "get_component_list_from_github", return_value=[]
+        self.mocker.patch.object(
+            ListCommand, "get_component_list_from_github", return_value=[
+                "HelloWorld-python", "HelloWorld-java"
+            ]
         )
-        mock_display_list = self.mocker.patch.object(ListCommand, "display_list", return_value=None)
         list = ListCommand({"template": True})
         list.run()
-        mock_get_component_list_from_github.assert_any_call(consts.templates_list_url)
-        assert mock_display_list.call_count == 1
+
+        [out, _err] = self.capsys.readouterr()
+        assert out == "1. HelloWorld (python)\n2. HelloWorld (java)\n"
+
+    def test_run_template_parsing_error(self):
+        self.mocker.patch.object(
+            ListCommand, "get_component_list_from_github", return_value=["aws-greengrass-labs-database-influxdb"]
+        )
+        list = ListCommand({"template": True})
+        list.run()
+
+        [out, _err] = self.capsys.readouterr()
+        assert out == '1. aws-greengrass-labs-database-influxdb\n'
 
     def test_run_repository(self):
         mock_get_component_list_from_github = self.mocker.patch.object(
