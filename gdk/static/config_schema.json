@@ -137,6 +137,16 @@
                                         "us-gov-west-1",
                                         "us-gov-east-1"
                                     ]
+                                },
+                                "options": {
+                                    "type": "object",
+                                    "description": "configuration options used during component version creation",
+                                    "properties": {
+                                        "file_upload_args": {
+                                            "type": "object",
+                                            "description": "Extra arguments used by S3 client during file transfer."
+                                        }
+                                    }
                                 }
                             },
                             "required": [

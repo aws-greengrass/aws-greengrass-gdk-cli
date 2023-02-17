@@ -67,6 +67,8 @@ class PublishCommand(Command):
         try:
             bucket = self.project_config["bucket"]
             region = self.project_config["region"]
+            options = self.project_config["options"]
+            s3_upload_file_args = options.get("file_upload_args", dict())
             logging.info(
                 f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
                 " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
@@ -80,7 +82,9 @@ class PublishCommand(Command):
             for artifact in build_component_artifacts:
                 s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
                 logging.debug("Uploading artifact '{}' to the bucket '{}'.".format(artifact.resolve(), bucket))
-                self.service_clients["s3_client"].upload_file(str(artifact.resolve()), bucket, s3_file_path)
+                self.service_clients["s3_client"].upload_file(
+                    str(artifact.resolve()), bucket, s3_file_path, ExtraArgs=s3_upload_file_args
+                )
         except Exception as e:
             raise Exception("Error while uploading the artifacts to s3 during publish.\n{}".format(e))
 
