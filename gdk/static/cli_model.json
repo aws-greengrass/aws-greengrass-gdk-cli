@@ -90,6 +90,20 @@
                     "--bucket"
                 ],
                 "help": "Name of the s3 bucket to use for uploading component artifacts."
+            },
+            "region": {
+                "name": [
+                    "-r",
+                    "--region"
+                ],
+                "help": "Name of the AWS region to use component creation."
+            },
+            "options": {
+                "name": [
+                    "-o",
+                    "--options"
+                ],
+                "help": "Extra configuration options used during component version creation."
             }
         }
     },

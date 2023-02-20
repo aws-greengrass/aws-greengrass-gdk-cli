@@ -53,11 +53,16 @@ class PublishCommand(Command):
             None
         """
         self._update_account_number()
-        self._update_bucket()
+        self._override_config_with_command_args()
         self._update_component_version()
 
     def _update_account_number(self):
         self.project_config["account_number"] = self.get_account_number()
+
+    def _override_config_with_command_args(self):
+        self._update_region()
+        self._update_bucket()
+        self._update_options()
 
     def _update_bucket(self):
         if self.arguments["bucket"]:
@@ -66,6 +71,15 @@ class PublishCommand(Command):
             self.project_config["bucket"] = "{}-{}-{}".format(
                 self.project_config["bucket"], self.project_config["region"], self.project_config["account_number"]
             )
+
+    def _update_options(self):
+        if self.arguments["options"]:
+            opts = json.loads(self.arguments["options"])
+            self.project_config["options"] = opts
+
+    def _update_region(self):
+        if self.arguments["region"]:
+            self.project_config["region"] = self.arguments["region"]
 
     def _update_component_version(self):
         self.project_config["component_version"] = self.get_component_version_from_config()

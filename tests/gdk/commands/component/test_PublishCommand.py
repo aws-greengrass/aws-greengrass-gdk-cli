@@ -567,10 +567,13 @@ class PublishCommandTest(TestCase):
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         mock_create_gg_component = self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
-        publish = PublishCommand({"bucket": None})
+        publish = PublishCommand(
+            {"bucket": None, "region": "us-west-2", "options": '{"file_upload_args":{"Metadata": {"key": "value"}}}'}
+        )
         publish.run()
         assert publish.project_config["account_number"] == "1234"
-        assert publish.project_config["bucket"] == "default-us-east-1-1234"
+        assert publish.project_config["bucket"] == "default-us-west-2-1234"
+        assert publish.project_config["options"] == {"file_upload_args": {"Metadata": {"key": "value"}}}
         assert mock_dir_exists.call_count == 1
         assert mock_build.call_count == 1
         assert mock_get_account_num.call_count == 1
@@ -591,7 +594,7 @@ class PublishCommandTest(TestCase):
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         mock_create_gg_component = self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
-        publish = PublishCommand({"bucket": "exact-bucket"})
+        publish = PublishCommand({"bucket": "exact-bucket", "region": None, "options": None})
         publish.run()
         assert publish.project_config["account_number"] == "1234"
         assert publish.project_config["bucket"] == "exact-bucket"
@@ -614,7 +617,7 @@ class PublishCommandTest(TestCase):
         )
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=True)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
-        publish = PublishCommand({"bucket": None})
+        publish = PublishCommand({"bucket": None, "region": None, "options": None})
         publish.project_config["bucket"] = "default"
         mock_create_gg_component = self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
         publish.run()
@@ -637,7 +640,7 @@ class PublishCommandTest(TestCase):
             side_effect=HTTPError("some error"),
         )
         mock_project_built = self.mocker.patch.object(PublishCommand, "try_build", return_value=None)
-        publish = PublishCommand({"bucket": None})
+        publish = PublishCommand({"bucket": None, "region": None, "options": None})
         publish.project_config["bucket"] = "default"
         with pytest.raises(Exception) as e:
             publish.run()
