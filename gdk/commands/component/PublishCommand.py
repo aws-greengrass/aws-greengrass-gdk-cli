@@ -9,6 +9,7 @@ import gdk.common.utils as utils
 import yaml
 from botocore.exceptions import ClientError
 from gdk.commands.Command import Command
+from gdk.common.exceptions.CommandError import InvalidArgumentsError
 
 
 class PublishCommand(Command):
@@ -60,6 +61,7 @@ class PublishCommand(Command):
         self.project_config["account_number"] = self.get_account_number()
 
     def _override_config_with_command_args(self):
+        logging.debug("Overridig gdk configuration with the command arguments")
         self._update_region()
         self._update_bucket()
         self._update_options()
@@ -74,8 +76,34 @@ class PublishCommand(Command):
 
     def _update_options(self):
         if self.arguments["options"]:
-            opts = json.loads(self.arguments["options"])
-            self.project_config["options"] = opts
+            try:
+                self.project_config["options"] = self._read_options(self.arguments["options"])
+            except Exception as exc:
+                raise Exception(
+                    "Please provide a valid json file path or a json string as the options argument.\nError:\t" + str(exc)
+                )
+
+    def _read_options(self, options):
+        if options.endswith(".json"):
+            logging.debug("Reading options from the json file provided in the publish command")
+            options = self._read_from_file(options)
+        try:
+            return json.loads(options)
+        except json.decoder.JSONDecodeError as err:
+            raise InvalidArgumentsError(
+                options,
+                "JSON string is incorrectly formatted.\nError:\t" + str(err),
+            )
+
+    def _read_from_file(self, options):
+        file_path = Path(options).resolve()
+        if not utils.file_exists(file_path):
+            raise InvalidArgumentsError(
+                options,
+                "The json file path provided in the command does not exist",
+            )
+        with open(file_path, "r") as o_file:
+            return o_file.read()
 
     def _update_region(self):
         if self.arguments["region"]:

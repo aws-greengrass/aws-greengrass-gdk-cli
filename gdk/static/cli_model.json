@@ -103,7 +103,7 @@
                     "-o",
                     "--options"
                 ],
-                "help": "Extra configuration options used during component version creation. This argument needs to be a json string containing publish options"
+                "help": "Extra configuration options used during component version creation. This argument needs to be a valid json string or a json file path containing publish options."
             }
         }
     },

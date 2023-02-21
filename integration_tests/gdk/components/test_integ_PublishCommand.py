@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import mock_open, patch, ANY
+from unittest.mock import ANY, mock_open, patch
 
 import boto3
 import gdk.CLIParser as CLIParser
@@ -161,6 +161,55 @@ def test_publish_run_with_region_and_options_argument(mocker, get_service_client
     assert spy_upload_file.call_count == 1  # Only one file to upload
     assert spy_create_component.call_count == 1  # Create gg private component
     assert spy_get_caller_identity.call_count == 1  # Get account number
+
+
+@pytest.mark.parametrize(
+    "options_arg",
+    ["file/path/not_exists.json", '{"invalid_json_string":{"missing":quotes"}}'],
+)
+def test_publish_with_invalid_options(mocker, options_arg, get_service_clients, mock_project_config):
+    mocker.patch(
+        "gdk.common.utils.dir_exists",
+        return_value=True,
+    )
+    if options_arg == "file_exists.json":
+        mocker.patch(
+            "gdk.common.utils.file_exists",
+            return_value=True,
+        )
+
+    with pytest.raises(Exception) as e:
+        with patch("builtins.open", mock_open()):
+            parse_args_actions.run_command(
+                CLIParser.cli_parser.parse_args(
+                    ["component", "publish", "-d", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", options_arg]
+                )
+            )
+    assert "Please provide a valid json file path or a json string as the options argument" in e.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "options_arg_file_contents",
+    ['{"missing""colon"}', '{"invalid_json_string":{"missing":quotes"}}'],
+)
+def test_publish_with_invalid_options_file(mocker, options_arg_file_contents, get_service_clients, mock_project_config):
+    mocker.patch(
+        "gdk.common.utils.dir_exists",
+        return_value=True,
+    )
+    mocker.patch(
+        "gdk.common.utils.file_exists",
+        return_value=True,
+    )
+    with pytest.raises(Exception) as e:
+        with patch("builtins.open", mock_open(read_data=options_arg_file_contents)):
+            parse_args_actions.run_command(
+                CLIParser.cli_parser.parse_args(
+                    ["component", "publish", "-d", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", 
+                    "options_arg_file_contents.json"]
+                )
+            )
+    assert "Please provide a valid json file path or a json string as the options argument" in e.value.args[0]
 
 
 def test_publish_run_next_patch(mocker, get_service_clients, mock_project_config):
