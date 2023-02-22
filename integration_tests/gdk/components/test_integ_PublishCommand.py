@@ -119,7 +119,7 @@ def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_proj
     assert spy_get_caller_identity.call_count == 1  # Get account number
 
 
-def test_publish_run_with_region_and_options_argument(mocker, get_service_clients, mock_project_config):
+def test_publish_run_with_all_argument(mocker, get_service_clients, mock_project_config):
     mock_build_dir_exists = mocker.patch(
         "gdk.common.utils.dir_exists",
         return_value=True,
@@ -133,9 +133,9 @@ def test_publish_run_with_region_and_options_argument(mocker, get_service_client
     )
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
-    spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
+    spy_create_bucket = mocker.spy(get_service_clients["s3_client"], "create_bucket")
+    spy_upload_file = mocker.spy(get_service_clients["s3_client"], "upload_file")
+    spy_create_component = mocker.spy(get_service_clients["greengrass_client"], "create_component_version")
     with patch("builtins.open", mock_open()) as mock_file:
         parse_args_actions.run_command(
             CLIParser.cli_parser.parse_args(
