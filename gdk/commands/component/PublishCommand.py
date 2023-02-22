@@ -84,11 +84,10 @@ class PublishCommand(Command):
                 )
 
     def _read_options(self, options):
-        if options.endswith(".json"):
-            logging.debug("Reading options from the json file provided in the publish command")
-            options = self._read_from_file(options)
         try:
-            return json.loads(options)
+            if not options.endswith(".json"):
+                return json.loads(options)
+            return self._read_from_file(options)
         except json.decoder.JSONDecodeError as err:
             raise InvalidArgumentsError(
                 options,
@@ -96,6 +95,7 @@ class PublishCommand(Command):
             )
 
     def _read_from_file(self, options):
+        logging.debug("Reading options from the json file provided in the publish command")
         file_path = Path(options).resolve()
         if not utils.file_exists(file_path):
             raise InvalidArgumentsError(
@@ -103,7 +103,7 @@ class PublishCommand(Command):
                 "The json file path provided in the command does not exist",
             )
         with open(file_path, "r") as o_file:
-            return o_file.read()
+            return json.loads(o_file.read())
 
     def _update_region(self):
         if self.arguments["region"]:
