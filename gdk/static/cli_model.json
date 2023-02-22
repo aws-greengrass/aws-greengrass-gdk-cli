@@ -89,7 +89,21 @@
                     "-b",
                     "--bucket"
                 ],
-                "help": "Name of the s3 bucket to use for uploading component artifacts."
+                "help": "Name of the s3 bucket to use for uploading component artifacts. This argument overrides the bucket name provided in the gdk configuration."
+            },
+            "region": {
+                "name": [
+                    "-r",
+                    "--region"
+                ],
+                "help": "Name of the AWS region to use during component creation. This argument overrides the region name provided in the gdk configuration."
+            },
+            "options": {
+                "name": [
+                    "-o",
+                    "--options"
+                ],
+                "help": "Extra configuration options used during component version creation. This argument needs to be a valid json string or file path to a JSON file containing the publish options. This argument overrides the options provided in the gdk configuration."
             }
         }
     },

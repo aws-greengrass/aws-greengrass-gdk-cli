@@ -1,10 +1,11 @@
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import ANY, mock_open, patch
 
 import boto3
+import pytest
+
 import gdk.CLIParser as CLIParser
 import gdk.common.parse_args_actions as parse_args_actions
-import pytest
 from gdk.commands.component.PublishCommand import PublishCommand
 
 
@@ -117,6 +118,108 @@ def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_proj
     assert spy_upload_file.call_count == 1  # Only one file to upload
     assert spy_create_component.call_count == 1  # Create gg private component
     assert spy_get_caller_identity.call_count == 1  # Get account number
+
+
+def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_project_config):
+    mock_build_dir_exists = mocker.patch(
+        "gdk.common.utils.dir_exists",
+        return_value=True,
+    )
+    pc = mock_project_config.return_value
+    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
+
+    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[Path("hello_world.py")])
+    file_name = (
+        Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
+    )
+
+    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
+    spy_create_bucket = mocker.spy(get_service_clients["s3_client"], "create_bucket")
+    spy_upload_file = mocker.spy(get_service_clients["s3_client"], "upload_file")
+    spy_create_component = mocker.spy(get_service_clients["greengrass_client"], "create_component_version")
+    with patch("builtins.open", mock_open()) as mock_file:
+        parse_args_actions.run_command(
+            CLIParser.cli_parser.parse_args(
+                ["component", "publish", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", '{"file_upload_args":{"ACL":"ABC"}}']
+            )
+        )
+        mock_file.assert_any_call(file_name, "w")
+    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
+    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
+    assert mock_glob.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+
+    # Assert cloud calls
+    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
+    spy_create_bucket.assert_called_with(
+        Bucket="new-bucket-arg", CreateBucketConfiguration={"LocationConstraint": "us-west-2"}
+    )  # Use exact bucket arg
+    spy_upload_file.assert_called_with(
+        ANY,
+        "new-bucket-arg",
+        "component_name/1.0.0/hello_world.py",
+        ExtraArgs={"ACL": "ABC"},
+    )
+    assert spy_upload_file.call_count == 1  # Only one file to upload
+    assert spy_create_component.call_count == 1  # Create gg private component
+    assert spy_get_caller_identity.call_count == 1  # Get account number
+
+
+@pytest.mark.parametrize(
+    "options_arg",
+    ["file/path/not_exists.json", '{"invalid_json_string":{"missing":quotes"}}'],
+)
+def test_publish_with_invalid_options(mocker, options_arg, get_service_clients, mock_project_config):
+    mocker.patch(
+        "gdk.common.utils.dir_exists",
+        return_value=True,
+    )
+    if options_arg == "file_exists.json":
+        mocker.patch(
+            "gdk.common.utils.file_exists",
+            return_value=True,
+        )
+
+    with pytest.raises(Exception) as e:
+        with patch("builtins.open", mock_open()):
+            parse_args_actions.run_command(
+                CLIParser.cli_parser.parse_args(
+                    ["component", "publish", "-d", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", options_arg]
+                )
+            )
+    assert "Please provide a valid json file path or a json string as the options argument" in e.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "options_arg_file_contents",
+    ['{"missing""colon"}', '{"invalid_json_string":{"missing":quotes"}}'],
+)
+def test_publish_with_invalid_options_file(mocker, options_arg_file_contents, get_service_clients, mock_project_config):
+    mocker.patch(
+        "gdk.common.utils.dir_exists",
+        return_value=True,
+    )
+    mocker.patch(
+        "gdk.common.utils.file_exists",
+        return_value=True,
+    )
+    with pytest.raises(Exception) as e:
+        with patch("builtins.open", mock_open(read_data=options_arg_file_contents)):
+            parse_args_actions.run_command(
+                CLIParser.cli_parser.parse_args(
+                    [
+                        "component",
+                        "publish",
+                        "-d",
+                        "-b",
+                        "new-bucket-arg",
+                        "-r",
+                        "us-west-2",
+                        "-o",
+                        "options_arg_file_contents.json",
+                    ]
+                )
+            )
+    assert "Please provide a valid json file path or a json string as the options argument" in e.value.args[0]
 
 
 def test_publish_run_next_patch(mocker, get_service_clients, mock_project_config):
@@ -386,7 +489,7 @@ def project_config():
         "component_author": "abc",
         "bucket": "default",
         "region": "us-east-1",
-        "options": {},
+        "options": {"what": "is"},
         "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
         "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
         "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
