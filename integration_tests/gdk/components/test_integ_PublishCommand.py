@@ -2,9 +2,10 @@ from pathlib import Path
 from unittest.mock import ANY, mock_open, patch
 
 import boto3
+import pytest
+
 import gdk.CLIParser as CLIParser
 import gdk.common.parse_args_actions as parse_args_actions
-import pytest
 from gdk.commands.component.PublishCommand import PublishCommand
 
 
@@ -119,7 +120,7 @@ def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_proj
     assert spy_get_caller_identity.call_count == 1  # Get account number
 
 
-def test_publish_run_with_all_argument(mocker, get_service_clients, mock_project_config):
+def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_project_config):
     mock_build_dir_exists = mocker.patch(
         "gdk.common.utils.dir_exists",
         return_value=True,
