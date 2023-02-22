@@ -205,8 +205,17 @@ def test_publish_with_invalid_options_file(mocker, options_arg_file_contents, ge
         with patch("builtins.open", mock_open(read_data=options_arg_file_contents)):
             parse_args_actions.run_command(
                 CLIParser.cli_parser.parse_args(
-                    ["component", "publish", "-d", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", 
-                    "options_arg_file_contents.json"]
+                    [
+                        "component",
+                        "publish",
+                        "-d",
+                        "-b",
+                        "new-bucket-arg",
+                        "-r",
+                        "us-west-2",
+                        "-o",
+                        "options_arg_file_contents.json",
+                    ]
                 )
             )
     assert "Please provide a valid json file path or a json string as the options argument" in e.value.args[0]
