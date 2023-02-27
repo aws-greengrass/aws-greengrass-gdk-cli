@@ -69,20 +69,31 @@ class PublishCommand(Command):
             region = self.project_config["region"]
             logging.info(
                 f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
-                " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
+                " 's3:GetObject' and 's3:ListBucket' permission to each core device's token exchange role to allow it to download the component"
                 f" artifacts. For more information, see {utils.doc_link_device_role}."
             )
 
             build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
             # Create bucket only when there's something to upload.
             if len(build_component_artifacts) != 0:
-                self.create_bucket(bucket, region)
+                # check if Bucket Already Exists
+                if not self.is_bucket_exist(bucket):
+                    self.create_bucket(bucket, region)
             for artifact in build_component_artifacts:
                 s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
                 logging.debug("Uploading artifact '{}' to the bucket '{}'.".format(artifact.resolve(), bucket))
                 self.service_clients["s3_client"].upload_file(str(artifact.resolve()), bucket, s3_file_path)
         except Exception as e:
             raise Exception("Error while uploading the artifacts to s3 during publish.\n{}".format(e))
+
+    def is_bucket_exist(self, bucket):
+        try:
+            self.service_clients["s3_client"].head_bucket(Bucket=bucket)
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return False
+            logging.error(f'Failed to get Bucket Head, Please confirm the Bucket Name: {bucket}')
 
     def create_bucket(self, bucket, region):
         """
