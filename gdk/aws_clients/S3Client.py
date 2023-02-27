@@ -96,3 +96,12 @@ class S3Client:
                 self.s3_client.upload_file(str(artifact.resolve()), bucket, s3_file_path, ExtraArgs=s3_upload_file_args)
         except Exception as exc:
             raise Exception(f"Error while uploading the artifacts to s3 during publish.\n{exc}") from exc
+
+    def is_bucket_exist(self, bucket):
+        try:
+            self.s3_client.head_bucket(Bucket=bucket)
+            return True
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                return False
+            logging.error(f"Failed to get Bucket Head, Please confirm the Bucket Name: {bucket}")
