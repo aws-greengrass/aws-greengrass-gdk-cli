@@ -2,11 +2,11 @@ import logging
 from pathlib import Path
 from unittest import TestCase, mock
 
-import boto3
-import gdk.common.exceptions.error_messages as error_messages
 import pytest
-from gdk.commands.component.PublishCommand import PublishCommand
 from urllib3.exceptions import HTTPError
+
+import gdk.common.exceptions.error_messages as error_messages
+from gdk.commands.component.PublishCommand import PublishCommand
 
 
 class PublishCommandTest(TestCase):
@@ -476,104 +476,6 @@ class PublishCommandTest(TestCase):
             mock_file.assert_any_call(publish.project_config["publish_recipe_file"])
             assert mock_create_component.call_count == 1
 
-    def test_create_bucket_exists(self):
-        bucket = "test-bucket"
-        region = "region"
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-        response = {"Buckets": [{"Name": "test-bucket"}]}
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=response)
-        publish.create_bucket(bucket, region)
-        assert mock_create_bucket.called
-
-    def test_create_bucket_exception(self):
-        bucket = "test-bucket"
-        region = "region"
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-        response = {"Buckets": [{"Name": "test-bucket"}]}
-        mock_create_bucket = self.mocker.patch(
-            "boto3.client.create_bucket", return_value=response, side_effect=HTTPError("some error")
-        )
-        with pytest.raises(Exception) as e:
-            publish.create_bucket(bucket, region)
-        assert mock_create_bucket.call_count == 1
-        assert type(e.value.args[0]) == HTTPError
-
-    def test_upload_artifacts_no_artifacts(self):
-        publish = PublishCommand({})
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"s3_client": mock_client}
-        response = {"Buckets": [{"Name": "test-bucket"}]}
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=[])
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=response)
-        mock_upload_file = self.mocker.patch("boto3.client.upload_file", return_value=response)
-        publish.upload_artifacts_s3("name", "version")
-        assert mock_iter_dir.call_count == 1
-        assert not mock_create_bucket.called
-        assert not mock_upload_file.called
-
-    def test_upload_artifacts_with_extra_args(self):
-        publish = PublishCommand({})
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"s3_client": mock_client}
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello.py")])
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=None)
-        mock_upload_file = self.mocker.patch("boto3.client.upload_file", return_value=None)
-        self.mock_get_proj_config.return_value["options"] = {"file_upload_args": {"Metadata": {"key": "value"}}}
-        publish.upload_artifacts_s3("name", "1.0.0")
-        assert mock_iter_dir.call_count == 1
-        assert mock_create_bucket.call_count == 1
-        assert mock_upload_file.call_count == 1
-        s3_file_path = "name/1.0.0/hello.py"
-        mock_upload_file.assert_any_call(
-            str(Path("hello.py").resolve()),
-            self.mock_get_proj_config.return_value["bucket"],
-            s3_file_path,
-            ExtraArgs={"Metadata": {"key": "value"}},
-        )
-
-    def test_upload_artifacts_region_us_east_1(self):
-        publish = PublishCommand({})
-        publish.project_config["region"] = "us-east-1"
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"s3_client": mock_client}
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello.py")])
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=None)
-        mock_upload_file = self.mocker.patch("boto3.client.upload_file", return_value=None)
-        publish.upload_artifacts_s3("name", "1.0.0")
-        assert mock_iter_dir.call_count == 1
-        assert mock_create_bucket.call_count == 1
-        assert mock_upload_file.call_count == 1
-        s3_file_path = "name/1.0.0/hello.py"
-        mock_upload_file.assert_any_call(
-            str(Path("hello.py").resolve()), self.mock_get_proj_config.return_value["bucket"], s3_file_path, ExtraArgs={}
-        )
-
-    def test_upload_artifacts_exception(self):
-        publish = PublishCommand({})
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"s3_client": mock_client}
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello.py")])
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=None)
-        # mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=True)
-        mock_upload_file = self.mocker.patch(
-            "boto3.client.upload_file", return_value=None, side_effect=HTTPError("some error")
-        )
-        with pytest.raises(Exception) as e:
-            publish.upload_artifacts_s3("name", "1.0.0")
-        assert "some error" in e.value.args[0]
-        # assert mock_dir_exists.call_count == 1
-        assert mock_iter_dir.call_count == 1
-        assert mock_create_bucket.call_count == 1
-        assert mock_upload_file.call_count == 1
-        s3_file_path = "name/1.0.0/hello.py"
-        mock_upload_file.assert_any_call(
-            str(Path("hello.py").resolve()), self.mock_get_proj_config.return_value["bucket"], s3_file_path, ExtraArgs={}
-        )
-
     def test_publish_run_not_build(self):
         mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
         mock_get_component_version_from_config = self.mocker.patch.object(
@@ -670,96 +572,6 @@ class PublishCommandTest(TestCase):
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
 
-    def test_create_bucket_exception_bucket_exists(self):
-        bucket = "test-bucket"
-        region = "region"
-
-        def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyExists(
-                {"Error": {"Code": "BucketAlreadyExists", "Message": "fake message"}}, "CreateBucket"
-            )
-            raise ex
-
-        mock_client = self.mocker.patch("boto3.client", return_value=boto3.client("s3"))
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-
-        with pytest.raises(Exception) as e:
-            publish.create_bucket(bucket, region)
-        assert mock_create_bucket.call_count == 1
-        assert "An error occurred (BucketAlreadyExists) when calling the CreateBucket operation: fake message" == str(
-            e.value.args[0]
-        )
-
-    def test_create_bucket_exception_bucket_owned(self):
-        bucket = "test-bucket"
-        region = "region"
-
-        def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-                {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
-            )
-            raise ex
-
-        mock_client = self.mocker.patch("boto3.client", return_value=boto3.client("s3"))
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-
-        with pytest.raises(Exception) as e:
-            publish.create_bucket(bucket, region)
-        assert mock_create_bucket.call_count == 1
-        assert "An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: fake message" == str(
-            e.value.args[0]
-        )
-
-    def test_create_bucket_exception_bucket_owned_not_in_region(self):
-        bucket = "test-bucket"
-        region = "region"
-        mock_check_in_same_region = self.mocker.patch.object(
-            PublishCommand, "bucket_exists_in_same_region", return_value=False
-        )
-
-        def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-                {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
-            )
-            raise ex
-
-        mock_client = self.mocker.patch("boto3.client", return_value=boto3.client("s3"))
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-
-        with pytest.raises(Exception) as e:
-            publish.create_bucket(bucket, region)
-        assert mock_create_bucket.call_count == 1
-        assert mock_check_in_same_region.called
-        assert "An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: fake message" == str(
-            e.value.args[0]
-        )
-
-    def test_create_bucket_exception_bucket_owned_in_region(self):
-        bucket = "test-bucket"
-        region = "region"
-        mock_check_in_same_region = self.mocker.patch.object(PublishCommand, "bucket_exists_in_same_region", return_value=True)
-
-        def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-                {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
-            )
-            raise ex
-
-        mock_client = self.mocker.patch("boto3.client", return_value=boto3.client("s3"))
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-
-        publish.create_bucket(bucket, region)
-        assert mock_create_bucket.call_count == 1
-        assert mock_check_in_same_region.called
-
     def test_get_account_number_exception(self):
         mock_client = self.mocker.patch("boto3.client", return_value=None)
         publish = PublishCommand({})
@@ -778,38 +590,6 @@ class PublishCommandTest(TestCase):
         num = publish.get_account_number()
         assert mock_get_caller_identity.call_count == 1
         assert num == 124
-
-    def test_bucket_exists_in_same_region_exists(self):
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-        mock_get_bucket_location = self.mocker.patch(
-            "boto3.client.get_bucket_location", return_value={"LocationConstraint": "us-east-1"}
-        )
-        exists = publish.bucket_exists_in_same_region("bucket", "us-east-1")
-        assert mock_get_bucket_location.call_count == 1
-        assert exists
-
-    def test_bucket_exists_in_same_region_not_exists(self):
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-        mock_get_bucket_location = self.mocker.patch(
-            "boto3.client.get_bucket_location", return_value={"LocationConstraint": "us-west-2"}
-        )
-        exists = publish.bucket_exists_in_same_region("bucket", "us-east-1")
-        assert mock_get_bucket_location.call_count == 1
-        assert not exists
-
-    def test_bucket_exists_in_same_region_exception(self):
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish = PublishCommand({})
-        publish.service_clients = {"s3_client": mock_client}
-        mock_get_bucket_location = self.mocker.patch("boto3.client.get_bucket_location", side_effect=HTTPError("some eror"))
-        with pytest.raises(Exception) as e:
-            publish.bucket_exists_in_same_region("bucket", "us-east-1")
-        assert "Unable to fetch the location of the bucket" in e.value.args[0]
-        assert mock_get_bucket_location.call_count == 1
 
 
 def project_config():
