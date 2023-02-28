@@ -23,7 +23,7 @@ jobs:
       contents: read
     name: Regression of GDK ${{ matrix.gdk-version == 'HEAD' && '' || matrix.gdk-version }} on ${{ matrix.os }} with Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ matrix.gdk-version == 'HEAD' && github.ref || matrix.gdk-version }}
           fetch-depth: 0
@@ -49,7 +49,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Get Latest UATs
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
