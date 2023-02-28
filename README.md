@@ -20,7 +20,7 @@ Please follow the [GDK CLI public documentation](https://docs.aws.amazon.com/gre
 
 To install the latest version of CLI using this git repository and pip, run the following command
 
-`pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1.1.0`
+`pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1.2.0`
 
 Run `gdk --help` to check if the cli tool is successfully installed.
 
@@ -45,11 +45,11 @@ Configure AWS CLI with your credentials as shown here - https://docs.aws.amazon.
    ```json
     {
         "component": {
-            "com.example.JavaHelloWorld": {
+            "com.example.PythonHelloWorld": {
                 "author": "<PLACEHOLDER_AUTHOR>",
                 "version": "NEXT_PATCH",
                 "build": {
-                    "build_system": "maven"
+                    "build_system": "zip"
                 },
                 "publish": {
                     "bucket": "<PLACEHOLDER_BUCKET>",
@@ -65,11 +65,11 @@ Configure AWS CLI with your credentials as shown here - https://docs.aws.amazon.
    ```json
     {
         "component": {
-            "com.example.JavaHelloWorld": {
+            "com.example.PythonHelloWorld": {
                 "author": "J. Doe",
                 "version": "NEXT_PATCH",
                 "build": {
-                    "build_system": "maven"
+                    "build_system": "zip"
                 },
                 "publish": {
                     "bucket": "my-s3-bucket",
