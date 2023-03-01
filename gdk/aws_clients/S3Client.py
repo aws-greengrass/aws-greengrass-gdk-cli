@@ -3,7 +3,7 @@ import logging
 from botocore.exceptions import ClientError
 
 
-class S3ClientUtils:
+class S3Client:
     """
     S3 client utils wrapper
     """
@@ -64,9 +64,7 @@ class S3ClientUtils:
         """
         try:
             response = self.s3_client.get_bucket_location(Bucket=bucket)
-            if response["LocationConstraint"] == region:
-                return True
-            return False
+            return response["LocationConstraint"] == region
         except Exception as exc:
             raise Exception(f"Unable to fetch the location of the bucket '{bucket}'.\n{exc}") from exc
 

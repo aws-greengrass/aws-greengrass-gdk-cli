@@ -8,7 +8,7 @@ import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
-from gdk.aws_client_utils.S3ClientUtils import S3ClientUtils
+from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.Command import Command
 from gdk.common.exceptions.CommandError import InvalidArgumentsError
 
@@ -19,6 +19,7 @@ class PublishCommand(Command):
 
         self.project_config = project_utils.get_project_config_values()
         self.service_clients = project_utils.get_service_clients(self._get_region())
+        self.s3_client = S3Client(self.project_config, self.service_clients)
 
     def run(self):
         try:
@@ -155,8 +156,8 @@ class PublishCommand(Command):
             build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
 
             if len(build_component_artifacts) != 0:
-                self.s3_client_utils.create_bucket(bucket, region)
-            self.s3_client_utils.upload_artifacts(build_component_artifacts)
+                self.s3_client.create_bucket(bucket, region)
+            self.s3_client.upload_artifacts(build_component_artifacts)
         except Exception as e:
             raise Exception("Error while uploading the artifacts to s3 during publish.\n{}".format(e))
 
