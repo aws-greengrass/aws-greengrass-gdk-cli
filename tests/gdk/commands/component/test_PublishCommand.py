@@ -1,11 +1,13 @@
 import logging
 from pathlib import Path
 from unittest import TestCase, mock
+from unittest.mock import call
 
 import pytest
 from urllib3.exceptions import HTTPError
 
 import gdk.common.exceptions.error_messages as error_messages
+from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.component.PublishCommand import PublishCommand
 
 
@@ -475,6 +477,38 @@ class PublishCommandTest(TestCase):
             assert "Creating private version '1.0.0' of the component 'component_name' failed." in e.value.args[0]
             mock_file.assert_any_call(publish.project_config["publish_recipe_file"])
             assert mock_create_component.call_count == 1
+
+    def test_upload_artifacts_with_no_artifacts(self):
+        publish = PublishCommand({})
+        publish.project_config = {
+            "bucket": "test-bucket",
+            "region": "test-region",
+            "gg_build_component_artifacts_dir": Path("some-build-dir"),
+        }
+        publish.service_clients = {"s3_client": self.mocker.patch("boto3.client", return_value=None)}
+        publish.s3_client = S3Client(publish.project_config, publish.service_clients)
+        self.mocker.patch("pathlib.Path.iterdir", return_value=[])
+        mock_create_bucket = self.mocker.spy(S3Client, "create_bucket")
+        mock_upload_file = self.mocker.spy(S3Client, "upload_artifacts")
+        publish.upload_artifacts_s3()
+        assert not mock_create_bucket.called
+        assert not mock_upload_file.called
+
+    def test_upload_artifacts(self):
+        publish = PublishCommand({})
+        publish.project_config = {
+            "bucket": "test-bucket",
+            "region": "test-region",
+            "gg_build_component_artifacts_dir": Path("some-build-dir"),
+        }
+        publish.service_clients = {"s3_client": self.mocker.patch("boto3.client", return_value=None)}
+        publish.s3_client = S3Client(publish.project_config, publish.service_clients)
+        self.mocker.patch("pathlib.Path.iterdir", return_value=[Path("a.py")])
+        mock_create_bucket = self.mocker.patch.object(S3Client, "create_bucket", return_value=None)
+        mock_upload_file = self.mocker.patch.object(S3Client, "upload_artifacts", return_value=None)
+        publish.upload_artifacts_s3()
+        assert mock_create_bucket.call_args_list == [call("test-bucket", "test-region")]
+        assert mock_upload_file.call_args_list == [call([Path("a.py")])]
 
     def test_publish_run_not_build(self):
         mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")

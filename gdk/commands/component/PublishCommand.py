@@ -121,7 +121,7 @@ class PublishCommand(Command):
     def _publish_component_version(self, component_name, component_version):
         logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
         logging.info("Uploading the component built artifacts to s3 bucket.")
-        self.upload_artifacts_s3(component_name, component_version)
+        self.upload_artifacts_s3()
 
         logging.info(f"Updating the component recipe {component_name}-{component_version}.")
         self.update_and_create_recipe_file(component_name, component_version)
@@ -129,7 +129,7 @@ class PublishCommand(Command):
         logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
         self.create_gg_component(component_name, component_version)
 
-    def upload_artifacts_s3(self, component_name, component_version):
+    def upload_artifacts_s3(self):
         """
         Uploads all the artifacts from component artifacts build folder to s3 bucket.
 
@@ -144,22 +144,19 @@ class PublishCommand(Command):
         -------
             None
         """
-        try:
-            bucket = self.project_config["bucket"]
-            region = self.project_config["region"]
-            logging.info(
-                f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
-                " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
-                f" artifacts. For more information, see {utils.doc_link_device_role}."
-            )
+        bucket = self.project_config["bucket"]
+        region = self.project_config["region"]
+        logging.info(
+            f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
+            " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
+            f" artifacts. For more information, see {utils.doc_link_device_role}."
+        )
 
-            build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
+        build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
 
-            if len(build_component_artifacts) != 0:
-                self.s3_client.create_bucket(bucket, region)
+        if len(build_component_artifacts) != 0:
+            self.s3_client.create_bucket(bucket, region)
             self.s3_client.upload_artifacts(build_component_artifacts)
-        except Exception as e:
-            raise Exception("Error while uploading the artifacts to s3 during publish.\n{}".format(e))
 
     def create_gg_component(self, c_name, c_version):
         """
