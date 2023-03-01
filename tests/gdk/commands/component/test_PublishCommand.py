@@ -364,6 +364,25 @@ class PublishCommandTest(TestCase):
         assert version == "1.0.7"
         assert mock_get_next_patch_component_version.call_count == 1
 
+    def test_client_built_with_correct_region(self):
+        self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
+        self.mocker.patch.object(PublishCommand, "get_component_version_from_config", return_value=None)
+        self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
+        self.mocker.patch.object(PublishCommand, "update_and_create_recipe_file", return_value=None)
+        self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
+        self.mocker.patch("gdk.commands.component.component.build", return_value=None)
+        self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
+
+        publish = PublishCommand({"region": "ca-central-1"})
+        publish.run()
+
+        # NOTE: This test is testing implementation details. It should be improved but for now it will
+        # give us the confidence that the client is getting created with the correct region
+        assert publish.project_config["region"] == "ca-central-1"
+        assert publish.service_clients["s3_client"].meta.config.region_name == "ca-central-1"
+        assert publish.service_clients["sts_client"].meta.config.region_name == "ca-central-1"
+        assert publish.service_clients["greengrass_client"].meta.config.region_name == "ca-central-1"
+
     def test_get_next_version_component_already_exists_semver(self):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"

@@ -17,12 +17,13 @@ class PublishCommand(Command):
         super().__init__(command_args, "publish")
 
         self.project_config = project_utils.get_project_config_values()
-        self.service_clients = project_utils.get_service_clients(self.project_config["region"])
 
     def run(self):
         try:
             self.try_build()
             self._update_project_config_values()
+            # NOTE: DO NOT move this line from here - if not there it will lead to the client being built with the wrong region
+            self.service_clients = project_utils.get_service_clients(self.project_config["region"])
             component_name = self.project_config["component_name"]
             component_version = self.project_config["component_version"]
             self._publish_component_version(component_name, component_version)
@@ -67,7 +68,7 @@ class PublishCommand(Command):
         self._update_options()
 
     def _update_bucket(self):
-        if self.arguments["bucket"]:
+        if self.arguments.get("bucket"):
             self.project_config["bucket"] = self.arguments["bucket"]
         else:
             self.project_config["bucket"] = "{}-{}-{}".format(
@@ -75,7 +76,7 @@ class PublishCommand(Command):
             )
 
     def _update_options(self):
-        if self.arguments["options"]:
+        if self.arguments.get("options"):
             try:
                 self.project_config["options"] = self._read_options(self.arguments["options"])
             except Exception as exc:
@@ -106,7 +107,7 @@ class PublishCommand(Command):
             return json.loads(o_file.read())
 
     def _update_region(self):
-        if self.arguments["region"]:
+        if self.arguments.get("region"):
             self.project_config["region"] = self.arguments["region"]
 
     def _update_component_version(self):
