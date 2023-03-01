@@ -17,13 +17,12 @@ class PublishCommand(Command):
         super().__init__(command_args, "publish")
 
         self.project_config = project_utils.get_project_config_values()
+        self.service_clients = project_utils.get_service_clients(self._get_region())
 
     def run(self):
         try:
             self.try_build()
             self._update_project_config_values()
-            # NOTE: DO NOT move this line from here - if not there it will lead to the client being built with the wrong region
-            self.service_clients = project_utils.get_service_clients(self.project_config["region"])
             component_name = self.project_config["component_name"]
             component_version = self.project_config["component_version"]
             self._publish_component_version(component_name, component_version)
@@ -106,9 +105,13 @@ class PublishCommand(Command):
         with open(file_path, "r") as o_file:
             return json.loads(o_file.read())
 
-    def _update_region(self):
+    def _get_region(self) -> str:
         if self.arguments.get("region"):
-            self.project_config["region"] = self.arguments["region"]
+            return self.arguments["region"]
+        return self.project_config["region"]
+
+    def _update_region(self):
+        self.project_config["region"] = self._get_region()
 
     def _update_component_version(self):
         self.project_config["component_version"] = self.get_component_version_from_config()
