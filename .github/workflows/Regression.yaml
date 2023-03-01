@@ -48,6 +48,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: 1.8
+          distribution: corretto
       - name: Get Latest UATs
         uses: actions/checkout@v3
         with:
