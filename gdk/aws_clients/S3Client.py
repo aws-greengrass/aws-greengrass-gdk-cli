@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 
 class S3Client:
     """
-    S3 client utils wrapper
+    S3 client wrapper
     """
 
     def __init__(self, project_configuration, service_clients):

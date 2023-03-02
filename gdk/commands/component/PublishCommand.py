@@ -129,20 +129,11 @@ class PublishCommand(Command):
         logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
         self.create_gg_component(component_name, component_version)
 
-    def upload_artifacts_s3(self):
+    def upload_artifacts_s3(self) -> None:
         """
         Uploads all the artifacts from component artifacts build folder to s3 bucket.
 
         Raises an exception when the request is not successful.
-
-        Parameters
-        ----------
-            component_name(string): Name of the component to use in the s3 file path.
-            component_version(string): Version of the component to use in the s3 file path.
-
-        Returns
-        -------
-            None
         """
         bucket = self.project_config["bucket"]
         region = self.project_config["region"]
