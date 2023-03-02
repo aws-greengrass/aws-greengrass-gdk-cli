@@ -2,12 +2,13 @@ import json
 import logging
 from pathlib import Path
 
+import yaml
+
 import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
-import yaml
-from botocore.exceptions import ClientError
+from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.Command import Command
 from gdk.common.exceptions.CommandError import InvalidArgumentsError
 
@@ -18,6 +19,7 @@ class PublishCommand(Command):
 
         self.project_config = project_utils.get_project_config_values()
         self.service_clients = project_utils.get_service_clients(self._get_region())
+        self.s3_client = S3Client(self.project_config, self.service_clients)
 
     def run(self):
         try:
@@ -119,7 +121,7 @@ class PublishCommand(Command):
     def _publish_component_version(self, component_name, component_version):
         logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
         logging.info("Uploading the component built artifacts to s3 bucket.")
-        self.upload_artifacts_s3(component_name, component_version)
+        self.upload_artifacts_s3()
 
         logging.info(f"Updating the component recipe {component_name}-{component_version}.")
         self.update_and_create_recipe_file(component_name, component_version)
@@ -127,101 +129,25 @@ class PublishCommand(Command):
         logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
         self.create_gg_component(component_name, component_version)
 
-    def upload_artifacts_s3(self, component_name, component_version):
+    def upload_artifacts_s3(self) -> None:
         """
         Uploads all the artifacts from component artifacts build folder to s3 bucket.
 
         Raises an exception when the request is not successful.
-
-        Parameters
-        ----------
-            component_name(string): Name of the component to use in the s3 file path.
-            component_version(string): Version of the component to use in the s3 file path.
-
-        Returns
-        -------
-            None
         """
-        try:
-            bucket = self.project_config["bucket"]
-            region = self.project_config["region"]
-            options = self.project_config["options"]
-            s3_upload_file_args = options.get("file_upload_args", dict())
-            logging.info(
-                f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
-                " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
-                f" artifacts. For more information, see {utils.doc_link_device_role}."
-            )
+        bucket = self.project_config["bucket"]
+        region = self.project_config["region"]
+        logging.info(
+            f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
+            " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
+            f" artifacts. For more information, see {utils.doc_link_device_role}."
+        )
 
-            build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
-            # Create bucket only when there's something to upload.
-            if len(build_component_artifacts) != 0:
-                self.create_bucket(bucket, region)
-            for artifact in build_component_artifacts:
-                s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
-                logging.debug("Uploading artifact '{}' to the bucket '{}'.".format(artifact.resolve(), bucket))
-                self.service_clients["s3_client"].upload_file(
-                    str(artifact.resolve()), bucket, s3_file_path, ExtraArgs=s3_upload_file_args
-                )
-        except Exception as e:
-            raise Exception("Error while uploading the artifacts to s3 during publish.\n{}".format(e))
+        build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
 
-    def create_bucket(self, bucket, region):
-        """
-        Creates a new s3 bucket for artifacts if it doesn't exist already.
-
-        Raises an exception when the request is not successful.
-
-        Parameters
-        ----------
-            bucket(string): Name of the bucket to create.
-            region(string): Region is which the bucket is created.
-
-        Returns
-        -------
-            None
-        """
-        try:
-            if region is None or region == "us-east-1":
-                self.service_clients["s3_client"].create_bucket(Bucket=bucket)
-            else:
-                location = {"LocationConstraint": region}
-                self.service_clients["s3_client"].create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "BucketAlreadyExists":
-                logging.error("Bucket already exists. Please provide a different name for the bucket in the configuration.")
-            elif e.response["Error"]["Code"] == "BucketAlreadyOwnedByYou":
-                if self.bucket_exists_in_same_region(bucket, region):
-                    logging.info("Not creating an artifacts bucket as it already exists.")
-                    return
-                logging.error(f"Cannot create the artifacts bucket '{bucket}' as it is already owned by you in other region.")
-            raise Exception(e)
-        except Exception as e:
-            logging.error("Failed to create the bucket '{}' in region '{}'".format(bucket, region))
-            raise Exception(e)
-        logging.info("Successfully created the artifacts bucket '{}' in region '{}'".format(bucket, region))
-
-    def bucket_exists_in_same_region(self, bucket, region):
-        """
-        Checks if region of the bucket is same as the given region.
-
-
-        Parameters
-        ----------
-            bucket(string): Name of the bucket to create.
-            region(string): Name of the region to check.
-
-        Returns
-        -------
-            bool: Returns true if the bucket region is same as the region in check. Else false.
-        """
-        try:
-            response = self.service_clients["s3_client"].get_bucket_location(Bucket=bucket)
-            if response["LocationConstraint"] == region:
-                return True
-            return False
-        except Exception as e:
-            raise Exception("Unable to fetch the location of the bucket '{}'.\n{}".format(bucket, e))
+        if len(build_component_artifacts) != 0:
+            self.s3_client.create_bucket(bucket, region)
+            self.s3_client.upload_artifacts(build_component_artifacts)
 
     def create_gg_component(self, c_name, c_version):
         """
