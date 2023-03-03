@@ -1,8 +1,10 @@
 import logging
 from pathlib import Path
 
-import gdk.common.utils as utils
+import pytest
 from urllib3.exceptions import HTTPError
+
+import gdk.common.utils as utils
 
 
 def test_get_static_file_path_exists(mocker):
@@ -150,3 +152,32 @@ def test_cli_version_check_latest_available(mocker):
     utils.cli_version_check()
     assert mock_get_latest_cli_version.called
     assert spy_log.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "version",
+    [
+        "1.0.0",
+        "1.0.0-alpha+meta",
+        "1.0.0-alpha",
+        "1.0.0-alpha.beta",
+        "1.0.0-alpha.beta.1",
+        "1.0.0-alpha.123",
+        "1.0.0-alpha0.valid",
+        "1.0.0-alpha.0valid",
+        "1.0.0-alpha-a.b-c-somethinglong+build.1-aef.1-its-okay",
+        "1.0.0-rc.1+build.123",
+        "1.0.0-DEV-SNAPSHOT",
+        "1.0.0+meta",
+        "1.0.0+meta-valid",
+        "1.0.0+build.1848",
+        "1.0.0-alpha+beta",
+        "1.0.0----RC-SNAPSHOT.12.9.1--.12+788",
+        "1.0.0----R-S.12.9.1--.12+meta",
+        "1.0.0----RC-SNAPSHOT.12.9.1--.12",
+        "1.0.0+0.build.1-rc.10000aaa-kk-0.1",
+        "1.0.0-0A.is.legal",
+    ],
+)
+def test_get_next_patch_version(version):
+    assert utils.get_next_patch_version(version) == "1.0.1"

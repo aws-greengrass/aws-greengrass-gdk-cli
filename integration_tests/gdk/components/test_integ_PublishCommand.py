@@ -47,7 +47,7 @@ def test_publish_command_instantiation(mocker, mock_project_config):
     mock_run = mocker.patch.object(PublishCommand, "run", return_value=None)
     mock_get_service_clients = mocker.patch(
         "gdk.commands.component.project_utils.get_service_clients",
-        return_value={"s3_client": None},
+        return_value={"s3_client": None, "greengrass_client": None},
     )
     parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
 

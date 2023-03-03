@@ -7,6 +7,7 @@ import pytest
 from urllib3.exceptions import HTTPError
 
 import gdk.common.exceptions.error_messages as error_messages
+from gdk.aws_clients.Greengrassv2Client import Greengrassv2Client
 from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.component.PublishCommand import PublishCommand
 
@@ -347,19 +348,18 @@ class PublishCommandTest(TestCase):
     def test_get_next_version_component_not_exists(self):
 
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            PublishCommand, "get_next_patch_component_version", return_value=None
+            Greengrassv2Client, "get_highest_component_version_", return_value=None
         )
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         version = publish.get_next_version()
         assert version == "1.0.0"  # Fallback version
-        assert mock_get_next_patch_component_version.call_count == 1
-        mock_get_next_patch_component_version.assert_any_call("component_name", "us-east-1", "1234")
+        assert mock_get_next_patch_component_version.call_args_list == [call()]
 
     def test_get_next_version_component_already_exists(self):
         publish = PublishCommand({})
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            PublishCommand, "get_next_patch_component_version", return_value="1.0.6"
+            Greengrassv2Client, "get_highest_component_version_", return_value="1.0.6"
         )
         publish.project_config["account_number"] = "12345"
         version = publish.get_next_version()
@@ -373,7 +373,7 @@ class PublishCommandTest(TestCase):
         self.mocker.patch.object(PublishCommand, "update_and_create_recipe_file", return_value=None)
         self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         self.mocker.patch("gdk.commands.component.component.build", return_value=None)
-        self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
+        self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
 
         publish = PublishCommand({"region": "ca-central-1"})
         publish.run()
@@ -389,7 +389,7 @@ class PublishCommandTest(TestCase):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            PublishCommand, "get_next_patch_component_version", return_value="1.0.6-x-y-z"
+            Greengrassv2Client, "get_highest_component_version_", return_value="1.0.6-x-y-z"
         )
         version = publish.get_next_version()
         assert version == "1.0.7"
@@ -399,84 +399,12 @@ class PublishCommandTest(TestCase):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            PublishCommand, "get_next_patch_component_version", side_effect=HTTPError("some error")
+            Greengrassv2Client, "get_highest_component_version_", side_effect=HTTPError("some error")
         )
         with pytest.raises(Exception) as e:
             publish.get_next_version()
         assert mock_get_next_patch_component_version.call_count == 1
         assert e.value.args[0] == "Failed to calculate the next version of the component during publish.\nsome error"
-
-    def test_get_next_patch_component_version(self):
-        publish = PublishCommand({})
-        publish.project_config["account_number"] = "1234"
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"greengrass_client": mock_client}
-        response = {"componentVersions": [{"componentVersion": "1.0.4"}, {"componentVersion": "1.0.1"}]}
-        mock_get_next_patch_component_version = self.mocker.patch(
-            "boto3.client.list_component_versions", return_value=response
-        )
-        li = publish.get_next_patch_component_version("c_name", "region", "1234")
-        assert mock_get_next_patch_component_version.call_count == 1
-        assert li == "1.0.4"
-
-    def test_get_next_patch_component_version_no_components(self):
-        publish = PublishCommand({})
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"greengrass_client": mock_client}
-        mock_get_next_patch_component_version = self.mocker.patch(
-            "boto3.client.list_component_versions", return_value={"componentVersions": []}
-        )
-        li = publish.get_next_patch_component_version("c_name", "region", "1234")
-        assert mock_get_next_patch_component_version.call_count == 1
-        assert not li
-
-    def test_get_next_patch_component_version_exception(self):
-        publish = PublishCommand({})
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"greengrass_client": mock_client}
-        mock_get_next_patch_component_version = self.mocker.patch(
-            "boto3.client.list_component_versions", side_effect=HTTPError("listing error")
-        )
-        with pytest.raises(Exception) as e:
-            publish.get_next_patch_component_version("c_name", "region", "1234")
-        assert mock_get_next_patch_component_version.call_count == 1
-        assert (
-            "Error while getting the component versions of 'c_name' in 'region' from the account '1234' during"
-            " publish.\nlisting error"
-            == e.value.args[0]
-        )
-
-    def test_create_gg_component(self):
-        publish = PublishCommand({})
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"greengrass_client": mock_client}
-        mock_create_component = self.mocker.patch("boto3.client.create_component_version", return_value=None)
-        publish.project_config["publish_recipe_file"] = Path("some-recipe.yaml")
-        component_name = "component_name"
-        component_version = "1.0.0"
-
-        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
-            publish.create_gg_component(component_name, component_version)
-            mock_file.assert_any_call(publish.project_config["publish_recipe_file"])
-            assert mock_create_component.call_count == 1
-
-    def test_create_gg_component_exception(self):
-        publish = PublishCommand({})
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish.service_clients = {"greengrass_client": mock_client}
-        mock_create_component = self.mocker.patch(
-            "boto3.client.create_component_version", return_value=None, side_effect=HTTPError("error")
-        )
-        publish.project_config["publish_recipe_file"] = Path("some-recipe.yaml")
-        component_name = "component_name"
-        component_version = "1.0.0"
-
-        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
-            with pytest.raises(Exception) as e:
-                publish.create_gg_component(component_name, component_version)
-            assert "Creating private version '1.0.0' of the component 'component_name' failed." in e.value.args[0]
-            mock_file.assert_any_call(publish.project_config["publish_recipe_file"])
-            assert mock_create_component.call_count == 1
 
     def test_upload_artifacts_with_no_artifacts(self):
         publish = PublishCommand({})
@@ -521,7 +449,7 @@ class PublishCommandTest(TestCase):
         )
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
-        mock_create_gg_component = self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
+        mock_create_gg_component = self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
         publish = PublishCommand(
             {"bucket": None, "region": "us-west-2", "options": '{"file_upload_args":{"Metadata": {"key": "value"}}}'}
         )
@@ -548,7 +476,7 @@ class PublishCommandTest(TestCase):
         )
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
-        mock_create_gg_component = self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
+        mock_create_gg_component = self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
         publish = PublishCommand({"bucket": "exact-bucket", "region": None, "options": None})
         publish.run()
         assert publish.project_config["account_number"] == "1234"
@@ -574,7 +502,7 @@ class PublishCommandTest(TestCase):
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         publish = PublishCommand({"bucket": None, "region": None, "options": None})
         publish.project_config["bucket"] = "default"
-        mock_create_gg_component = self.mocker.patch.object(PublishCommand, "create_gg_component", return_value=None)
+        mock_create_gg_component = self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
         publish.run()
         assert publish.project_config["account_number"] == "1234"
         assert publish.project_config["bucket"] == "default-us-east-1-1234"

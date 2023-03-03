@@ -2,10 +2,11 @@ import logging
 import shutil
 from pathlib import Path
 
-import gdk
-import gdk._version as version
 import requests
 from packaging.version import Version
+
+import gdk
+import gdk._version as version
 
 
 def get_static_file_path(file_name):
@@ -128,6 +129,17 @@ def cli_version_check():
             f"New version of GDK CLI - {latest_cli_version} is available. Please update the cli using the command"
             f" `{update_command}`.\n"
         )
+
+
+def get_next_patch_version(version_number: str) -> str:
+    split_with_hyphen = version_number.split("-")
+    split_with_plus = split_with_hyphen[0].split("+")
+    semver_numeric = split_with_plus[0].split(".")
+    major = semver_numeric[0]
+    minor = semver_numeric[1]
+    patch = semver_numeric[2]
+    next_patch_version = int(patch) + 1
+    return f"{major}.{minor}.{str(next_patch_version)}"
 
 
 error_line = "\n=============================== ERROR ===============================\n"

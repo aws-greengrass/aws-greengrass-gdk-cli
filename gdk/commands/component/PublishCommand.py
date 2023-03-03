@@ -8,6 +8,7 @@ import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
+from gdk.aws_clients.Greengrassv2Client import Greengrassv2Client
 from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.Command import Command
 from gdk.common.exceptions.CommandError import InvalidArgumentsError
@@ -20,6 +21,7 @@ class PublishCommand(Command):
         self.project_config = project_utils.get_project_config_values()
         self.service_clients = project_utils.get_service_clients(self._get_region())
         self.s3_client = S3Client(self.project_config, self.service_clients)
+        self.greengrass_client = Greengrassv2Client(self.project_config, self.service_clients)
 
     def run(self):
         try:
@@ -127,7 +129,7 @@ class PublishCommand(Command):
         self.update_and_create_recipe_file(component_name, component_version)
 
         logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
-        self.create_gg_component(component_name, component_version)
+        self.greengrass_client.create_gg_component()
 
     def upload_artifacts_s3(self) -> None:
         """
@@ -149,30 +151,6 @@ class PublishCommand(Command):
             self.s3_client.create_bucket(bucket, region)
             self.s3_client.upload_artifacts(build_component_artifacts)
 
-    def create_gg_component(self, c_name, c_version):
-        """
-        Creates a GreengrassV2 private component using its recipe.
-
-        Raises an exception if the recipe is invalid or the request is not successful.
-
-        Parameters
-        ----------
-            c_name(string): Name of the component to create.
-            c_version(string): Version of the component to create.
-
-        Returns
-        -------
-            None
-        """
-        publish_recipe_file = self.project_config["publish_recipe_file"]
-        with open(publish_recipe_file) as f:
-            try:
-                self.service_clients["greengrass_client"].create_component_version(inlineRecipe=f.read())
-            except Exception as e:
-                logging.error("Failed to create the component using the recipe at '{}'.".format(publish_recipe_file))
-                raise Exception("Creating private version '{}' of the component '{}' failed.\n{}".format(c_version, c_name, e))
-            logging.info("Created private version '{}' of the component in the account.'{}'.".format(c_version, c_name))
-
     def get_next_version(self):
         """
         Calculates the next patch version of the component if it already exists in the account. Otherwise, it uses 1.0.0 as
@@ -190,9 +168,7 @@ class PublishCommand(Command):
         logging.debug("Fetching private components from the account.")
         try:
             c_name = self.project_config["component_name"]
-            region = self.project_config["region"]
-            account_num = self.project_config["account_number"]
-            c_next_patch_version = self.get_next_patch_component_version(c_name, region, account_num)
+            c_next_patch_version = self.greengrass_client.get_highest_component_version_()
             if not c_next_patch_version:
                 logging.info(
                     "No private version of the component '{}' exist in the account. Using '{}' as the next version to create."
@@ -202,13 +178,7 @@ class PublishCommand(Command):
             logging.debug(
                 "Found latest version '{}' of the component '{}' in the account.".format(c_next_patch_version, c_name)
             )
-            semver_alphanumeric = c_next_patch_version.split("-")
-            semver_numeric = semver_alphanumeric[0].split(".")
-            major = semver_numeric[0]
-            minor = semver_numeric[1]
-            patch = semver_numeric[2]
-            next_patch_version = int(patch) + 1
-            next_version = "{}.{}.{}".format(major, minor, str(next_patch_version))
+            next_version = utils.get_next_patch_version(c_next_patch_version)
             logging.info("Using '{}' as the next version of the component '{}' to create.".format(next_version, c_name))
             return next_version
         except Exception as e:
@@ -235,35 +205,6 @@ class PublishCommand(Command):
             return account_num
         except Exception as e:
             raise Exception("Error while fetching account number from credentials.\n{}".format(e))
-
-    def get_next_patch_component_version(self, component_name, region, account_num):
-        """
-        Gets highest version of the component from the sorted order of its versions from an account in a region.
-
-        Makes a boto3 request with greengrass service client to list all versions of a component in an account.
-        Parameters
-        ----------
-            None
-
-        Returns
-        -------
-            version(string): Highest version of the component if it exists already. Else returns 1.0.0.
-        """
-
-        try:
-            comp_list_response = self.service_clients["greengrass_client"].list_component_versions(
-                arn="arn:aws:greengrass:{}:{}:components:{}".format(region, account_num, component_name)
-            )
-            component_versions = comp_list_response["componentVersions"]
-            if not component_versions:
-                return None
-            return component_versions[0]["componentVersion"]
-        except Exception as e:
-            raise Exception(
-                "Error while getting the component versions of '{}' in '{}' from the account '{}' during publish.\n{}".format(
-                    component_name, region, account_num, e
-                )
-            )
 
     def get_component_version_from_config(self):
         """
