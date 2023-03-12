@@ -40,7 +40,7 @@ jobs:
           pip install .
           gdk --help
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@master
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{secrets.GDK_WORKFLOW_AWS_ROLE}}
           aws-region: us-east-1
