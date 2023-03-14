@@ -148,8 +148,7 @@ class PublishCommand(Command):
         build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
 
         if len(build_component_artifacts) != 0:
-            if not self.s3_client.is_bucket_exist(bucket):
-                self.s3_client.create_bucket(bucket, region)
+            self.s3_client.create_bucket(bucket, region)
             self.s3_client.upload_artifacts(build_component_artifacts)
 
     def get_next_version(self):

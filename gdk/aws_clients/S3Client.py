@@ -27,46 +27,20 @@ class S3Client:
         -------
             None
         """
+        if self.valid_bucket_for_artifacts_exists(bucket, region):
+            logging.info("Not creating an artifacts bucket as it already exists.")
+            return
+
         try:
             if region is None or region == "us-east-1":
                 self.s3_client.create_bucket(Bucket=bucket)
             else:
                 location = {"LocationConstraint": region}
                 self.s3_client.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
-        except ClientError as exc:
-            if exc.response["Error"]["Code"] == "BucketAlreadyExists":
-                logging.error("Bucket already exists. Please provide a different name for the bucket in the configuration.")
-            elif exc.response["Error"]["Code"] == "BucketAlreadyOwnedByYou":
-                if self.bucket_exists_in_same_region(bucket, region):
-                    logging.info("Not creating an artifacts bucket as it already exists.")
-                    return
-                logging.error("Cannot create the artifacts bucket '%s' as it is already owned by you in other region.", bucket)
-            raise Exception(exc) from exc
         except Exception as exc:
-            print(exc)
             logging.error("Failed to create the bucket '%s' in region '%s'", bucket, region)
             raise Exception(exc) from exc
         logging.info("Successfully created the artifacts bucket '%s' in region '%s'", bucket, region)
-
-    def bucket_exists_in_same_region(self, bucket, region):
-        """
-        Checks if region of the bucket is same as the given region.
-
-
-        Parameters
-        ----------
-            bucket(string): Name of the bucket to create.
-            region(string): Name of the region to check.
-
-        Returns
-        -------
-            bool: Returns true if the bucket region is same as the region in check. Else false.
-        """
-        try:
-            response = self.s3_client.get_bucket_location(Bucket=bucket)
-            return response["LocationConstraint"] == region
-        except Exception as exc:
-            raise Exception(f"Unable to fetch the location of the bucket '{bucket}'.\n{exc}") from exc
 
     def upload_artifacts(self, artifacts_to_upload):
         """
@@ -97,11 +71,29 @@ class S3Client:
         except Exception as exc:
             raise Exception(f"Error while uploading the artifacts to s3 during publish.\n{exc}") from exc
 
-    def is_bucket_exist(self, bucket):
+    def valid_bucket_for_artifacts_exists(self, bucket, region) -> bool:
+        location_constraint = None if region == "us-east-1" else region
         try:
-            self.s3_client.head_bucket(Bucket=bucket)
-            return True
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                return False
-            logging.error(f"Failed to get Bucket Head, Please confirm the Bucket Name: {bucket}")
+            response = self.s3_client.get_bucket_location(Bucket=bucket)
+            if response["LocationConstraint"] == location_constraint:
+                return True
+            raise Exception(
+                f"Bucket '{bucket}' already exists and is owned by you in another region '{response['LocationConstraint']}'."
+                f" Please provide a different name for the bucket in the region '{region}'"
+            )
+        except ClientError as exc:
+            error_code = exc.response["Error"]["Code"]
+            if error_code != "403" and error_code != "404":
+                raise Exception(
+                    f"Could not verify if the bucket '{bucket}' exists in the region '{region}'.\nError:{exc}"
+                ) from exc
+            elif error_code == "403":
+                raise Exception(
+                    f"Bucket '{bucket}' already exists and is not owned by you. Please provide a different name for the"
+                    " bucket in the configuration."
+                ) from exc
+            return False
+        except Exception as exc:
+            raise Exception(
+                f"Could not verify if the bucket '{bucket}' exists in the region '{region}'.\nError:{exc}"
+            ) from exc
