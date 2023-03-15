@@ -22,143 +22,175 @@ class S3ClientTest(TestCase):
         region = "us-east-1"
         response = {"Buckets": [{"Name": "test-bucket"}]}
         mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=response)
+        mock_valid_bucket_exists = self.mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", return_value=False)
+
         s3_client_utils = S3Client(self.mock_project_config, self.service_clients)
         s3_client_utils.create_bucket(bucket, region)
         assert mock_create_bucket.called
         mock_create_bucket.assert_called_with(Bucket="test-bucket")
+        assert mock_valid_bucket_exists.call_args_list == [call(bucket, region)]
 
     def test_create_bucket_non_us_east_1(self):
         bucket = "test-bucket"
         region = "us-west-2"
         response = {"Buckets": [{"Name": "test-bucket"}]}
+        mock_valid_bucket_exists = self.mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", return_value=False)
         mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", return_value=response)
         s3_client_utils = S3Client(self.mock_project_config, self.service_clients)
         s3_client_utils.create_bucket(bucket, region)
         mock_create_bucket.assert_called_with(
             Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "us-west-2"}
         )
+        assert mock_valid_bucket_exists.call_args_list == [call(bucket, region)]
 
     def test_create_bucket_exception(self):
         bucket = "test-bucket"
         region = "region"
+        mock_valid_bucket_exists = self.mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", return_value=False)
         s3_client_utils = S3Client(self.mock_project_config, self.service_clients)
         self.mocker.patch("boto3.client.create_bucket", side_effect=HTTPError("some error"))
         with pytest.raises(Exception) as e:
             s3_client_utils.create_bucket(bucket, region)
         assert type(e.value.args[0]) == HTTPError
+        assert mock_valid_bucket_exists.call_args_list == [call("test-bucket", "region")]
 
-    def test_bucket_exists_in_same_region_exists(self):
+    def test_create_bucket_valid_bucket_for_artifacts_exists(self):
+        bucket = "test-bucket"
+        region = "region"
+        mock_valid_bucket_exists = self.mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", return_value=True)
+        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket")
+        s3_client_utils = S3Client({}, self.service_clients)
+        s3_client_utils.create_bucket(bucket, region)
+        assert mock_valid_bucket_exists.call_args_list == [call("test-bucket", "region")]
+        assert not mock_create_bucket.called
+
+    def test_create_bucket_valid_bucket_for_artifacts_not_exists(self):
+        bucket = "test-bucket"
+        region = "region"
+        mock_valid_bucket_exists = self.mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", return_value=False)
+        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket")
+        s3_client_utils = S3Client({}, self.service_clients)
+        s3_client_utils.create_bucket(bucket, region)
+        assert mock_valid_bucket_exists.call_args_list == [call("test-bucket", "region")]
+        assert mock_create_bucket.call_args_list == [
+            call(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "region"})
+        ]
+
+    def test_create_bucket_exception_in_valid_bucket_for_artifacts_exists(self):
+        bucket = "test-bucket"
+        region = "region"
+        mock_valid_bucket_exists = self.mocker.patch.object(
+            S3Client, "valid_bucket_for_artifacts_exists", side_effect=HTTPError("some error")
+        )
+        s3_client_utils = S3Client({}, self.service_clients)
+
+        with pytest.raises(Exception) as e:
+            s3_client_utils.create_bucket(bucket, region)
+        assert mock_valid_bucket_exists.call_count == 1
+        assert "some error" == str(e.value.args[0])
+
+    def test_valid_bucket_for_artifacts_exists_in_us_east_1(self):
         s3_client_utils = S3Client({}, self.service_clients)
         mock_get_bucket_location = self.mocker.patch(
-            "boto3.client.get_bucket_location", return_value={"LocationConstraint": "us-east-1"}
+            "boto3.client.get_bucket_location", return_value={"LocationConstraint": None}
         )
-        exists = s3_client_utils.bucket_exists_in_same_region("bucket", "us-east-1")
+        exists = s3_client_utils.valid_bucket_for_artifacts_exists("bucket", "us-east-1")
         mock_get_bucket_location.assert_called_with(Bucket="bucket")
         assert exists
 
-    def test_bucket_exists_in_same_region_not_exists(self):
+    def test_valid_bucket_for_artifacts_exists_in_same_region(self):
         s3_client_utils = S3Client({}, self.service_clients)
         mock_get_bucket_location = self.mocker.patch(
             "boto3.client.get_bucket_location", return_value={"LocationConstraint": "us-west-2"}
         )
-        exists = s3_client_utils.bucket_exists_in_same_region("bucket", "us-east-1")
+        exists = s3_client_utils.valid_bucket_for_artifacts_exists("bucket", "us-west-2")
         mock_get_bucket_location.assert_called_with(Bucket="bucket")
-        assert not exists
+        assert exists
 
-    def test_bucket_exists_in_same_region_exception(self):
+    def test_valid_bucket_for_artifacts_exists_in_diff_region_raise_exception(self):
         s3_client_utils = S3Client({}, self.service_clients)
-        mock_get_bucket_location = self.mocker.patch("boto3.client.get_bucket_location", side_effect=HTTPError("some eror"))
+        mock_get_bucket_location = self.mocker.patch(
+            "boto3.client.get_bucket_location", return_value={"LocationConstraint": "us-west-2"}
+        )
         with pytest.raises(Exception) as e:
-            s3_client_utils.bucket_exists_in_same_region("bucket", "us-east-1")
-        assert "Unable to fetch the location of the bucket" in e.value.args[0]
+            s3_client_utils.valid_bucket_for_artifacts_exists("bucket", "us-east-1")
         mock_get_bucket_location.assert_called_with(Bucket="bucket")
+        assert (
+            "Bucket 'bucket' already exists and is owned by you in another region 'us-west-2'. Please provide a different name"
+            " for the bucket in the region 'us-east-1'"
+            in e.value.args[0]
+        )
 
-    def test_create_bucket_exception_bucket_exists(self):
+    def test_valid_bucket_for_artifacts_exists_unknown_exception(self):
+        s3_client_utils = S3Client({}, self.service_clients)
+        mock_get_bucket_location = self.mocker.patch("boto3.client.get_bucket_location", side_effect=HTTPError("some-error"))
+        with pytest.raises(Exception) as e:
+            s3_client_utils.valid_bucket_for_artifacts_exists("bucket", "us-east-1")
+        mock_get_bucket_location.assert_called_with(Bucket="bucket")
+        assert "Could not verify if the bucket 'bucket' exists in the region 'us-east-1'.\nError:some-error" in e.value.args[0]
+
+    def test_valid_bucket_for_artifacts_exists_owned_by_someone(self):
         bucket = "test-bucket"
         region = "region"
 
         def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyExists(
-                {"Error": {"Code": "BucketAlreadyExists", "Message": "fake message"}}, "CreateBucket"
+            ex = boto3.client("s3").exceptions.ClientError(
+                {"Error": {"Code": "403", "Message": "Forbidden"}}, "GetBucketLocation"
             )
             raise ex
 
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
+        mock_get_bucket_location = self.mocker.patch("boto3.client.get_bucket_location", side_effect=throw_err)
         s3_client_utils = S3Client({}, self.service_clients)
 
         with pytest.raises(Exception) as e:
-            s3_client_utils.create_bucket(bucket, region)
-        assert mock_create_bucket.call_count == 1
-        assert "An error occurred (BucketAlreadyExists) when calling the CreateBucket operation: fake message" == str(
-            e.value.args[0]
+            s3_client_utils.valid_bucket_for_artifacts_exists(bucket, region)
+
+        assert mock_get_bucket_location.call_args_list == [call(Bucket=bucket)]
+        assert (
+            "Bucket 'test-bucket' already exists and is not owned by you. Please provide a different name for the bucket in"
+            " the configuration"
+            in str(e.value.args[0])
         )
 
-    def test_create_bucket_exception_bucket_owned(self):
+    def test_valid_bucket_for_artifacts_exists_not_exists(self):
         bucket = "test-bucket"
-        region = "us-west-2"
+        region = "region"
 
         def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-                {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
+            ex = boto3.client("s3").exceptions.ClientError(
+                {"Error": {"Code": "404", "Message": "Not Found"}}, "GetBucketLocation"
             )
             raise ex
 
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
+        mock_get_bucket_location = self.mocker.patch("boto3.client.get_bucket_location", side_effect=throw_err)
+        s3_client_utils = S3Client({}, self.service_clients)
+
+        assert not s3_client_utils.valid_bucket_for_artifacts_exists(bucket, region)
+
+        assert mock_get_bucket_location.call_args_list == [call(Bucket=bucket)]
+
+    def test_valid_bucket_for_artifacts_exists_bad_request(self):
+        bucket = "test-bucket"
+        region = "region"
+
+        def throw_err(*args, **kwargs):
+            ex = boto3.client("s3").exceptions.ClientError(
+                {"Error": {"Code": "400", "Message": "Bad Request"}}, "GetBucketLocation"
+            )
+            raise ex
+
+        mock_get_bucket_location = self.mocker.patch("boto3.client.get_bucket_location", side_effect=throw_err)
         s3_client_utils = S3Client({}, self.service_clients)
 
         with pytest.raises(Exception) as e:
-            s3_client_utils.create_bucket(bucket, region)
-        mock_create_bucket.assert_called_with(
-            Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "us-west-2"}
+            s3_client_utils.valid_bucket_for_artifacts_exists(bucket, region)
+
+        assert mock_get_bucket_location.call_args_list == [call(Bucket=bucket)]
+        assert (
+            "Could not verify if the bucket 'test-bucket' exists in the region 'region'.\nError:An error occurred (400) when"
+            " calling the GetBucketLocation operation: Bad Request"
+            in e.value.args[0]
         )
-        assert "An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: fake message" == str(
-            e.value.args[0]
-        )
-
-    def test_create_bucket_exception_bucket_owned_not_in_region(self):
-        bucket = "test-bucket"
-        region = "us-west-2"
-        mock_check_in_same_region = self.mocker.patch.object(S3Client, "bucket_exists_in_same_region", return_value=False)
-
-        def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-                {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
-            )
-            raise ex
-
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
-
-        s3_client_utils = S3Client({}, self.service_clients)
-
-        with pytest.raises(Exception) as e:
-            s3_client_utils.create_bucket(bucket, region)
-        mock_create_bucket.assert_called_with(
-            Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "us-west-2"}
-        )
-        mock_check_in_same_region.assert_called_with("test-bucket", "us-west-2")
-        assert "An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: fake message" == str(
-            e.value.args[0]
-        )
-
-    def test_create_bucket_exception_bucket_owned_in_region(self):
-        bucket = "test-bucket"
-        region = "us-west-2"
-        mock_check_in_same_region = self.mocker.patch.object(S3Client, "bucket_exists_in_same_region", return_value=True)
-
-        def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-                {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
-            )
-            raise ex
-
-        mock_create_bucket = self.mocker.patch("boto3.client.create_bucket", side_effect=throw_err)
-        s3_client_utils = S3Client({}, self.service_clients)
-
-        s3_client_utils.create_bucket(bucket, region)
-        mock_create_bucket.assert_called_with(
-            Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "us-west-2"}
-        )
-        mock_check_in_same_region.assert_called_with("test-bucket", "us-west-2")
 
     def test_upload_artifacts(self):
         project_config = {

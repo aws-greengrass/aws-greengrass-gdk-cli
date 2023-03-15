@@ -6,6 +6,7 @@ import pytest
 
 import gdk.CLIParser as CLIParser
 import gdk.common.parse_args_actions as parse_args_actions
+from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.component.PublishCommand import PublishCommand
 
 
@@ -70,7 +71,7 @@ def test_publish_run_already_built(mocker, get_service_clients, mock_project_con
     )
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
+    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -82,7 +83,7 @@ def test_publish_run_already_built(mocker, get_service_clients, mock_project_con
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with(Bucket="default-us-east-1-1234")
+    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
     assert spy_upload_file.call_count == 1  # Only one file to upload
     assert spy_create_component.call_count == 1  # Create gg private component
     assert spy_get_caller_identity.call_count == 1  # Get account number
@@ -102,7 +103,7 @@ def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_proj
     )
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
+    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -114,7 +115,7 @@ def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_proj
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with(Bucket="new-bucket-arg")  # Use exact bucket arg
+    spy_create_bucket.assert_called_with("new-bucket-arg", "us-east-1")  # Use exact bucket arg
     assert spy_upload_file.call_count == 1  # Only one file to upload
     assert spy_create_component.call_count == 1  # Create gg private component
     assert spy_get_caller_identity.call_count == 1  # Get account number
@@ -134,7 +135,7 @@ def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_projec
     )
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.spy(get_service_clients["s3_client"], "create_bucket")
+    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.spy(get_service_clients["s3_client"], "upload_file")
     spy_create_component = mocker.spy(get_service_clients["greengrass_client"], "create_component_version")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -150,9 +151,7 @@ def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_projec
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with(
-        Bucket="new-bucket-arg", CreateBucketConfiguration={"LocationConstraint": "us-west-2"}
-    )  # Use exact bucket arg
+    spy_create_bucket.assert_called_with("new-bucket-arg", "us-west-2")  # Use exact bucket arg
     spy_upload_file.assert_called_with(
         ANY,
         "new-bucket-arg",
@@ -236,7 +235,7 @@ def test_publish_run_next_patch(mocker, get_service_clients, mock_project_config
     file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.5")).resolve()
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
+    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -248,7 +247,7 @@ def test_publish_run_next_patch(mocker, get_service_clients, mock_project_config
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with(Bucket="default-us-east-1-1234")
+    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
     assert spy_upload_file.call_count == 1  # Only one file to upload
     assert spy_create_component.call_count == 1  # Create gg private component
     assert spy_get_caller_identity.call_count == 1  # Get account number
@@ -272,7 +271,7 @@ def test_publish_run_next_patch_doesnt_exist(mocker, get_service_clients, mock_p
         return_value={"componentVersions": []},
     )
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
+    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -284,7 +283,7 @@ def test_publish_run_next_patch_doesnt_exist(mocker, get_service_clients, mock_p
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with(Bucket="default-us-east-1-1234")
+    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
     assert spy_upload_file.call_count == 1  # Only one file to upload
     assert spy_create_component.call_count == 1  # Create gg private component
     assert spy_get_caller_identity.call_count == 1  # Get account number
@@ -306,7 +305,7 @@ def test_publish_run_not_built(mocker, get_service_clients, mock_project_config)
     )
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
+    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
     with patch("builtins.open", mock_open()) as mock_file:
@@ -336,8 +335,7 @@ def test_publish_run_error_during_upload(mocker, get_service_clients, mock_proje
     file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
-
+    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
 
     mocker.patch.object(get_service_clients["s3_client"], "upload_file", side_effect=Exception("Error in upload"))
@@ -352,12 +350,12 @@ def test_publish_run_error_during_upload(mocker, get_service_clients, mock_proje
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with(Bucket="default-us-east-1-1234")
+    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
     assert spy_create_component.call_count == 0  # GG component is not created
     assert spy_get_caller_identity.call_count == 1  # Get account number
 
 
-def test_publish_run_bucket_exists(mocker, get_service_clients, mock_project_config):
+def test_publish_run_bucket_exists_owned_by_someone(mocker, get_service_clients, mock_project_config):
     mock_build_dir_exists = mocker.patch(
         "gdk.common.utils.dir_exists",
         return_value=True,
@@ -372,12 +370,11 @@ def test_publish_run_bucket_exists(mocker, get_service_clients, mock_project_con
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
 
     def throw_err(*args, **kwargs):
-        ex = boto3.client("s3").exceptions.BucketAlreadyExists(
-            {"Error": {"Code": "BucketAlreadyExists", "Message": "fake message"}}, "CreateBucket"
-        )
+        ex = boto3.client("s3").exceptions.ClientError({"Error": {"Code": "403", "Message": "Forbidden"}}, "GetBucketLocation")
         raise ex
 
-    mock_create_bucket_err = mocker.patch.object(get_service_clients["s3_client"], "create_bucket", side_effect=throw_err)
+    mock_get_bucket_location = mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", side_effect=throw_err)
+    mock_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
     mocker.patch.object(get_service_clients["s3_client"], "upload_file", return_value=None)
     with pytest.raises(Exception) as e:
@@ -392,9 +389,9 @@ def test_publish_run_bucket_exists(mocker, get_service_clients, mock_project_con
     assert mock_glob.call_count == 0  # Recipe is not updated
 
     # Assert cloud calls
-    assert mock_create_bucket_err.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    mock_create_bucket_err.assert_called_with(Bucket="default-us-east-1-1234")
-    assert spy_create_component.call_count == 0  # GG component is not created
+    assert not mock_create_bucket.called  # Tries to create a bucket if at least one artifact needs to be uploaded
+    mock_get_bucket_location.assert_called_with("default-us-east-1-1234", "us-east-1")
+    assert not spy_create_component.called  # GG component is not created
     assert spy_get_caller_identity.call_count == 1  # Get account number
 
 
@@ -411,17 +408,10 @@ def test_publish_run_bucket_already_owned_in_same_region(mocker, get_service_cli
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
 
-    def throw_err(*args, **kwargs):
-        ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-            {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
-        )
-        raise ex
-
-    mock_create_bucket_err = mocker.patch.object(get_service_clients["s3_client"], "create_bucket", side_effect=throw_err)
+    mock_get_bucket_location = mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", return_value=True)
+    mock_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
     spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    mock_get_bucket_location = mocker.patch.object(
-        get_service_clients["s3_client"], "get_bucket_location", return_value={"LocationConstraint": "us-east-1"}
-    )
+
     with patch("builtins.open", mock_open()) as mock_file:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish", "-d"]))
         mock_file.assert_any_call(file_name, "w")
@@ -430,55 +420,10 @@ def test_publish_run_bucket_already_owned_in_same_region(mocker, get_service_cli
     assert mock_glob.call_count == 1  # Recipe is not updated
 
     # Assert cloud calls
-    assert mock_create_bucket_err.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    mock_create_bucket_err.assert_called_with(Bucket="default-us-east-1-1234")
+    assert not mock_create_bucket.called  # Tries to create a bucket if at least one artifact needs to be uploaded
     assert spy_create_component.call_count == 1  # GG component is not created
     assert spy_get_caller_identity.call_count == 1  # Get account number
-    assert mock_get_bucket_location.call_count == 1
-
-
-def test_publish_run_bucket_already_owned_in_diff_region(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    pc["region"] = "us-west-2"
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[Path("hello_world.py")])
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
-
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-
-    def throw_err(*args, **kwargs):
-        ex = boto3.client("s3").exceptions.BucketAlreadyOwnedByYou(
-            {"Error": {"Code": "BucketAlreadyOwnedByYou", "Message": "fake message"}}, "CreateBucket"
-        )
-        raise ex
-
-    mock_create_bucket_err = mocker.patch.object(get_service_clients["s3_client"], "create_bucket", side_effect=throw_err)
-    mock_get_bucket_location = mocker.patch.object(
-        get_service_clients["s3_client"], "get_bucket_location", return_value={"LocationConstraint": "us-east-1"}
-    )
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    with pytest.raises(Exception) as e:
-        with patch("builtins.open", mock_open()) as mock_file:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish", "-d"]))
-            mock_file.assert_any_call(file_name, "w")
-        assert "BucketAlreadyOwnedByYou" in e
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_glob.call_count == 0  # Recipe is not updated
-
-    # Assert cloud calls
-    assert mock_create_bucket_err.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    mock_create_bucket_err.assert_called_with(
-        Bucket="default-us-west-2-1234", CreateBucketConfiguration={"LocationConstraint": "us-west-2"}
-    )
-    assert spy_create_component.call_count == 0  # GG component is not created
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-    assert mock_get_bucket_location.call_count == 1
+    mock_get_bucket_location.assert_called_with("default-us-east-1-1234", "us-east-1")
 
 
 def project_config():
