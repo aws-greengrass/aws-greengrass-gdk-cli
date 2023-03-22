@@ -12,132 +12,16 @@
             ],
             "properties": {
                 "sub-commands": {
-                    "$ref": "#/$defs/sub-commands"
-                },
-                "help": {
-                    "$ref": "#/$defs/help"
-                }
-            }
-        },
-        "component": {
-            "type": "object",
-            "description": "A command of gdk cli tool. This is one of the sub parsers under the top-level parser ('gdk') of the cli.",
-            "required": [
-                "sub-commands",
-                "help"
-            ],
-            "properties": {
-                "sub-commands": {
-                    "$ref": "#/$defs/sub-commands"
-                },
-                "help": {
-                    "$ref": "#/$defs/help"
-                }
-            }
-        },
-        "init": {
-            "type": "object",
-            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
-            "required": [
-                "arguments",
-                "conflicting_arg_groups",
-                "arg_groups",
-                "help"
-            ],
-            "properties": {
-                "arguments": {
-                    "description": "List of all the arguments that can be passed with the init command.",
                     "required": [
-                        "language",
-                        "repository",
-                        "template",
-                        "name"
+                        "component"
                     ],
                     "properties": {
-                        "language": {
-                            "$ref": "#/$defs/argument"
-                        },
-                        "repository": {
-                            "$ref": "#/$defs/argument"
-                        },
-                        "template": {
-                            "$ref": "#/$defs/argument"
-                        },
-                        "name": {
-                            "$ref": "#/$defs/argument"
+                        "component": {
+                            "$ref": "#/$defs/component"
                         }
-                    }
+                    },
+                    "additionalProperties": false
                 },
-                "conflicting_arg_groups": {
-                    "$ref": "#/$defs/conflicting_arg_groups"
-                },
-                "arg_groups": {
-                    "$ref": "#/$defs/arg_groups"
-                },
-                "help": {
-                    "$ref": "#/$defs/help"
-                }
-            }
-        },
-        "publish": {
-            "type": "object",
-            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
-            "required": [
-                "help",
-                "arguments"
-            ],
-            "properties": {
-                "help": {
-                    "$ref": "#/$defs/help"
-                },
-                "arguments": {
-                    "description": "List of all the arguments that can be passed with the publish command.",
-                    "required": [
-                        "bucket"
-                    ],
-                    "properties": {
-                        "bucket": {
-                            "$ref": "#/$defs/argument"
-                        }
-                    }
-                }
-            }
-        },
-        "list": {
-            "type": "object",
-            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
-            "required": [
-                "help",
-                "arguments"
-            ],
-            "properties": {
-                "arguments": {
-                    "description": "List of all the arguments that can be passed with the list command.",
-                    "required": [
-                        "template",
-                        "repository"
-                    ],
-                    "properties": {
-                        "template": {
-                            "$ref": "#/$defs/argument"
-                        },
-                        "repository": {
-                            "$ref": "#/$defs/argument"
-                        }
-                    }
-                },
-                "help": {
-                    "$ref": "#/$defs/help"
-                }
-            }
-        },
-        "build": {
-            "type": "object",
-            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
-            "required": [
-                "help"
-            ],
-            "properties": {
                 "help": {
                     "$ref": "#/$defs/help"
                 }
@@ -145,24 +29,10 @@
         }
     },
     "required": [
-        "gdk",
-        "component",
-        "init",
-        "list",
-        "build",
-        "publish"
+        "gdk"
     ],
     "additionalProperties": false,
     "$defs": {
-        "sub-commands": {
-            "type": "array",
-            "description": "Array of all the sub commands of a command.",
-            "additionalItems": true,
-            "items": {
-                "type": "string",
-                "description": "Name of the (sub) command."
-            }
-        },
         "help": {
             "type": "string",
             "description": "Description of the command which is displayed in the cli help message."
@@ -223,6 +93,153 @@
                 },
                 "additionalProperties": true
             }
+        },
+        "component": {
+            "type": "object",
+            "description": "A command of gdk cli tool. This is one of the sub parsers under the top-level parser ('gdk') of the cli.",
+            "properties": {
+                "sub-commands": {
+                    "required": [
+                        "init",
+                        "build",
+                        "publish",
+                        "list"
+                    ],
+                    "properties": {
+                        "init": {
+                            "$ref": "#/$defs/init"
+                        },
+                        "build": {
+                            "$ref": "#/$defs/build"
+                        },
+                        "publish": {
+                            "$ref": "#/$defs/publish"
+                        },
+                        "list": {
+                            "$ref": "#/$defs/list"
+                        }
+                    }
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
+        },
+        "list": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "help",
+                "arguments"
+            ],
+            "properties": {
+                "arguments": {
+                    "description": "List of all the arguments that can be passed with the list command.",
+                    "required": [
+                        "template",
+                        "repository"
+                    ],
+                    "properties": {
+                        "template": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "repository": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                },
+                "conflicting_arg_groups": {
+                    "$ref": "#/$defs/conflicting_arg_groups"
+                }
+            },
+            "additionalProperties": false
+        },
+        "publish": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "help",
+                "arguments"
+            ],
+            "properties": {
+                "help": {
+                    "$ref": "#/$defs/help"
+                },
+                "arguments": {
+                    "description": "List of all the arguments that can be passed with the publish command.",
+                    "required": [
+                        "bucket"
+                    ],
+                    "properties": {
+                        "bucket": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "init": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "arguments",
+                "conflicting_arg_groups",
+                "arg_groups",
+                "help"
+            ],
+            "properties": {
+                "arguments": {
+                    "description": "List of all the arguments that can be passed with the init command.",
+                    "required": [
+                        "language",
+                        "repository",
+                        "template",
+                        "name"
+                    ],
+                    "properties": {
+                        "language": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "repository": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "template": {
+                            "$ref": "#/$defs/argument"
+                        },
+                        "name": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
+                },
+                "conflicting_arg_groups": {
+                    "$ref": "#/$defs/conflicting_arg_groups"
+                },
+                "arg_groups": {
+                    "$ref": "#/$defs/arg_groups"
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
+        },
+        "build": {
+            "type": "object",
+            "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "help"
+            ],
+            "properties": {
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
         }
     }
 }

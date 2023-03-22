@@ -69,10 +69,6 @@ class Command:
         """
         Creates a dictionary object with argument as a key and a set of its non-conflicting args as value.
 
-        Parameters
-        ----------
-          cli_model(dict): A dictonary object which contains CLI arguments and sub-commands at each command level.
-
         Returns
         -------
           _non_conflicting_args_map(dict): A dictionary object formed with argument as a key and a set of its non-conflicting
@@ -81,7 +77,10 @@ class Command:
         from gdk.CLIParser import cli_tool
 
         _non_conflicting_args_map = {}
-        cli_model = cli_tool.cli_model
+
+        cli_model = self.get_sub_c(next(iter(cli_tool.cli_model.keys())), cli_tool.cli_model)
+        if not cli_model:
+            return {}
         if self.name in cli_model and "conflicting_arg_groups" in cli_model[self.name]:
             c_arg_groups = cli_model[self.name]["conflicting_arg_groups"]
             for c_group in c_arg_groups:
@@ -90,6 +89,14 @@ class Command:
                     c_arg_set.update(set(c_group))
                     _non_conflicting_args_map[c_arg] = c_arg_set
         return _non_conflicting_args_map
+
+    def get_sub_c(self, command, sub_c):
+        if sub_c.get(command) and sub_c.get(command).get("sub-commands"):
+            sub_c = sub_c.get(command).get("sub-commands")
+        if self.name in sub_c:
+            return sub_c
+        if command and command in self.arguments:
+            return self.get_sub_c(self.arguments[command], sub_c)
 
     @abstractmethod
     def run(self):

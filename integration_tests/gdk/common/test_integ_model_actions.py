@@ -1,9 +1,10 @@
 import json
 
+import jsonschema
+
 import gdk.common.consts as consts
 import gdk.common.model_actions as model_actions
 import gdk.common.utils as utils
-import jsonschema
 
 cli_model_schema = "cli_model_schema.json"
 
@@ -78,19 +79,27 @@ def test_is_valid_model_with_invalid_sub_command():
 def test_is_valid_model_with_invalid_arg_group_missing_title():
     # Valid model with correct args ang sub-commands.
     invalid_model = {
-        "gdk": {"sub-commands": ["component"], "help": "help"},
-        "component": {"sub-commands": ["init", "build"], "help": "help"},
-        "init": {
-            "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}},
-            "arg_groups": [
-                {
-                    "args": ["lang"],
-                    "description": "description",
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "sub-commands": {
+                        "init": {
+                            "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}},
+                            "arg_groups": [
+                                {
+                                    "args": ["lang"],
+                                    "description": "description",
+                                }
+                            ],
+                            "help": "help",
+                        },
+                        "build": {"help": "help"},
+                    },
+                    "help": "help",
                 }
-            ],
+            },
             "help": "help",
         },
-        "build": {"help": "help"},
     }
     assert not model_actions.is_valid_model(invalid_model, consts.cli_tool_name)
 
@@ -98,40 +107,56 @@ def test_is_valid_model_with_invalid_arg_group_missing_title():
 def test_is_valid_model_with_invalid_arg_group_missing_arg():
     # Valid model with correct args ang sub-commands.
     invalid_model = {
-        "gdk": {"sub-commands": ["component"], "help": "help"},
-        "component": {"sub-commands": ["init", "build"], "help": "help"},
-        "init": {
-            "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}},
-            "arg_groups": [
-                {
-                    "title": "title",
-                    "args": ["lang", "template"],
-                    "description": "description",
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "sub-commands": {
+                        "init": {
+                            "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}},
+                            "arg_groups": [
+                                {
+                                    "title": "title",
+                                    "args": ["lang", "template"],
+                                    "description": "description",
+                                }
+                            ],
+                            "help": "help",
+                        },
+                    },
+                    "help": "help",
                 }
-            ],
+            },
             "help": "help",
         },
-        "build": {"help": "help"},
     }
+
     assert not model_actions.is_valid_model(invalid_model, consts.cli_tool_name)
 
 
 def test_is_valid_model_with_valid_cli_model():
     # Valid model with correct args ang sub-commands.
     valid_model = {
-        "gdk": {"sub-commands": ["component"], "help": "help"},
-        "component": {"sub-commands": ["init", "build"], "help": "help"},
-        "init": {
-            "help": "help",
-            "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}},
-            "arg_groups": [
-                {
-                    "title": "Greengrass component templates.",
-                    "args": ["lang"],
-                    "description": "description",
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "sub-commands": {
+                        "init": {
+                            "arguments": {"lang": {"name": ["-l", "--lang"], "help": "help"}},
+                            "arg_groups": [
+                                {
+                                    "title": "title",
+                                    "args": ["lang"],
+                                    "description": "description",
+                                }
+                            ],
+                            "help": "help",
+                        },
+                    },
+                    "help": "help",
                 }
-            ],
+            },
+            "help": "help",
         },
-        "build": {"help": "build"},
     }
+
     assert model_actions.is_valid_model(valid_model, consts.cli_tool_name)

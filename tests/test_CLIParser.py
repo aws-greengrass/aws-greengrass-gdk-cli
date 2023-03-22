@@ -1,9 +1,9 @@
 import argparse
 
-import gdk.CLIParser as cli_parser
 import pytest
 from urllib3.exceptions import HTTPError
 
+import gdk.CLIParser as cli_parser
 import gdk.common.consts as consts
 
 
@@ -12,7 +12,6 @@ def test_CLIParser_initiation_top_level():
     # If CLIParser is initiated with the cli tool name, it has no top-level parser.
     parser = cli_parser.CLIParser(consts.cli_tool_name, None)
     assert not hasattr(parser, "top_level_parser")
-    assert parser.command == consts.cli_tool_name
     assert type(parser.parser) == cli_parser.ArgumentParser
     assert parser.subparsers.dest == consts.cli_tool_name
 
@@ -24,8 +23,6 @@ def test_CLIParser_initiation_sub_level():
     subparser = cli_parser.CLIParser(sub_command, parser.subparsers)
     assert hasattr(subparser, "top_level_parser")
     assert subparser.top_level_parser.dest == consts.cli_tool_name
-    assert subparser.command != consts.cli_tool_name
-    assert subparser.command == sub_command
     assert type(subparser.parser) == cli_parser.ArgumentParser
     assert subparser.subparsers.dest == sub_command
 

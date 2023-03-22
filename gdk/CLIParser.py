@@ -21,13 +21,12 @@ class ArgumentParser(argparse.ArgumentParser):
 
 
 class CLIParser:
-
     cli_model = model_actions.get_validated_model()
 
-    def __init__(self, command, top_level_parser):
+    def __init__(self, command, top_level_parser, model=cli_model[consts.cli_tool_name]):
         """A class that represents an argument parser at command level."""
-        self.command = command
-        help_text_for_command = self.cli_model[self.command]["help"]
+        self.command_model = model
+        help_text_for_command = self.command_model["help"]
         if command != consts.cli_tool_name:
             self.top_level_parser = top_level_parser
             self.parser = self.top_level_parser.add_parser(
@@ -49,7 +48,6 @@ class CLIParser:
         -------
           parser(argparse.ArgumentParser): ArgumentParser object which can parse args at its command level.
         """
-        self.command_model = self.cli_model[self.command]
         self._add_common_args_for_all_commands()
         self._add_arguments()
         self._get_subcommands_from_model()
@@ -134,8 +132,8 @@ class CLIParser:
 
         if "sub-commands" in self.command_model:
             sub_commands = self.command_model["sub-commands"]
-            for sub_command in sub_commands:
-                CLIParser(sub_command, self.subparsers).create_parser()
+            for sub_command, model in sub_commands.items():
+                CLIParser(sub_command, self.subparsers, model).create_parser()
 
     def _get_arg_from_model(self, argument):
         """
