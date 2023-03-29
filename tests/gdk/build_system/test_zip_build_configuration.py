@@ -34,7 +34,7 @@ def configuration_base(options: dict) -> dict:
 
 @pytest.mark.parametrize(
     "options",
-    [None, {"exclude": ["*.ts"]}, dict()],
+    [None, {"excludes": ["*.ts"]}, dict()],
 )
 def test_valid_configuration_options(options):
     validate_configuration(configuration_base(options))

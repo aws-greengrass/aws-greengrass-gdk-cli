@@ -115,3 +115,22 @@ Feature: gdk component build works
     When we quietly run gdk component build
     Then command was successful
     And we verify component build files
+
+
+  @version(min='1.2.0')
+  @change_cwd
+  Scenario: build template zip with excludes options
+    Given we have cli installed
+    And we make directory HelloWorld
+    And we run gdk component init -t HelloWorld -l python
+    And command was successful
+    And we verify gdk project files
+    And change component name to com.example.PythonHelloWorld
+    And change build options to {"excludes":["main.py"]}
+    When we run gdk component build
+    Then command was successful
+    And we verify component zip build files
+    And we verify build artifact named HelloWorld.zip
+    And we verify the following files in HelloWorld.zip
+      | excluded    | included  |
+      | ["main.py"] | ["tests"] |
