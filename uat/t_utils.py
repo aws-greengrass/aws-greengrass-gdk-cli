@@ -22,10 +22,18 @@ def update_config(config_file, component_name, region, bucket, author, version="
 
 
 def update_config_build_sytem(config_file, component_name, build_system):
-    # Update gdk-config file mandatory field like region.
     with open(str(config_file), "r") as f:
         config = json.loads(f.read())
         config["component"][component_name]["build"]["build_sytem"] = build_system
+    with open(str(config_file), "w") as f:
+        f.write(json.dumps(config, indent=4))
+
+
+def update_config_build_options(config_file, component_name, build_options):
+    with open(str(config_file), "r") as f:
+        config = json.loads(f.read())
+        d = {"options": json.loads(build_options)}
+        config["component"][component_name]["build"].update(d)
     with open(str(config_file), "w") as f:
         f.write(json.dumps(config, indent=4))
 
