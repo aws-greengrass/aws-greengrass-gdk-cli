@@ -35,7 +35,7 @@ jobs:
         uses: wagoid/commitlint-github-action@v5
         if: matrix.os == 'ubuntu-latest'
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Python version
@@ -65,7 +65,7 @@ jobs:
         with:
           flags: integ
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{secrets.GDK_WORKFLOW_AWS_ROLE}}
           aws-region: us-east-1
