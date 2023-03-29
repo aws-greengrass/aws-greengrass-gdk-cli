@@ -80,7 +80,7 @@
                                                 "type": "object",
                                                 "description": "configuration options for the zip build system",
                                                 "properties": {
-                                                    "exclude": {
+                                                    "excludes": {
                                                         "type": "array",
                                                         "description": "regex patterns of files to exclude",
                                                         "minItems": 1
