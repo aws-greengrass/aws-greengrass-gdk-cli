@@ -117,7 +117,7 @@ Feature: gdk component build works
     And we verify component build files
 
 
-  @version(min='1.2.0')
+  @version(min='1.2.2')
   @change_cwd
   Scenario: build template zip with excludes options
     Given we have cli installed
