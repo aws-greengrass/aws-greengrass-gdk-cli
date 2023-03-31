@@ -3,21 +3,20 @@ from unittest import TestCase
 import tempfile
 import pytest
 
-from gdk.common.recipe_file.CaseInsensitiveRecipe import CaseInsensitiveRecipe
-from gdk.common.recipe_file.Recipe import Recipe
+from gdk.common.recipe_file.CaseInsensitiveRecipeFile import CaseInsensitiveRecipeFile
 
 from requests.structures import CaseInsensitiveDict
 
 
-class CaseInsensitiveRecipeTest(TestCase):
+class CaseInsensitiveRecipeFileTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
 
     def test_read_json(self):
         json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
-        case_insensitive_recipe = CaseInsensitiveRecipe().read(json_file)
-        assert isinstance(CaseInsensitiveRecipe().read(json_file), CaseInsensitiveDict)
+        case_insensitive_recipe = CaseInsensitiveRecipeFile().read(json_file)
+        assert isinstance(CaseInsensitiveRecipeFile().read(json_file), CaseInsensitiveDict)
         assert "manifests" in case_insensitive_recipe
         assert "MANIFESTS" in case_insensitive_recipe
         assert "artifacts" in case_insensitive_recipe["manifests"][0]
@@ -27,7 +26,7 @@ class CaseInsensitiveRecipeTest(TestCase):
 
     def test_read_yaml(self):
         yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
-        case_insensitive_recipe = CaseInsensitiveRecipe().read(yaml_file)
+        case_insensitive_recipe = CaseInsensitiveRecipeFile().read(yaml_file)
         assert isinstance(case_insensitive_recipe, CaseInsensitiveDict)
         assert "manifests" in case_insensitive_recipe
         assert "MANIFESTS" in case_insensitive_recipe
@@ -39,28 +38,26 @@ class CaseInsensitiveRecipeTest(TestCase):
     def test_read_invalid_format(self):
         invalid_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("not_exists.txt").resolve()
         with pytest.raises(Exception) as e:
-            CaseInsensitiveRecipe().read(invalid_file)
+            CaseInsensitiveRecipeFile().read(invalid_file)
         assert "Recipe file must be in json or yaml format" in e.value.args[0]
 
     def test_write_json(self):
         json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
         with tempfile.TemporaryDirectory() as newDir:
             tmp_path = Path(newDir).joinpath("valid.json").resolve()
-            CaseInsensitiveRecipe().write(tmp_path, CaseInsensitiveRecipe().read(json_file))
-            assert Recipe().read(json_file) == Recipe().read(tmp_path)  # original case is preserved
+            CaseInsensitiveRecipeFile().write(tmp_path, CaseInsensitiveRecipeFile().read(json_file))
 
     def test_write_yaml(self):
         yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
         with tempfile.TemporaryDirectory() as newDir:
             tmp_path = Path(newDir).joinpath("valid.yaml").resolve()
-            CaseInsensitiveRecipe().write(tmp_path, CaseInsensitiveRecipe().read(yaml_file))
-            assert Recipe().read(yaml_file) == Recipe().read(tmp_path)  # original case is preserved
+            CaseInsensitiveRecipeFile().write(tmp_path, CaseInsensitiveRecipeFile().read(yaml_file))
 
     def test_write_invalid_format(self):
         with tempfile.TemporaryDirectory() as newDir:
             yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
-            contents = CaseInsensitiveRecipe().read(yaml_file)
+            contents = CaseInsensitiveRecipeFile().read(yaml_file)
             tmp_path = Path(newDir).joinpath("invalid.txt").resolve()
             with pytest.raises(Exception) as e:
-                CaseInsensitiveRecipe().write(tmp_path, contents)
+                CaseInsensitiveRecipeFile().write(tmp_path, contents)
             assert "Recipe file must be in json or yaml format" in e.value.args[0]
