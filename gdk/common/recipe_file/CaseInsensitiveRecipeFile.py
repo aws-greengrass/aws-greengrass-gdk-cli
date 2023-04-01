@@ -9,29 +9,29 @@ class CaseInsensitiveRecipeFile:
         """
         Writes CaseInsensitiveDict contents to a JSON or a YAML file based on the file path.
         """
+        if not self._is_json(file_path) and not self._is_yaml(file_path):
+            raise Exception(f"Invalid recipe file : {file_path}. Recipe file must be in json or yaml format.")
         self._write(file_path, self._to_dict(content))
 
     def read(self, file_path: Path) -> CaseInsensitiveDict:
         """
         Reads a JSON or a YAMl file contents as a CaseInsensitiveDict and returns it.
         """
+        if not self._is_json(file_path) and not self._is_yaml(file_path):
+            raise Exception(f"Invalid recipe file : {file_path}. Recipe file must be in json or yaml format.")
         return self._from_dict(self._read(file_path))
 
     def _write(self, file_path, content):
         if self._is_json(file_path):
             self._write_to_json(file_path, content)
-        elif self._is_yaml(file_path):
-            self._write_to_yaml(file_path, content)
         else:
-            raise Exception(f"Invalid recipe file : {file_path}. Recipe file must be in json or yaml format.")
+            self._write_to_yaml(file_path, content)
 
     def _read(self, file_path):
         if self._is_json(file_path):
             return self._read_from_json(file_path)
-        elif self._is_yaml(file_path):
-            return self._read_from_yaml(file_path)
         else:
-            raise Exception(f"Invalid recipe file - {file_path}. Recipe file must be in json or yaml format.")
+            return self._read_from_yaml(file_path)
 
     def _read_from_yaml(self, file_path: Path) -> dict:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -43,17 +43,17 @@ class CaseInsensitiveRecipeFile:
 
     def _write_to_json(self, file_path: Path, content: dict) -> None:
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(json.dumps(content))
+            f.write(json.dumps(content, indent=4))
 
     def _write_to_yaml(self, file_path: Path, content: dict) -> None:
         with open(file_path, "w", encoding="utf-8") as f:
-            yaml.safe_dump(content, f)
+            yaml.safe_dump(content, f, sort_keys=False)
 
     def _is_json(self, file_path: Path) -> bool:
         return file_path.name.endswith(".json")
 
     def _is_yaml(self, file_path: Path) -> bool:
-        return file_path.name.endswith(".yaml")
+        return file_path.name.endswith(".yaml") or file_path.name.endswith(".yml")
 
     def _convert_nested_dict(self, case_insensitive_dict: CaseInsensitiveDict) -> CaseInsensitiveDict:
         for key, value in case_insensitive_dict.items():

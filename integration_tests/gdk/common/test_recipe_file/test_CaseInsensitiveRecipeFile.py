@@ -2,9 +2,9 @@ from pathlib import Path
 from unittest import TestCase
 import tempfile
 import pytest
-
+import yaml
 from gdk.common.recipe_file.CaseInsensitiveRecipeFile import CaseInsensitiveRecipeFile
-
+import json
 from requests.structures import CaseInsensitiveDict
 
 
@@ -46,12 +46,18 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         with tempfile.TemporaryDirectory() as newDir:
             tmp_path = Path(newDir).joinpath("valid.json").resolve()
             CaseInsensitiveRecipeFile().write(tmp_path, CaseInsensitiveRecipeFile().read(json_file))
+            with open(json_file, "r") as original_yaml:
+                with open(tmp_path, "r") as updated_yaml:
+                    assert json.loads(original_yaml.read()) == json.loads(updated_yaml.read())
 
     def test_write_yaml(self):
         yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
         with tempfile.TemporaryDirectory() as newDir:
             tmp_path = Path(newDir).joinpath("valid.yaml").resolve()
             CaseInsensitiveRecipeFile().write(tmp_path, CaseInsensitiveRecipeFile().read(yaml_file))
+            with open(yaml_file, "r") as original_yaml:
+                with open(tmp_path, "r") as updated_yaml:
+                    assert yaml.safe_load(original_yaml.read()) == yaml.safe_load(updated_yaml.read())
 
     def test_write_invalid_format(self):
         with tempfile.TemporaryDirectory() as newDir:
