@@ -3,9 +3,9 @@ from unittest import TestCase
 import tempfile
 import pytest
 import yaml
-from gdk.common.recipe_file.CaseInsensitiveRecipeFile import CaseInsensitiveRecipeFile
+from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
 import json
-from requests.structures import CaseInsensitiveDict
+from gdk.common.CaseInsensitive import CaseInsensitiveDict
 
 
 class CaseInsensitiveRecipeFileTest(TestCase):
@@ -67,3 +67,38 @@ class CaseInsensitiveRecipeFileTest(TestCase):
             with pytest.raises(Exception) as e:
                 CaseInsensitiveRecipeFile().write(tmp_path, contents)
             assert "Recipe file must be in json or yaml format" in e.value.args[0]
+
+
+class CaseInsensitiveDictTest(TestCase):
+    @pytest.fixture(autouse=True)
+    def __inject_fixtures(self, mocker):
+        self.mocker = mocker
+
+    def test_convert_dict_to_CaseInsensitiveDict(self):
+        dictionary = {
+            "key1": "value1",
+            "key2": [{"key21": "value21"}, {"key22": "value22"}],
+            "key3": {"key31": {"key311": "key312"}},
+        }
+        cis = CaseInsensitiveDict(dictionary)
+        assert "KEY1" in cis
+        assert cis["KEY2"][0]["KEy21"] == "value21"
+        assert cis["KEy3"]["key31"]["KeY311"] == "key312"
+        assert cis.to_dict() == dictionary
+
+    def test_when_update_value_then_key_not_changed(self):
+        dictionary = {
+            "key1": "value1",
+            "key2": [{"key21": "value21"}, {"key22": "value22"}],
+            "key3": {"key31": {"key311": "key312"}},
+        }
+        cis = CaseInsensitiveDict(dictionary)
+        cis.update_value("KEY1", "updated-value")
+        cis["keY2"][0].update_value("KEY21", "updated-value21")
+
+        assert cis["KEY1"] == "updated-value"
+        assert cis.to_dict() == {
+            "key1": "updated-value",
+            "key2": [{"key21": "updated-value21"}, {"key22": "value22"}],
+            "key3": {"key31": {"key311": "key312"}},
+        }
