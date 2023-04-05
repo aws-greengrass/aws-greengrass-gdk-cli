@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import call
-from gdk.commands.component.recipe_generator.PublishRecipeGenerator import PublishRecipeGenerator
+from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import pytest
 from urllib3.exceptions import HTTPError
@@ -81,7 +81,7 @@ class PublishCommandTest(TestCase):
         self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
         self.mocker.patch.object(PublishCommand, "get_component_version_from_config", return_value=None)
         self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        self.mocker.patch.object(PublishRecipeGenerator, "generate")
+        self.mocker.patch.object(PublishRecipeTransformer, "transform")
         self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
@@ -155,7 +155,7 @@ class PublishCommandTest(TestCase):
             PublishCommand, "get_component_version_from_config", return_value=None
         )
         mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        mock_generate = self.mocker.patch.object(PublishRecipeGenerator, "generate")
+        mock_transform = self.mocker.patch.object(PublishRecipeTransformer, "transform")
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         mock_create_gg_component = self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
@@ -171,7 +171,7 @@ class PublishCommandTest(TestCase):
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
         assert mock_upload_artifacts_s3.call_count == 1
-        assert mock_generate.call_count == 1
+        assert mock_transform.call_count == 1
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_not_build_command_bucket(self):
@@ -180,7 +180,7 @@ class PublishCommandTest(TestCase):
             PublishCommand, "get_component_version_from_config", return_value=None
         )
         mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        mock_generate = self.mocker.patch.object(PublishRecipeGenerator, "generate")
+        mock_transform = self.mocker.patch.object(PublishRecipeTransformer, "transform")
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         mock_create_gg_component = self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
@@ -193,7 +193,7 @@ class PublishCommandTest(TestCase):
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
         assert mock_upload_artifacts_s3.call_count == 1
-        assert mock_generate.call_count == 1
+        assert mock_transform.call_count == 1
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_build(self):
@@ -202,7 +202,7 @@ class PublishCommandTest(TestCase):
             PublishCommand, "get_component_version_from_config", return_value=None
         )
         mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        mock_generate = self.mocker.patch.object(PublishRecipeGenerator, "generate")
+        mock_transform = self.mocker.patch.object(PublishRecipeTransformer, "transform")
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=True)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         publish = PublishCommand({"bucket": None, "region": None, "options": None})
@@ -216,7 +216,7 @@ class PublishCommandTest(TestCase):
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
         assert mock_upload_artifacts_s3.call_count == 1
-        assert mock_generate.call_count == 1
+        assert mock_transform.call_count == 1
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_exception(self):

@@ -8,11 +8,11 @@ import gdk.common.consts as consts
 import gdk.common.utils as utils
 
 
-class BuildRecipeGenerator:
+class BuildRecipeTransformer:
     def __init__(self, project_config) -> None:
         self.project_config = project_config
 
-    def generate(self, build_folders):
+    def transform(self, build_folders):
         component_recipe = CaseInsensitiveRecipeFile().read(self.project_config["component_recipe_file"])
         self.update_component_recipe_file(component_recipe, build_folders)
         self.create_build_recipe_file(component_recipe)

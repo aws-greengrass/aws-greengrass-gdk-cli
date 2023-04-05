@@ -6,11 +6,11 @@ import gdk.common.consts as consts
 import gdk.common.utils as utils
 
 
-class PublishRecipeGenerator:
+class PublishRecipeTransformer:
     def __init__(self, project_config) -> None:
         self.project_config = project_config
 
-    def generate(self):
+    def transform(self):
         recipe_path = Path(self.project_config["gg_build_recipes_dir"]).joinpath(
             self.project_config["component_recipe_file"].name
         )

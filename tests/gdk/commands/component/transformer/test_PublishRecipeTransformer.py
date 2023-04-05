@@ -5,11 +5,11 @@ from unittest.mock import call
 import pytest
 
 
-from gdk.commands.component.recipe_generator.PublishRecipeGenerator import PublishRecipeGenerator
+from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
 
 
-class PublishRecipeGeneratorTest(TestCase):
+class PublishRecipeTransformerTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
@@ -24,16 +24,16 @@ class PublishRecipeGeneratorTest(TestCase):
             return_value=self.case_insensitive_recipe,
         )
 
-    def test_publish_recipe_generator_instantiate(self):
+    def test_publish_recipe_transformer_instantiate(self):
         pc = project_config()
-        prg = PublishRecipeGenerator(pc)
+        prg = PublishRecipeTransformer(pc)
         assert prg.project_config == pc
 
-    def test_generate(self):
-        brg = PublishRecipeGenerator(project_config())
-        mock_update = self.mocker.patch.object(PublishRecipeGenerator, "update_component_recipe_file", return_value=None)
-        mock_create = self.mocker.patch.object(PublishRecipeGenerator, "create_publish_recipe_file", return_value=None)
-        brg.generate()
+    def test_transform(self):
+        brg = PublishRecipeTransformer(project_config())
+        mock_update = self.mocker.patch.object(PublishRecipeTransformer, "update_component_recipe_file", return_value=None)
+        mock_create = self.mocker.patch.object(PublishRecipeTransformer, "create_publish_recipe_file", return_value=None)
+        brg.transform()
 
         assert mock_update.call_args_list == [call(self.mock_component_recipe.return_value)]
         assert mock_create.call_args_list == [call(self.mock_component_recipe.return_value)]
@@ -58,7 +58,7 @@ class PublishRecipeGeneratorTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeGenerator(project_config())
+        prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("hello_world.py")]
@@ -84,7 +84,7 @@ class PublishRecipeGeneratorTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeGenerator(project_config())
+        prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("hello_world.py")]
@@ -110,7 +110,7 @@ class PublishRecipeGeneratorTest(TestCase):
         mock_iter_dir_list = []
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeGenerator(project_config())
+        prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("not-in_build.py")]
@@ -119,7 +119,7 @@ class PublishRecipeGeneratorTest(TestCase):
     def test_update_component_recipe_file_not_build(self):
         proj_config = project_config()
         proj_config.update({"component_name": "not-com.example.HelloWorld"})
-        prg = PublishRecipeGenerator(proj_config)
+        prg = PublishRecipeTransformer(proj_config)
         cis_recipe = CaseInsensitiveDict(fake_recipe())
         with pytest.raises(Exception) as e:
             prg.update_component_recipe_file(cis_recipe)
@@ -138,7 +138,7 @@ class PublishRecipeGeneratorTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeGenerator(project_config())
+        prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert not mock_glob.called
@@ -162,7 +162,7 @@ class PublishRecipeGeneratorTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeGenerator(project_config())
+        prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert not mock_glob.called
@@ -187,13 +187,13 @@ class PublishRecipeGeneratorTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeGenerator(project_config())
+        prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert not mock_glob.called
 
     def test_create_publish_recipe_file(self):
-        prg = PublishRecipeGenerator(project_config())
+        prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(fake_recipe())
         mocker_recipe_write = self.mocker.patch.object(CaseInsensitiveRecipeFile, "write")
         prg.create_publish_recipe_file(cis_recipe)

@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from gdk.commands.component.recipe_generator.PublishRecipeGenerator import PublishRecipeGenerator
+from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
@@ -135,7 +135,7 @@ class PublishCommand(Command):
         self.upload_artifacts_s3()
 
         logging.info(f"Updating the component recipe {component_name}-{component_version}.")
-        PublishRecipeGenerator(self.project_config).generate()
+        PublishRecipeTransformer(self.project_config).transform()
 
         logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
         self.greengrass_client.create_gg_component()

@@ -11,7 +11,7 @@ import gdk.common.utils as utils
 from gdk.build_system.BuildSystem import BuildSystem
 from gdk.build_system.Zip import Zip
 from gdk.commands.Command import Command
-from gdk.commands.component.recipe_generator.BuildRecipeGenerator import BuildRecipeGenerator
+from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
 
 
 class BuildCommand(Command):
@@ -19,7 +19,7 @@ class BuildCommand(Command):
         super().__init__(command_args, "build")
         self.project_config = project_utils.get_project_config_values()
         self.supported_build_sytems = project_utils.get_supported_component_builds()
-        self.build_recipe_generator = BuildRecipeGenerator(self.project_config)
+        self.build_recipe_transformer = BuildRecipeTransformer(self.project_config)
 
     def run(self):
         """
@@ -102,7 +102,7 @@ class BuildCommand(Command):
         try:
             # Build the project with specified build system
             self.run_build_command()
-            self.build_recipe_generator.generate(self._get_build_folder_by_build_system())
+            self.build_recipe_transformer.transform(self._get_build_folder_by_build_system())
         except Exception as e:
             raise Exception("""{}\n{}""".format(error_messages.BUILD_FAILED, e))
 

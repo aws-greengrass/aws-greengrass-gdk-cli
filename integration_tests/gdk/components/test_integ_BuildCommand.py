@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from shutil import Error
-from gdk.commands.component.recipe_generator.BuildRecipeGenerator import BuildRecipeGenerator
+from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
 
 import pytest
 
@@ -140,12 +140,12 @@ def test_build_run_default_zip_json(mocker, supported_build_system, rglob_build_
         return_value=project_config(),
     )
 
-    mock_generate = mocker.patch.object(BuildRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
     parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
     assert mock_get_proj_config.assert_called_once
     assert mock_copy_dir.call_count == 1  # copy files to zip-build to create a zip
     assert mock_archive_dir.call_count == 1  # archiving directory
-    assert mock_generate.call_count == 1  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 2  # clean zip-build, clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
 
@@ -163,7 +163,7 @@ def test_build_run_default_maven_yaml(mocker, supported_build_system, rglob_buil
         return_value=pc,
     )
     mock_platform = mocker.patch("platform.system", return_value="not-windows")
-    mock_generate = mocker.patch.object(BuildRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
 
     mock_subprocess_run = mocker.patch("subprocess.run")
 
@@ -173,7 +173,7 @@ def test_build_run_default_maven_yaml(mocker, supported_build_system, rglob_buil
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_generate.call_count == 1  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
     assert mock_platform.call_count == 1
@@ -193,7 +193,7 @@ def test_build_run_default_maven_yaml_windows(mocker, supported_build_system, rg
         return_value=pc,
     )
 
-    mock_generate = mocker.patch.object(BuildRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
 
     mock_subprocess_run = mocker.patch("subprocess.run", side_effect="error with maven build cmd")
 
@@ -203,7 +203,7 @@ def test_build_run_default_maven_yaml_windows(mocker, supported_build_system, rg
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_generate.call_count == 1  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
     assert mock_platform.call_count == 1
@@ -224,7 +224,7 @@ def test_build_run_default_maven_yaml_error(mocker, supported_build_system, rglo
         return_value=pc,
     )
 
-    mock_generate = mocker.patch.object(BuildRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
 
     mock_subprocess_run = mocker.patch("subprocess.run", side_effect=Exception("error with maven build cmd"))
     pc = mock_get_proj_config.return_value
@@ -237,7 +237,7 @@ def test_build_run_default_maven_yaml_error(mocker, supported_build_system, rglo
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_generate.call_count == 0  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 0  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
     assert mock_platform.called
@@ -273,7 +273,7 @@ def test_default_build_component_error_run_build_command(mocker, rglob_build_fil
     mock_run_build_command = mocker.patch.object(
         BuildCommand, "run_build_command", side_effect=Error("err in run_build_command")
     )
-    mock_generate = mocker.patch.object(BuildRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
 
     mock_get_proj_config = mocker.patch(
         "gdk.commands.component.project_utils.get_project_config_values",
@@ -286,7 +286,7 @@ def test_default_build_component_error_run_build_command(mocker, rglob_build_fil
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
     assert error_messages.BUILD_FAILED in e.value.args[0]
     assert mock_run_build_command.assert_called_once
-    assert not mock_generate.called
+    assert not mock_transform.called
 
     assert mock_get_supported_component_builds.called
     assert mock_clean_dir.call_count == 1
@@ -305,7 +305,7 @@ def test_build_run_custom(mocker, supported_build_system, rglob_build_file):
         return_value=pc,
     )
 
-    mock_generate = mocker.patch.object(BuildRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
     mock_boto3_client = mocker.patch("boto3.client")
     mock_subprocess_run = mocker.patch("subprocess.run")
 
@@ -315,7 +315,7 @@ def test_build_run_custom(mocker, supported_build_system, rglob_build_file):
     mock_subprocess_run.assert_called_with(["some-command"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
-    assert not mock_generate.called
+    assert not mock_transform.called
     assert mock_boto3_client.call_count == 0
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories

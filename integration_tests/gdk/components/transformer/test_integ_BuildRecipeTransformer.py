@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from gdk.commands.component.recipe_generator.BuildRecipeGenerator import BuildRecipeGenerator
+from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
 
 import pytest
 import tempfile
@@ -33,7 +33,7 @@ def rglob_build_file(mocker):
     return mock_rglob
 
 
-def test_generate_build_recipe_artifact_in_build(mocker):
+def test_transform_build_recipe_artifact_in_build(mocker):
     pc = project_config()
     with tempfile.TemporaryDirectory() as newDir:
         pc["component_recipe_file"] = (
@@ -56,8 +56,8 @@ def test_generate_build_recipe_artifact_in_build(mocker):
         pc["gg_build_component_artifacts_dir"].mkdir(parents=True)
         pc["gg_build_recipes_dir"].mkdir(parents=True)
 
-        brg = BuildRecipeGenerator(pc)
-        brg.generate([zip_build_directory])
+        brg = BuildRecipeTransformer(pc)
+        brg.transform([zip_build_directory])
 
         assert pc["gg_build_component_artifacts_dir"].joinpath("hello_world.py").is_file()
         assert pc["gg_build_recipes_dir"].joinpath("valid_component_recipe.json").is_file()
@@ -71,7 +71,7 @@ def test_generate_build_recipe_artifact_in_build(mocker):
             )
 
 
-def test_generate_build_recipe_artifact_in_s3(mocker):
+def test_transform_build_recipe_artifact_in_s3(mocker):
     pc = project_config()
 
     mocker.patch(
@@ -98,8 +98,8 @@ def test_generate_build_recipe_artifact_in_s3(mocker):
         pc["gg_build_component_artifacts_dir"].mkdir(parents=True)
         pc["gg_build_recipes_dir"].mkdir(parents=True)
 
-        brg = BuildRecipeGenerator(pc)
-        brg.generate([zip_build_directory])
+        brg = BuildRecipeTransformer(pc)
+        brg.transform([zip_build_directory])
 
         assert not pc["gg_build_component_artifacts_dir"].joinpath("hello_world.py").is_file()
         assert pc["gg_build_recipes_dir"].joinpath("valid_component_recipe.json").is_file()
@@ -113,7 +113,7 @@ def test_generate_build_recipe_artifact_in_s3(mocker):
             )
 
 
-def test_generate_build_recipe_artifact_not_found():
+def test_transform_build_recipe_artifact_not_found():
     pc = project_config()
     with tempfile.TemporaryDirectory() as newDir:
         pc["component_recipe_file"] = (
@@ -134,9 +134,9 @@ def test_generate_build_recipe_artifact_not_found():
         pc["gg_build_component_artifacts_dir"].mkdir(parents=True)
         pc["gg_build_recipes_dir"].mkdir(parents=True)
 
-        brg = BuildRecipeGenerator(pc)
+        brg = BuildRecipeTransformer(pc)
         with pytest.raises(Exception) as e:
-            brg.generate([zip_build_directory])
+            brg.transform([zip_build_directory])
 
         assert (
             "Could not find artifact with URI 's3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py'"

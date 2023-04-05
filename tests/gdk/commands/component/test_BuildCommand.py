@@ -9,7 +9,7 @@ import gdk.common.utils as utils
 from gdk.build_system.Zip import Zip
 from gdk.commands.component.BuildCommand import BuildCommand
 from gdk.common.exceptions import error_messages
-from gdk.commands.component.recipe_generator.BuildRecipeGenerator import BuildRecipeGenerator
+from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
 
 
 class BuildCommandTest(TestCase):
@@ -57,7 +57,7 @@ class BuildCommandTest(TestCase):
 
     def test_default_build_component(self):
         mock_run_build_command = self.mocker.patch.object(BuildCommand, "run_build_command")
-        mock_generate = self.mocker.patch.object(BuildRecipeGenerator, "generate")
+        mock_transform = self.mocker.patch.object(BuildRecipeTransformer, "transform")
         mock_get_supported_component_builds = self.mocker.patch(
             "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
         )
@@ -65,13 +65,13 @@ class BuildCommandTest(TestCase):
         build = BuildCommand({})
         build.default_build_component()
         assert mock_run_build_command.assert_called_once
-        assert mock_generate.assert_called_once
+        assert mock_transform.assert_called_once
         assert mock_get_supported_component_builds.called
         assert mock_build_info.assert_called_once
 
-    def test_default_build_component_error_generate(self):
+    def test_default_build_component_error_transform(self):
         mock_run_build_command = self.mocker.patch.object(BuildCommand, "run_build_command")
-        mock_generate = self.mocker.patch.object(BuildRecipeGenerator, "generate", side_effect=Error("generating"))
+        mock_transform = self.mocker.patch.object(BuildRecipeTransformer, "transform", side_effect=Error("generating"))
 
         mock_get_supported_component_builds = self.mocker.patch(
             "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
@@ -84,7 +84,7 @@ class BuildCommandTest(TestCase):
         assert "\ngenerating" in e.value.args[0]
         assert error_messages.BUILD_FAILED in e.value.args[0]
         assert mock_run_build_command.assert_called_once
-        assert mock_generate.assert_called_once
+        assert mock_transform.assert_called_once
         assert mock_build_info.assert_called_once
 
         assert mock_get_supported_component_builds.called

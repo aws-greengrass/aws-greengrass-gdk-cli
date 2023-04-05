@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import ANY, mock_open, patch
 
 import boto3
-from gdk.commands.component.recipe_generator.PublishRecipeGenerator import PublishRecipeGenerator
+from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 import pytest
 
 import gdk.CLIParser as CLIParser
@@ -65,7 +65,7 @@ def test_publish_run_already_built(mocker, get_service_clients, mock_project_con
     file_name = (
         Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
     )
-    mock_generate = mocker.patch.object(PublishRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
     spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
@@ -75,7 +75,7 @@ def test_publish_run_already_built(mocker, get_service_clients, mock_project_con
         mock_file.assert_any_call(file_name)
     assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
     assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_generate.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
@@ -96,7 +96,7 @@ def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_proj
     file_name = (
         Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
     )
-    mock_generate = mocker.patch.object(PublishRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
     spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
     spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
@@ -106,7 +106,7 @@ def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_proj
         mock_file.assert_any_call(file_name)
     assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
     assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_generate.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
@@ -123,7 +123,7 @@ def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_projec
     )
     pc = mock_project_config.return_value
     mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_generate = mocker.patch.object(PublishRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
     file_name = (
         Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
     )
@@ -141,7 +141,7 @@ def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_projec
         mock_file.assert_any_call(file_name)
     assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
     assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_generate.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
@@ -223,7 +223,7 @@ def test_publish_run_next_patch(mocker, get_service_clients, mock_project_config
     pc = mock_project_config.return_value
     pc["component_version"] = "NEXT_PATCH"
     mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_generate = mocker.patch.object(PublishRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
     # Next patch version based on test data
     file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.5")).resolve()
 
@@ -236,7 +236,7 @@ def test_publish_run_next_patch(mocker, get_service_clients, mock_project_config
         mock_file.assert_any_call(file_name)
     assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
     assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_generate.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
@@ -254,7 +254,7 @@ def test_publish_run_next_patch_doesnt_exist(mocker, get_service_clients, mock_p
     pc = mock_project_config.return_value
     pc["component_version"] = "NEXT_PATCH"
     mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_generate = mocker.patch.object(PublishRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
     # Next patch version based on test data
     file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
     mocker.patch.object(
@@ -271,7 +271,7 @@ def test_publish_run_next_patch_doesnt_exist(mocker, get_service_clients, mock_p
         mock_file.assert_any_call(file_name)
     assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
     assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_generate.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
@@ -290,7 +290,7 @@ def test_publish_run_not_built(mocker, get_service_clients, mock_project_config)
 
     pc = mock_project_config.return_value
     mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_generate = mocker.patch.object(PublishRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
     file_name = (
         Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
     )
@@ -305,7 +305,7 @@ def test_publish_run_not_built(mocker, get_service_clients, mock_project_config)
     assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
     assert mock_build.call_count == 1  # build the component first
     assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_generate.call_count == 1  # Checks if artifact in the recipe exist in the build directory
+    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
 
     # Assert cloud calls
     assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
@@ -393,7 +393,7 @@ def test_publish_run_bucket_already_owned_in_same_region(mocker, get_service_cli
     )
     pc = mock_project_config.return_value
     mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_generate = mocker.patch.object(PublishRecipeGenerator, "generate")
+    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
     file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
 
     spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
@@ -407,7 +407,7 @@ def test_publish_run_bucket_already_owned_in_same_region(mocker, get_service_cli
         mock_file.assert_any_call(file_name)
     assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
     assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_generate.call_count == 1  # Recipe is not updated
+    assert mock_transform.call_count == 1  # Recipe is not updated
 
     # Assert cloud calls
     assert not mock_create_bucket.called  # Tries to create a bucket if at least one artifact needs to be uploaded

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from gdk.commands.component.recipe_generator.PublishRecipeGenerator import PublishRecipeGenerator
+from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import pytest
 import tempfile
@@ -32,7 +32,7 @@ def rglob_build_file(mocker):
     return mock_rglob
 
 
-def test_generate_publish_recipe_artifact_in_build_json():
+def test_transform_publish_recipe_artifact_in_build_json():
     pc = project_config()
     with tempfile.TemporaryDirectory() as newDir:
         pc["component_recipe_file"] = (
@@ -55,8 +55,8 @@ def test_generate_publish_recipe_artifact_in_build_json():
         artifact_file = Path(pc["gg_build_component_artifacts_dir"]).joinpath("hello_world.py").resolve()
         artifact_file.touch(exist_ok=True)
 
-        prg = PublishRecipeGenerator(pc)
-        prg.generate()
+        prg = PublishRecipeTransformer(pc)
+        prg.transform()
 
         assert pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.json").is_file()
 
@@ -65,7 +65,7 @@ def test_generate_publish_recipe_artifact_in_build_json():
             assert recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://default/com.example.HelloWorld/1.0.0/hello_world.py"
 
 
-def test_generate_publish_recipe_artifact_in_build_yaml():
+def test_transform_publish_recipe_artifact_in_build_yaml():
     pc = project_config()
     with tempfile.TemporaryDirectory() as newDir:
         pc["component_recipe_file"] = (
@@ -89,8 +89,8 @@ def test_generate_publish_recipe_artifact_in_build_yaml():
         artifact_file = Path(pc["gg_build_component_artifacts_dir"]).joinpath("hello_world.py").resolve()
         artifact_file.touch(exist_ok=True)
 
-        prg = PublishRecipeGenerator(pc)
-        prg.generate()
+        prg = PublishRecipeTransformer(pc)
+        prg.transform()
 
         assert pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.yaml").is_file()
 
