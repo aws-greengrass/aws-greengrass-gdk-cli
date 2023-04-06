@@ -1,6 +1,6 @@
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import call
+from unittest.mock import call, patch, mock_open
 from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import pytest
@@ -218,6 +218,59 @@ class PublishCommandTest(TestCase):
         assert mock_upload_artifacts_s3.call_count == 1
         assert mock_transform.call_count == 1
         assert mock_create_gg_component.call_count == 1
+
+    def test_publish_run_override_command_args_with_options(self):
+        valid_json_string = '{"metadata": "test"}'
+        publish = PublishCommand({"bucket": "my-bucket", "region": None, "options": valid_json_string})
+        publish.project_config["bucket"] = "default"
+        publish.project_config["account_number"] = "1234"
+        publish.project_config["component_version"] = "1.0.0"
+        publish._override_config_with_command_args()
+        assert publish.project_config["bucket"] == "my-bucket"
+        assert publish.project_config["options"] == {"metadata": "test"}
+
+    def test_publish_run_override_command_args_with_invalid_options(self):
+        incorrect_json_string = '{"metadata: "test"}'
+        publish = PublishCommand({"bucket": None, "region": "us-west-2", "options": incorrect_json_string})
+        publish.project_config["bucket"] = "default"
+        publish.project_config["account_number"] = "1234"
+        publish.project_config["component_version"] = "1.0.0"
+        with pytest.raises(Exception) as e:
+            publish._override_config_with_command_args()
+        assert "JSON string is incorrectly formatted" in e.value.args[0]
+
+    def test_publish_run_override_command_args_with_options_from_file_not_exists(self):
+        publish = PublishCommand({"bucket": None, "region": "us-west-2", "options": "file_not_exists.json"})
+        publish.project_config["bucket"] = "default"
+        publish.project_config["account_number"] = "1234"
+        publish.project_config["component_version"] = "1.0.0"
+        with pytest.raises(Exception) as e:
+            self.mocker.patch("gdk.common.utils.file_exists", return_value=False)
+            publish._override_config_with_command_args()
+        assert "The json file path provided in the command does not exist" in e.value.args[0]
+
+    def test_publish_run_override_command_args_with_options_from_a_valid_file(self):
+        self.mocker.patch("gdk.common.utils.file_exists", return_value=True)
+        publish = PublishCommand({"bucket": None, "region": None, "options": "valid_file.json"})
+        publish.project_config["bucket"] = "default"
+        publish.project_config["account_number"] = "1234"
+        publish.project_config["component_version"] = "1.0.0"
+        valid_json_string = '{"metadata": "test"}'
+        with patch("builtins.open", mock_open(read_data=valid_json_string)):
+            publish._override_config_with_command_args()
+        assert publish.project_config["options"] == {"metadata": "test"}
+
+    def test_publish_run_override_command_args_with_options_from_an_invalid_file(self):
+        self.mocker.patch("gdk.common.utils.file_exists", return_value=True)
+        publish = PublishCommand({"bucket": None, "region": None, "options": "valid_file.json"})
+        publish.project_config["bucket"] = "default"
+        publish.project_config["account_number"] = "1234"
+        publish.project_config["component_version"] = "1.0.0"
+        incorrect_json_string = '{"metadata: "test"}'
+        with patch("builtins.open", mock_open(read_data=incorrect_json_string)):
+            with pytest.raises(Exception) as e:
+                publish._override_config_with_command_args()
+        assert "JSON string is incorrectly formatted" in e.value.args[0]
 
     def test_publish_run_exception(self):
         mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")

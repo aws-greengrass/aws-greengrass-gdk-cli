@@ -73,23 +73,26 @@ def test_component_publish_exception(mocker):
     mock_component_publish.assert_called_with(d_args)
 
 
-def mock_component_list(mocker):
+def test_component_list(mocker):
     mock_component_list = mocker.patch.object(ListCommand, "__init__", return_value=None)
     mock_component_list_run = mocker.patch.object(ListCommand, "run", return_value=None)
     d_args = {"list": None}
-    component.build(d_args)
+    component.list(d_args)
     assert mock_component_list.call_count == 1
     assert mock_component_list_run.call_count == 1
     mock_component_list.assert_called_with(d_args)
 
 
-def mock_component_list_exception(mocker):
+def test_component_list_exception(mocker):
     mock_component_list = mocker.patch.object(ListCommand, "__init__", side_effect=Exception("Error in list"))
     mock_component_list_run = mocker.patch.object(ListCommand, "run", return_value=None)
     d_args = {"list": None}
     with pytest.raises(Exception) as e:
-        component.build(d_args)
-    assert "Could not list components from the software catalog due to the following error." in e.value.args[0]
+        component.list(d_args)
+    assert (
+        "Could not list the available components from Greengrass Software Catalog due to the following error"
+        in e.value.args[0]
+    )
     assert mock_component_list.call_count == 1
     assert mock_component_list_run.call_count == 0
     mock_component_list.assert_called_with(d_args)
