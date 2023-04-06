@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from shutil import Error
-from unittest.mock import mock_open, patch
+from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
 
 import pytest
 
@@ -139,20 +139,13 @@ def test_build_run_default_zip_json(mocker, supported_build_system, rglob_build_
         "gdk.commands.component.project_utils.get_project_config_values",
         return_value=project_config(),
     )
-    mock_is_artifact_in_build = mocker.patch.object(BuildCommand, "is_artifact_in_build", return_value=True)
 
-    mock_json_dump = mocker.patch("json.dumps")
-    pc = mock_get_proj_config.return_value
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath(pc["component_recipe_file"].name).resolve()
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-        mock_file.assert_any_call(file_name, "w")
-        mock_json_dump.call_count == 1
-
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
+    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
     assert mock_get_proj_config.assert_called_once
     assert mock_copy_dir.call_count == 1  # copy files to zip-build to create a zip
     assert mock_archive_dir.call_count == 1  # archiving directory
-    assert mock_is_artifact_in_build.call_count == 1  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 2  # clean zip-build, clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
 
@@ -170,22 +163,17 @@ def test_build_run_default_maven_yaml(mocker, supported_build_system, rglob_buil
         return_value=pc,
     )
     mock_platform = mocker.patch("platform.system", return_value="not-windows")
-    pc["component_recipe_file"] = Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.yaml")
-    mock_is_artifact_in_build = mocker.patch.object(BuildCommand, "is_artifact_in_build", return_value=True)
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
 
     mock_subprocess_run = mocker.patch("subprocess.run")
-    pc = mock_get_proj_config.return_value
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath(pc["component_recipe_file"].name).resolve()
 
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-        mock_file.assert_any_call(file_name, "w")
+    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
     assert mock_get_proj_config.assert_called_once
     mock_subprocess_run.assert_called_with(["mvn", "clean", "package"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_is_artifact_in_build.call_count == 1  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
     assert mock_platform.call_count == 1
@@ -205,23 +193,17 @@ def test_build_run_default_maven_yaml_windows(mocker, supported_build_system, rg
         return_value=pc,
     )
 
-    mock_is_artifact_in_build = mocker.patch.object(BuildCommand, "is_artifact_in_build", return_value=True)
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
 
     mock_subprocess_run = mocker.patch("subprocess.run", side_effect="error with maven build cmd")
-    mock_yaml_dump = mocker.patch("yaml.dump")
-    pc = mock_get_proj_config.return_value
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath(pc["component_recipe_file"].name).resolve()
 
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-        mock_file.assert_any_call(file_name, "w")
-        mock_yaml_dump.call_count == 1
+    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
     assert mock_get_proj_config.assert_called_once
     mock_subprocess_run.assert_called_with(["mvn.cmd", "clean", "package"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_is_artifact_in_build.call_count == 1  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
     assert mock_platform.call_count == 1
@@ -242,7 +224,7 @@ def test_build_run_default_maven_yaml_error(mocker, supported_build_system, rglo
         return_value=pc,
     )
 
-    mock_is_artifact_in_build = mocker.patch.object(BuildCommand, "is_artifact_in_build", return_value=True)
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
 
     mock_subprocess_run = mocker.patch("subprocess.run", side_effect=Exception("error with maven build cmd"))
     pc = mock_get_proj_config.return_value
@@ -255,50 +237,10 @@ def test_build_run_default_maven_yaml_error(mocker, supported_build_system, rglo
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
     assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_is_artifact_in_build.call_count == 0  # only one artifact in project_config. Available in build
+    assert mock_transform.call_count == 0  # only one artifact in project_config. Available in build
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
     assert mock_platform.called
-
-
-def test_build_run_default_gradle_yaml_artifact_not_found(mocker, supported_build_system, rglob_build_file):
-
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    mock_archive_dir = mocker.patch("shutil.make_archive", return_value=None)
-    pc = project_config()
-    pc["component_build_config"] = {"build_system": "gradle"}
-    pc["component_recipe_file"] = Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.yaml")
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=pc,
-    )
-
-    mock_boto3_client = mocker.patch("boto3.client")
-    mock_subprocess_run = mocker.patch("subprocess.run")
-    mock_yaml_dump = mocker.patch("yaml.dump")
-    pc = mock_get_proj_config.return_value
-
-    with patch("builtins.open", mock_open()) as mock_file:
-        with pytest.raises(Exception) as e:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-            assert (
-                "Could not find artifact with URI"
-                " 's3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py' on s3 or inside"
-                " the build folders."
-                in e.value.args[0]
-            )
-            assert not mock_file.called
-            mock_yaml_dump.call_count == 0
-    assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(gradle_build_command, check=True)  # called gradle build command
-    assert mock_copy_dir.call_count == 0  # No copying directories
-    assert supported_build_system.call_count == 1
-    assert mock_archive_dir.call_count == 0  # Archvie never called in gralde
-    assert mock_boto3_client.call_count == 1
-    assert mock_clean_dir.call_count == 1  # clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
 
 
 def test_build_run_default_exception(mocker, rglob_build_file):
@@ -331,8 +273,8 @@ def test_default_build_component_error_run_build_command(mocker, rglob_build_fil
     mock_run_build_command = mocker.patch.object(
         BuildCommand, "run_build_command", side_effect=Error("err in run_build_command")
     )
-    mock_find_artifacts_and_update_uri = mocker.patch.object(BuildCommand, "find_artifacts_and_update_uri")
-    mock_create_build_recipe_file = mocker.patch.object(BuildCommand, "create_build_recipe_file")
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
+
     mock_get_proj_config = mocker.patch(
         "gdk.commands.component.project_utils.get_project_config_values",
         return_value=project_config(),
@@ -344,8 +286,7 @@ def test_default_build_component_error_run_build_command(mocker, rglob_build_fil
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
     assert error_messages.BUILD_FAILED in e.value.args[0]
     assert mock_run_build_command.assert_called_once
-    assert not mock_find_artifacts_and_update_uri.called
-    assert not mock_create_build_recipe_file.called
+    assert not mock_transform.called
 
     assert mock_get_supported_component_builds.called
     assert mock_clean_dir.call_count == 1
@@ -364,99 +305,18 @@ def test_build_run_custom(mocker, supported_build_system, rglob_build_file):
         return_value=pc,
     )
 
-    mock_is_artifact_in_build = mocker.patch.object(BuildCommand, "is_artifact_in_build", return_value=False)
-    mock_is_artifact_in_s3 = mocker.patch.object(BuildCommand, "is_artifact_in_s3", return_value=True)
+    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
     mock_boto3_client = mocker.patch("boto3.client")
     mock_subprocess_run = mocker.patch("subprocess.run")
-    mock_yaml_dump = mocker.patch("yaml.dump")
-    pc = mock_get_proj_config.return_value
 
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-        assert not mock_file.called
-        mock_yaml_dump.call_count == 0
+    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
+
     assert mock_get_proj_config.assert_called_once
     mock_subprocess_run.assert_called_with(["some-command"], check=True)  # called maven build command
     assert mock_copy_dir.call_count == 0  # No copying directories
     assert supported_build_system.call_count == 1
-    assert mock_is_artifact_in_build.call_count == 0  # only one artifact in project_config. Not vailable in build
-    assert mock_is_artifact_in_s3.call_count == 0  # only one artifact in project_config. Not available in s3
+    assert not mock_transform.called
     assert mock_boto3_client.call_count == 0
-    assert mock_clean_dir.call_count == 1  # clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
-
-
-def test_build_run_default_gradle_yaml_artifact_found_build(mocker, supported_build_system, rglob_build_file):
-
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    mock_archive_dir = mocker.patch("shutil.make_archive", return_value=None)
-    pc = project_config()
-    pc["component_build_config"] = {"build_system": "gradle"}
-    pc["component_recipe_file"] = Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.yaml")
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=pc,
-    )
-
-    mock_boto3_client = mocker.patch("boto3.client")
-    mock_subprocess_run = mocker.patch("subprocess.run")
-    mock_yaml_dump = mocker.patch("yaml.dump")
-    pc = mock_get_proj_config.return_value
-    mocker.patch("pathlib.Path.is_file", return_value=True)
-    mock_copy_file = mocker.patch("shutil.copy", return_value=None)
-    mock_exists = mocker.patch("pathlib.Path.exists", return_value=True)
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath(pc["component_recipe_file"].name).resolve()
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-        mock_file.assert_any_call(file_name, "w")
-        mock_yaml_dump.call_count == 0
-    assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(gradle_build_command, check=True)  # called gradle build command
-    assert mock_copy_dir.call_count == 0  # No copying directories
-    assert supported_build_system.call_count == 1
-    assert mock_archive_dir.call_count == 0  # Archvie never called in gralde
-    assert mock_boto3_client.call_count == 0  # artifacts found in s3
-    assert mock_clean_dir.call_count == 1  # clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
-    assert mock_copy_file.call_count == 1
-    assert mock_exists.called
-
-
-def test_build_run_default_gradle_yaml_error_creating_recipe(mocker, supported_build_system, rglob_build_file):
-
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    mock_archive_dir = mocker.patch("shutil.make_archive", return_value=None)
-    pc = project_config()
-    pc["component_build_config"] = {"build_system": "gradle"}
-    pc["component_recipe_file"] = Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.yaml")
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=pc,
-    )
-
-    mock_boto3_client = mocker.patch("boto3.client")
-    mock_subprocess_run = mocker.patch("subprocess.run")
-    mock_yaml_dump = mocker.patch("yaml.dump", side_effect=Exception("writing failed"))
-    pc = mock_get_proj_config.return_value
-    mock_is_artifact_in_build = mocker.patch.object(BuildCommand, "is_artifact_in_build", return_value=True)
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath(pc["component_recipe_file"].name).resolve()
-    with patch("builtins.open", mock_open()) as mock_file:
-        with pytest.raises(Exception) as e:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-            mock_file.assert_any_call(file_name, "w")
-            mock_yaml_dump.call_count == 1
-        assert "Failed to create build recipe file at" in e.value.args[0]
-    assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(gradle_build_command, check=True)  # called gradle build command
-    assert mock_copy_dir.call_count == 0  # No copying directories
-    assert supported_build_system.call_count == 1
-    assert mock_is_artifact_in_build.call_count == 1
-    assert mock_archive_dir.call_count == 0  # Archvie never called in gralde
-    assert mock_boto3_client.call_count == 0  # artifacts found in s3
     assert mock_clean_dir.call_count == 1  # clean greengrass-build
     assert mock_create_dir.call_count == 2  # create gg directories
 
@@ -474,19 +334,4 @@ def project_config():
         "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
         "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
         "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/valid_component_recipe.json"),
-        "parsed_component_recipe": {
-            "RecipeFormatVersion": "2020-01-25",
-            "ComponentName": "com.example.HelloWorld",
-            "ComponentVersion": "1.0.0",
-            "ComponentDescription": "My first Greengrass component.",
-            "ComponentPublisher": "Amazon",
-            "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
-            "Manifests": [
-                {
-                    "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                    "Artifacts": [{"URI": "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"}],
-                }
-            ],
-        },
     }

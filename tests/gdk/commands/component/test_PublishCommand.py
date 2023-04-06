@@ -1,7 +1,7 @@
-import logging
 from pathlib import Path
-from unittest import TestCase, mock
+from unittest import TestCase
 from unittest.mock import call
+from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import pytest
 from urllib3.exceptions import HTTPError
@@ -20,295 +20,6 @@ class PublishCommandTest(TestCase):
             "gdk.commands.component.project_utils.get_project_config_values",
             return_value=project_config(),
         )
-
-    def test_create_publish_recipe_file_json(self):
-        component_name = "component_name"
-        component_version = "1.0.0"
-        parsed_recipe_file = {"componentName": component_name, "componentVersion": component_version}
-
-        file_name = (
-            Path(self.mock_get_proj_config.return_value["gg_build_recipes_dir"])
-            .joinpath("component_name-1.0.0.json")
-            .resolve()
-        )
-        mock_json_dump = self.mocker.patch("json.dumps")
-        mock_yaml_dump = self.mocker.patch("yaml.dump")
-        publish = PublishCommand({})
-        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
-            publish.create_publish_recipe_file(component_name, component_version, parsed_recipe_file)
-            mock_file.assert_any_call(file_name, "w")
-            mock_json_dump.call_count == 1
-            assert not mock_yaml_dump.called
-        assert "publish_recipe_file" in publish.project_config
-
-    def test_create_publish_recipe_file_yaml(self):
-        component_name = "component_name"
-        component_version = "1.0.0"
-        parsed_recipe_file = {"componentName": component_name, "componentVersion": component_version}
-        publish = PublishCommand({})
-        publish.project_config["component_recipe_file"] = Path("some-yaml.yaml").resolve()
-        file_name = (
-            Path(self.mock_get_proj_config.return_value["gg_build_recipes_dir"])
-            .joinpath("component_name-1.0.0.yaml")
-            .resolve()
-        )
-        mock_json_dump = self.mocker.patch("json.dumps")
-        mock_yaml_dump = self.mocker.patch("yaml.dump")
-        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
-            publish.create_publish_recipe_file(component_name, component_version, parsed_recipe_file)
-            mock_file.assert_any_call(file_name, "w")
-            mock_yaml_dump.call_count == 1
-            assert not mock_json_dump.called
-        assert "publish_recipe_file" in publish.project_config
-
-    def test_create_recipe_file_json_invalid(self):
-        # Raise exception for when creating recipe failed due to invalid json
-        component_name = "component_name"
-        component_version = "1.0.0"
-        parsed_recipe_file = {"componentName": component_name, "componentVersion": component_version}
-        publish = PublishCommand({})
-        publish.project_config["component_recipe_file"] = Path("some-json.json").resolve()
-        file_name = (
-            Path(self.mock_get_proj_config.return_value["gg_build_recipes_dir"])
-            .joinpath("component_name-1.0.0.json")
-            .resolve()
-        )
-
-        def throw_error(*args, **kwargs):
-            if args[0] == parsed_recipe_file:
-                raise TypeError("I mock json error")
-
-        mock_json_dump = self.mocker.patch("json.dumps", side_effect=throw_error)
-        mock_yaml_dump = self.mocker.patch("yaml.dump")
-        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
-            with pytest.raises(Exception) as e:
-                publish.create_publish_recipe_file(component_name, component_version, parsed_recipe_file)
-            assert "Failed to create publish recipe file at" in e.value.args[0]
-            mock_file.assert_called_once_with(file_name, "w")
-            mock_json_dump.call_count == 1
-            assert not mock_yaml_dump.called
-        assert "publish_recipe_file" in publish.project_config
-
-    def test_create_recipe_file_yaml_invalid(self):
-        # Raise exception for when creating recipe failed due to invalid yaml
-        component_name = "component_name"
-        component_version = "1.0.0"
-        parsed_recipe_file = {"componentName": component_name, "componentVersion": component_version}
-        publish = PublishCommand({})
-        publish.project_config["component_recipe_file"] = Path("some-yaml.yaml").resolve()
-        file_name = (
-            Path(self.mock_get_proj_config.return_value["gg_build_recipes_dir"])
-            .joinpath("component_name-1.0.0.yaml")
-            .resolve()
-        )
-
-        def throw_error(*args, **kwargs):
-            if args[0] == parsed_recipe_file:
-                raise TypeError("I mock yaml error")
-
-        mock_json_dump = self.mocker.patch("json.dumps")
-        mock_yaml_dump = self.mocker.patch("yaml.dump", side_effect=throw_error)
-        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
-            with pytest.raises(Exception) as e:
-                publish.create_publish_recipe_file(component_name, component_version, parsed_recipe_file)
-            assert "Failed to create publish recipe file at" in e.value.args[0]
-            mock_file.assert_called_once_with(file_name, "w")
-            mock_json_dump.call_count == 1
-            assert mock_yaml_dump.called
-        assert "publish_recipe_file" in publish.project_config
-
-    def test_update_and_create_recipe_file_no_manifests(self):
-        self.mocker.patch("gdk.commands.component.project_utils.parse_recipe_file", return_value={})
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
-        component_name = "component_name"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        assert not mock_create_publish_recipe.called  # No 'Manifests' in recipe
-
-    def test_update_and_create_recipe_file_manifests_build(self):
-        self.mocker.patch(
-            "gdk.commands.component.project_utils.parse_recipe_file",
-            return_value=self.mock_get_proj_config.return_value["parsed_component_recipe"],
-        )
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=[Path("hello_world.py")])
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
-        component_name = "com.example.HelloWorld"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        publish_component_recipe = self.mock_get_proj_config.return_value["parsed_component_recipe"]
-        assert mock_glob.call_count == 1
-        assert mock_create_publish_recipe.call_count == 1
-        mock_create_publish_recipe.assert_any_call(component_name, component_version, publish_component_recipe)
-        assert publish_component_recipe["ComponentVersion"] == component_version
-        assert (
-            publish_component_recipe["Manifests"][0]["Artifacts"][0]["URI"]
-            == f"s3://default/{component_name}/{component_version}/hello_world.py"
-        )
-
-    def test_update_and_create_recipe_file_manifests_not_build(self):
-        self.mocker.patch(
-            "gdk.commands.component.project_utils.parse_recipe_file",
-            return_value=self.mock_get_proj_config.return_value["parsed_component_recipe"],
-        )
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
-        component_name = "component_name"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        with pytest.raises(Exception) as e:
-            publish.update_and_create_recipe_file(component_name, component_version)
-        assert "as it is not build.\nBuild the component `gdk component build` before publishing it." in e.value.args[0]
-        assert mock_create_publish_recipe.call_count == 0
-
-    def test_update_and_create_recipe_file_uri_not_matches(self):
-        self.mocker.patch(
-            "gdk.commands.component.project_utils.parse_recipe_file",
-            return_value=self.mock_get_proj_config.return_value["parsed_component_recipe"],
-        )
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=[Path("hello_world.py")])
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
-        component_name = "com.example.HelloWorld"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        publish_component_recipe = self.mock_get_proj_config.return_value["parsed_component_recipe"]
-        assert mock_glob.call_count == 1
-        assert mock_create_publish_recipe.call_count == 1
-        mock_create_publish_recipe.assert_any_call(component_name, component_version, publish_component_recipe)
-        assert publish_component_recipe["ComponentVersion"] == component_version
-
-    def test_update_and_create_recipe_file_artifact_file_not_exists(self):
-        self.mocker.patch(
-            "gdk.commands.component.project_utils.parse_recipe_file",
-            return_value=self.mock_get_proj_config.return_value["parsed_component_recipe"],
-        )
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=[])
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-        spy_logging_warning = self.mocker.spy(logging, "warning")
-        component_name = "com.example.HelloWorld"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        assert spy_logging_warning.call_count == 1
-        assert mock_glob.call_count == 1
-        assert mock_create_publish_recipe.called
-
-    def test_update_and_create_recipe_file_no_artifacts(self):
-        no_artifacts_key = {
-            "RecipeFormatVersion": "2020-01-25",
-            "ComponentName": "com.example.HelloWorld",
-            "ComponentVersion": "1.0.0",
-            "ComponentDescription": "My first Greengrass component.",
-            "ComponentPublisher": "Amazon",
-            "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
-            "Manifests": [
-                {
-                    "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                }
-            ],
-        }
-        self.mocker.patch("gdk.commands.component.project_utils.parse_recipe_file", return_value=no_artifacts_key)
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
-        component_name = "com.example.HelloWorld"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        assert mock_create_publish_recipe.call_count == 1
-        mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_key)
-        assert no_artifacts_key["ComponentVersion"] == component_version
-
-    def test_update_and_create_recipe_file_no_artifacts_uri(self):
-        no_artifacts_uri_key = {
-            "RecipeFormatVersion": "2020-01-25",
-            "ComponentName": "com.example.HelloWorld",
-            "ComponentVersion": "1.0.0",
-            "ComponentDescription": "My first Greengrass component.",
-            "ComponentPublisher": "Amazon",
-            "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
-            "Manifests": [
-                {
-                    "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                    "Artifacts": [{}],
-                }
-            ],
-        }
-        self.mocker.patch("gdk.commands.component.project_utils.parse_recipe_file", return_value=no_artifacts_uri_key)
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
-        component_name = "com.example.HelloWorld"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        assert mock_create_publish_recipe.call_count == 1
-        mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_uri_key)
-        assert no_artifacts_uri_key["ComponentVersion"] == component_version
-
-    def test_update_and_create_recipe_file_docker_artifacts_uri(self):
-        no_artifacts_uri_key = {
-            "RecipeFormatVersion": "2020-01-25",
-            "ComponentName": "com.example.HelloWorld",
-            "ComponentVersion": "1.0.0",
-            "ComponentDescription": "My first Greengrass component.",
-            "ComponentPublisher": "Amazon",
-            "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
-            "Manifests": [
-                {
-                    "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                    "Artifacts": [{"URI": "docker:uri"}],
-                }
-            ],
-        }
-        self.mocker.patch("gdk.commands.component.project_utils.parse_recipe_file", return_value=no_artifacts_uri_key)
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-
-        component_name = "com.example.HelloWorld"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        assert mock_create_publish_recipe.call_count == 1
-        mock_create_publish_recipe.assert_any_call(component_name, component_version, no_artifacts_uri_key)
-        assert no_artifacts_uri_key["ComponentVersion"] == component_version
-
-    def test_update_and_create_recipe_file_mix_uri_in_recipe(self):
-        # Nothing to copy if artifact uri don't exist in the recipe.
-
-        mock_iter_dir_list = [Path("hello_world.py").resolve()]
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
-
-        docker_artifacts_uri_key = {
-            "RecipeFormatVersion": "2020-01-25",
-            "ComponentName": "com.example.HelloWorld",
-            "ComponentVersion": "1.0.0",
-            "ComponentDescription": "My first Greengrass component.",
-            "ComponentPublisher": "Amazon",
-            "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
-            "Manifests": [
-                {
-                    "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                    "Artifacts": [{"URI": "docker:uri"}, {"URI": "s3://hello_world.py"}],
-                }
-            ],
-        }
-        mock_create_publish_recipe = self.mocker.patch.object(PublishCommand, "create_publish_recipe_file", return_value=None)
-        self.mocker.patch("gdk.commands.component.project_utils.parse_recipe_file", return_value=docker_artifacts_uri_key)
-        component_name = "com.example.HelloWorld"
-        component_version = "1.0.0"
-        publish = PublishCommand({})
-        publish.update_and_create_recipe_file(component_name, component_version)
-        mock_glob.assert_called_with("hello_world.py")
-        assert mock_create_publish_recipe.call_count == 1
-        mock_create_publish_recipe.assert_any_call(component_name, component_version, docker_artifacts_uri_key)
-        assert docker_artifacts_uri_key["ComponentVersion"] == component_version
 
     def test_get_component_version_from_config(self):
         mock_get_next_version = self.mocker.patch.object(PublishCommand, "get_next_version", return_value="")
@@ -370,7 +81,7 @@ class PublishCommandTest(TestCase):
         self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
         self.mocker.patch.object(PublishCommand, "get_component_version_from_config", return_value=None)
         self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        self.mocker.patch.object(PublishCommand, "update_and_create_recipe_file", return_value=None)
+        self.mocker.patch.object(PublishRecipeTransformer, "transform")
         self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
@@ -444,9 +155,7 @@ class PublishCommandTest(TestCase):
             PublishCommand, "get_component_version_from_config", return_value=None
         )
         mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        mock_update_and_create_recipe_file = self.mocker.patch.object(
-            PublishCommand, "update_and_create_recipe_file", return_value=None
-        )
+        mock_transform = self.mocker.patch.object(PublishRecipeTransformer, "transform")
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         mock_create_gg_component = self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
@@ -462,7 +171,7 @@ class PublishCommandTest(TestCase):
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
         assert mock_upload_artifacts_s3.call_count == 1
-        assert mock_update_and_create_recipe_file.call_count == 1
+        assert mock_transform.call_count == 1
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_not_build_command_bucket(self):
@@ -471,9 +180,7 @@ class PublishCommandTest(TestCase):
             PublishCommand, "get_component_version_from_config", return_value=None
         )
         mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        mock_update_and_create_recipe_file = self.mocker.patch.object(
-            PublishCommand, "update_and_create_recipe_file", return_value=None
-        )
+        mock_transform = self.mocker.patch.object(PublishRecipeTransformer, "transform")
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=False)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         mock_create_gg_component = self.mocker.patch.object(Greengrassv2Client, "create_gg_component", return_value=None)
@@ -486,7 +193,7 @@ class PublishCommandTest(TestCase):
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
         assert mock_upload_artifacts_s3.call_count == 1
-        assert mock_update_and_create_recipe_file.call_count == 1
+        assert mock_transform.call_count == 1
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_build(self):
@@ -495,9 +202,7 @@ class PublishCommandTest(TestCase):
             PublishCommand, "get_component_version_from_config", return_value=None
         )
         mock_upload_artifacts_s3 = self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
-        mock_update_and_create_recipe_file = self.mocker.patch.object(
-            PublishCommand, "update_and_create_recipe_file", return_value=None
-        )
+        mock_transform = self.mocker.patch.object(PublishRecipeTransformer, "transform")
         mock_dir_exists = self.mocker.patch("gdk.common.utils.dir_exists", return_value=True)
         mock_build = self.mocker.patch("gdk.commands.component.component.build", return_value=None)
         publish = PublishCommand({"bucket": None, "region": None, "options": None})
@@ -511,7 +216,7 @@ class PublishCommandTest(TestCase):
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
         assert mock_upload_artifacts_s3.call_count == 1
-        assert mock_update_and_create_recipe_file.call_count == 1
+        assert mock_transform.call_count == 1
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_exception(self):
@@ -568,19 +273,4 @@ def project_config():
         "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
         "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
         "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/valid_component_recipe.json"),
-        "parsed_component_recipe": {
-            "RecipeFormatVersion": "2020-01-25",
-            "ComponentName": "com.example.HelloWorld",
-            "ComponentVersion": "1.0.0",
-            "ComponentDescription": "My first Greengrass component.",
-            "ComponentPublisher": "Amazon",
-            "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
-            "Manifests": [
-                {
-                    "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                    "Artifacts": [{"URI": "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"}],
-                }
-            ],
-        },
     }

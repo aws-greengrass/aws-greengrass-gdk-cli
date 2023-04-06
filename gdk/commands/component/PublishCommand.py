@@ -1,8 +1,7 @@
 import json
 import logging
 from pathlib import Path
-
-import yaml
+from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
@@ -119,6 +118,16 @@ class PublishCommand(Command):
 
     def _update_component_version(self):
         self.project_config["component_version"] = self.get_component_version_from_config()
+        self._update_publish_recipe_file_path()
+
+    def _update_publish_recipe_file_path(self):
+        ext = self.project_config["component_recipe_file"].name.split(".")[-1]
+        publish_recipe_file_name = "{}-{}.{}".format(
+            self.project_config["component_name"], self.project_config["component_version"], ext
+        )  # Eg. HelloWorld-1.0.0.yaml
+        self.project_config["publish_recipe_file"] = (
+            Path(self.project_config["gg_build_recipes_dir"]).joinpath(publish_recipe_file_name).resolve()
+        )
 
     def _publish_component_version(self, component_name, component_version):
         logging.info(f"Publishing the component '{component_name}' with the given project configuration.")
@@ -126,7 +135,7 @@ class PublishCommand(Command):
         self.upload_artifacts_s3()
 
         logging.info(f"Updating the component recipe {component_name}-{component_version}.")
-        self.update_and_create_recipe_file(component_name, component_version)
+        PublishRecipeTransformer(self.project_config).transform()
 
         logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
         self.greengrass_client.create_gg_component()
@@ -236,97 +245,3 @@ class PublishCommand(Command):
                 "Failed to calculate the version of component '{}' based on the configuration.".format(component_name)
             )
             raise (e)
-
-    def update_and_create_recipe_file(self, component_name, component_version):
-        """
-        Updates recipe with the component version calculated and artifact URIs of the artifacts. This updated recipe is
-        used to create a new publish recipe file in build recipes directory.
-
-        Parameters
-        ----------
-            component_name(string): Name of the component. This is also used in the name of the recipe file.
-            component_version(string): Version of the component calculated based on the configuration.
-
-        Returns
-        -------
-            None
-        """
-        logging.debug("Updating artifact URIs in the recipe...")
-        build_recipe = Path(self.project_config["gg_build_recipes_dir"]).joinpath(
-            self.project_config["component_recipe_file"].name
-        )
-        parsed_component_recipe = project_utils.parse_recipe_file(build_recipe)
-        if "ComponentName" in parsed_component_recipe:
-            if parsed_component_recipe["ComponentName"] != component_name:
-                logging.error("Component '{}' is not build.".format(parsed_component_recipe["ComponentName"]))
-                raise Exception(
-                    "Failed to publish the component '{}' as it is not build.\nBuild the component `gdk component"
-                    " build` before publishing it.".format(parsed_component_recipe["ComponentName"])
-                )
-        gg_build_component_artifacts = self.project_config["gg_build_component_artifacts_dir"]
-        bucket = self.project_config["bucket"]
-        artifact_uri = f"{utils.s3_prefix}{bucket}/{component_name}/{component_version}"
-
-        if "Manifests" not in parsed_component_recipe:
-            logging.debug("No 'Manifests' key in the recipe.")
-            return
-        for manifest in parsed_component_recipe["Manifests"]:
-            if "Artifacts" not in manifest:
-                logging.debug("No 'Artifacts' key in the recipe manifest.")
-                continue
-            for artifact in manifest["Artifacts"]:
-                if "URI" not in artifact:
-                    logging.debug("No 'URI' found in the recipe artifacts.")
-                    continue
-                # Skip non-s3 URIs in the recipe. Eg docker URIs
-                if not artifact["URI"].startswith("s3://"):
-                    continue
-                artifact_file = Path(artifact["URI"]).name
-                # For artifact in build component artifacts folder, update its URI
-                build_artifact_files = list(gg_build_component_artifacts.glob(artifact_file))
-                if len(build_artifact_files) == 1:
-                    logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
-                    artifact["URI"] = f"{artifact_uri}/{artifact_file}"
-                else:
-                    logging.warning(
-                        f"Could not find the artifact file specified in the recipe '{artifact_file}' inside the build folder"
-                        f" '{gg_build_component_artifacts}'."
-                    )
-
-        # Update the version of the component in the recipe
-        parsed_component_recipe["ComponentVersion"] = component_version
-        self.create_publish_recipe_file(component_name, component_version, parsed_component_recipe)
-
-    def create_publish_recipe_file(self, component_name, component_version, parsed_component_recipe):
-        """
-        Creates a new recipe file(json or yaml) with name `<component_name>-<component_version>.extension` in the component
-        recipes build directory.
-
-        This recipe is updated with the component version calculated and artifact URIs of the artifacts.
-
-        Parameters
-        ----------
-            component_name(string): Name of the component. This is also used in the name of the recipe file.
-            component_version(string): Version of the component calculated based on the configuration.
-            parsed_component_recipe(dict): Updated publish recipe with component version and s3 artifact uris
-        Returns
-        -------
-            None
-        """
-        ext = self.project_config["component_recipe_file"].name.split(".")[-1]  # json or yaml
-        publish_recipe_file_name = f"{component_name}-{component_version}.{ext}"  # Eg. HelloWorld-1.0.0.yaml
-        publish_recipe_file = Path(self.project_config["gg_build_recipes_dir"]).joinpath(publish_recipe_file_name).resolve()
-        self.project_config["publish_recipe_file"] = publish_recipe_file
-        with open(publish_recipe_file, "w") as prf:
-            try:
-                logging.debug(
-                    "Creating component recipe '{}' in '{}'.".format(
-                        publish_recipe_file_name, self.project_config["gg_build_recipes_dir"]
-                    )
-                )
-                if publish_recipe_file_name.endswith(".json"):
-                    prf.write(json.dumps(parsed_component_recipe, indent=4))
-                else:
-                    yaml.dump(parsed_component_recipe, prf)
-            except Exception as e:
-                raise Exception("""Failed to create publish recipe file at '{}'.\n{}""".format(publish_recipe_file, e))
