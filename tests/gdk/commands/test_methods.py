@@ -1,6 +1,12 @@
 import gdk.commands.methods as methods
 
 
+def test_gdk(mocker):
+    mock_component_init = mocker.patch("gdk.CLIParser.cli_parser.print_help", return_value=None)
+    methods._gdk({"gdk": None})
+    assert mock_component_init.call_count == 1
+
+
 def test_gdk_component_init(mocker):
     mock_component_init = mocker.patch("gdk.commands.component.component.init", return_value=None)
     methods._gdk_component_init({})
