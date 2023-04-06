@@ -13,12 +13,6 @@ valid_project_config_file = (
 valid_json_recipe_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
 valid_yaml_recipe_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
 
-invalid_json_recipe_file = (
-    Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.json").resolve()
-)
-invalid_yaml_recipe_file = (
-    Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.yaml").resolve()
-)
 
 with open(valid_project_config_file, "r") as f:
     parsed_config_file = json.loads(f.read())
@@ -110,56 +104,14 @@ def test_get_recipe_file_both_exist(mocker):
     mock_glob.assert_any_call("recipe.yaml")
 
 
-def test_parse_recipe_file_json(mocker):
-    # Parse json file
-    mock_yaml_loads = mocker.patch("yaml.safe_load")
-    json_data = project_utils.parse_recipe_file(valid_json_recipe_file)
-    assert not mock_yaml_loads.called
-    assert type(json_data) == dict
-
-
-def test_parse_recipe_file_yaml(mocker):
-    # Parse yaml file
-    mock_json_loads = mocker.patch("json.loads")
-    yaml_dic = project_utils.parse_recipe_file(valid_yaml_recipe_file)
-    assert not mock_json_loads.called
-    assert type(yaml_dic) == dict
-
-
-def test_parse_recipe_file_yaml_invalid(mocker):
-    # Parse yaml file
-    spy_json = mocker.spy(json, "loads")
-    spy_yaml = mocker.spy(yaml, "safe_load")
-    with pytest.raises(Exception) as e:
-        project_utils.parse_recipe_file(invalid_yaml_recipe_file)
-    assert "Unable to parse the recipe file - invalid_component_recipe.yaml" in e.value.args[0]
-    spy_yaml.call_count == 0
-    spy_json.call_count == 1
-
-
-def test_parse_recipe_file_json_invalid(mocker):
-    # Parse invalid json file
-    spy_json = mocker.spy(json, "loads")
-    spy_yaml = mocker.spy(yaml, "safe_load")
-    with pytest.raises(Exception) as e:
-        project_utils.parse_recipe_file(invalid_json_recipe_file)
-    assert "Unable to parse the recipe file - invalid_component_recipe.json" in e.value.args[0]
-    spy_yaml.call_count == 1
-    spy_json.call_count == 0
-
-
 def test_get_project_config_values(mocker):
     # Check if the values are correctly created with valid recipe and config files.
     mock_get_recipe_file = mocker.patch(
         "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
     )
-    mock_get_parsed_json_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.parse_recipe_file", return_value=parsed_json_recipe_file
-    )
     mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", return_value=parsed_config_file)
     values = project_utils.get_project_config_values()
     assert mock_get_recipe_file.call_count == 1
-    assert mock_get_parsed_json_recipe_file.call_count == 1
     assert mock_get_parsed_config.call_count == 1
     assert type(values) == dict
 
@@ -174,7 +126,6 @@ def test_get_project_config_values(mocker):
     assert "gg_build_recipes_dir" in values
     assert "gg_build_component_artifacts_dir" in values
     assert "component_recipe_file" in values
-    assert "parsed_component_recipe" in values
 
 
 def test_get_project_config_values_invalid_config(mocker):
@@ -182,45 +133,13 @@ def test_get_project_config_values_invalid_config(mocker):
     mock_get_recipe_file = mocker.patch(
         "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
     )
-    mock_get_parsed_json_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.parse_recipe_file", return_value=parsed_json_recipe_file
-    )
     mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", side_effect=KeyError("key"))
     with pytest.raises(Exception) as e:
         project_utils.get_project_config_values()
 
     assert e.value.args[0] == "key"
     assert not mock_get_recipe_file.called
-    assert not mock_get_parsed_json_recipe_file.called
     assert mock_get_parsed_config.called
-
-
-def test_get_project_config_values_invalid_json_recipe(mocker):
-    # Check if an exception is thrown for invalid recipe and valid config files.
-    mock_get_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.get_recipe_file", return_value=invalid_json_recipe_file
-    )
-    mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", return_value=parsed_config_file)
-    with pytest.raises(Exception) as e:
-        project_utils.get_project_config_values()
-    assert "Unable to parse the recipe file - invalid_component_recipe.json" in e.value.args[0]
-
-    assert mock_get_recipe_file.call_count == 1
-    assert mock_get_parsed_config.call_count == 1
-
-
-def test_get_project_config_values_invalid_yaml_recipe(mocker):
-    # Check if an exception is thrown for invalid recipe and valid config files.
-    mock_get_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.get_recipe_file", return_value=invalid_yaml_recipe_file
-    )
-    mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", return_value=parsed_config_file)
-    with pytest.raises(Exception) as e:
-        project_utils.get_project_config_values()
-    assert "Unable to parse the recipe file - invalid_component_recipe.yaml" in e.value.args[0]
-
-    assert mock_get_recipe_file.call_count == 1
-    assert mock_get_parsed_config.call_count == 1
 
 
 def test_get_project_config_values_recipe_file_not_exists(mocker):
@@ -243,14 +162,10 @@ def test_component_version_build_specific_version(mocker):
     mock_get_recipe_file = mocker.patch(
         "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
     )
-    mock_get_parsed_json_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.parse_recipe_file", return_value=parsed_json_recipe_file
-    )
     mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", return_value=parsed_config_file)
     values = project_utils.get_project_config_values()
     assert values["component_version"] == "1.0.0"
     assert mock_get_recipe_file.call_count == 1
-    assert mock_get_parsed_json_recipe_file.call_count == 1
     assert mock_get_parsed_config.call_count == 1
 
 

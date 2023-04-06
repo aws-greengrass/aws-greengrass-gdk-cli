@@ -7,7 +7,6 @@ import gdk.common.configuration as config_actions
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
-import yaml
 
 
 def get_supported_component_builds():
@@ -66,34 +65,6 @@ def get_recipe_file():
     return recipe_file
 
 
-def parse_recipe_file(component_recipe_file):
-    """
-    Loads recipes file from current project as a json obect.
-
-    Uses yaml or json module to load the recipe file based on its extension.
-
-    Parameters
-    ----------
-        component_recipe_file(pathlib.Path): Path of the component recipe file.
-
-    Returns
-    -------
-      (dict): Returns a dict object with the component recipe file.
-    """
-    logging.debug("Parsing the component recipe file '{}'.".format(component_recipe_file.name))
-    with open(component_recipe_file, "r") as r_file:
-        recipe = r_file.read()
-        try:
-            if component_recipe_file.name.endswith(".json"):
-                recipe_json = json.loads(recipe)
-                return recipe_json
-            else:
-                recipe_yaml = yaml.safe_load(recipe)
-                return recipe_yaml
-        except Exception as e:
-            raise Exception("""Unable to parse the recipe file - {}.\n{}""".format(component_recipe_file.name, e))
-
-
 def get_project_config_values():
 
     # Get component configuration from the greengrass project config file.
@@ -119,9 +90,6 @@ def get_project_config_values():
     # Get recipe file
     component_recipe_file = get_recipe_file()
 
-    # Get parsed recipe file
-    parsed_component_recipe = parse_recipe_file(component_recipe_file)
-
     # Create dictionary with all the above values
     vars = {}
     vars["component_name"] = component_name
@@ -136,7 +104,6 @@ def get_project_config_values():
     vars["gg_build_recipes_dir"] = gg_build_recipes_dir
     vars["gg_build_component_artifacts_dir"] = gg_build_component_artifacts_dir
     vars["component_recipe_file"] = component_recipe_file
-    vars["parsed_component_recipe"] = parsed_component_recipe
     return vars
 
 

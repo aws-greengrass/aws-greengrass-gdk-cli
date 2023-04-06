@@ -51,11 +51,9 @@ def test_get_project_config_values_with_recipe(mocker):
     mock_get_recipe_file = mocker.patch(
         "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
     )
-    spy_parse_recipe_file = mocker.spy(project_utils, "parse_recipe_file")
     values = project_utils.get_project_config_values()
     assert mock_get_project_config_file.call_count == 1
     assert mock_get_recipe_file.call_count == 1
-    assert spy_parse_recipe_file.call_count == 1
     assert "component_name" in values
     assert "component_build_config" in values
     assert "component_version" in values
@@ -67,7 +65,6 @@ def test_get_project_config_values_with_recipe(mocker):
     assert "gg_build_recipes_dir" in values
     assert "gg_build_component_artifacts_dir" in values
     assert "component_recipe_file" in values
-    assert "parsed_component_recipe" in values
 
 
 def test_get_project_config_values_both_exist(mocker):
@@ -147,61 +144,6 @@ def test_get_project_config_values_yaml_exists(mocker):
     mock_glob.assert_any_call("recipe.json")
     mock_glob.assert_any_call("recipe.yaml")
     assert spy_log.call_count == 0
-
-
-def test_get_project_config_values_invalid_yaml(mocker):
-    # invalid recipe.yaml exists
-    invalid_yaml_recipe_file = (
-        Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.json").resolve()
-    )
-
-    def use_this_for_recipe(*args):
-        if args[0] == "recipe.json":
-            return []
-        elif args[0] == "recipe.yaml":
-            return [invalid_yaml_recipe_file]
-
-    mock_get_project_config_file = mocker.patch(
-        "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json").resolve(),
-    )
-
-    mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
-
-    with pytest.raises(Exception) as e:
-        project_utils.get_project_config_values()
-    assert "Unable to parse the recipe file" in e.value.args[0]
-    assert mock_get_project_config_file.called
-    assert mock_glob.call_count == 2
-    mock_glob.assert_any_call("recipe.json")
-    mock_glob.assert_any_call("recipe.yaml")
-
-
-def test_get_project_config_values_invalid_json(mocker):
-    # recipe.json exists
-    invalid_json_recipe_file = (
-        Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.json").resolve()
-    )
-
-    def use_this_for_recipe(*args):
-        if args[0] == "recipe.json":
-            return [invalid_json_recipe_file]
-        elif args[0] == "recipe.yaml":
-            return []
-
-    mock_get_project_config_file = mocker.patch(
-        "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json").resolve(),
-    )
-
-    mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
-    with pytest.raises(Exception) as e:
-        project_utils.get_project_config_values()
-    assert "Unable to parse the recipe file" in e.value.args[0]
-    assert mock_get_project_config_file.called
-    assert mock_glob.call_count == 2
-    mock_glob.assert_any_call("recipe.json")
-    mock_glob.assert_any_call("recipe.yaml")
 
 
 def test_service_clients_no_mocks(mocker):
