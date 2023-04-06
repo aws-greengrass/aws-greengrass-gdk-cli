@@ -31,3 +31,12 @@ def test_main_parse_args_list(mocker):
     args = CLIParser.cli_parser.parse_args(["component", "list", "--template", "-d"])
     parse_args_actions.run_command(args)
     assert mock_component_list.called
+
+
+def test_main_parse_args_gdk(capsys):
+    args = CLIParser.cli_parser.parse_args([])
+    parse_args_actions.run_command(args)
+    command_output = capsys.readouterr().out
+    CLIParser.cli_parser.print_help()
+    help_output = capsys.readouterr().out
+    assert command_output == help_output

@@ -1,4 +1,10 @@
 from gdk.commands.component import component
+import gdk.CLIParser
+
+
+def _gdk(d_args):
+    if not d_args.get("gdk"):
+        gdk.CLIParser.cli_parser.print_help()
 
 
 def _gdk_component_init(d_args):
