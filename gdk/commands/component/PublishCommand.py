@@ -29,9 +29,9 @@ class PublishCommand(Command):
             component_name = self.project_config["component_name"]
             component_version = self.project_config["component_version"]
             self._publish_component_version(component_name, component_version)
-        except Exception as e:
+        except Exception:
             logging.error("Failed to publish new version of the component '{}'".format(self.project_config["component_name"]))
-            raise Exception("{}\n{}".format(error_messages.PUBLISH_FAILED, e))
+            raise
 
     def try_build(self):
         # TODO: This method should just warn and proceed. It should not build the component.
@@ -81,10 +81,9 @@ class PublishCommand(Command):
         if self.arguments.get("options"):
             try:
                 self.project_config["options"] = self._read_options(self.arguments["options"])
-            except Exception as exc:
-                raise Exception(
-                    "Please provide a valid json file path or a json string as the options argument.\nError:\t" + str(exc)
-                )
+            except Exception:
+                logging.error("Please provide a valid json file path or a json string as the options argument.")
+                raise
 
     def _read_options(self, options):
         try:
@@ -190,8 +189,9 @@ class PublishCommand(Command):
             next_version = utils.get_next_patch_version(c_next_patch_version)
             logging.info("Using '{}' as the next version of the component '{}' to create.".format(next_version, c_name))
             return next_version
-        except Exception as e:
-            raise Exception("Failed to calculate the next version of the component during publish.\n{}".format(e))
+        except Exception:
+            logging.error("Failed to calculate the next version of the component during publish.")
+            raise
 
     def get_account_number(self):
         """
@@ -212,8 +212,9 @@ class PublishCommand(Command):
             account_num = caller_identity_response["Account"]
             logging.debug("Identified account number as '{}'.".format(account_num))
             return account_num
-        except Exception as e:
-            raise Exception("Error while fetching account number from credentials.\n{}".format(e))
+        except Exception:
+            logging.error("Error while fetching account number from credentials.")
+            raise
 
     def get_component_version_from_config(self):
         """

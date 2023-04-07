@@ -28,7 +28,7 @@ def test_list_template_failed_request(mocker):
     with pytest.raises(Exception) as e:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "list", "--template"]))
     assert mock_list_req.called
-    assert error_messages.LISTING_COMPONENTS_FAILED in e.value.args[0]
+    assert "some error" in e.value.args[0]
 
 
 def test_list_repository_failed_request(mocker):
@@ -37,7 +37,7 @@ def test_list_repository_failed_request(mocker):
     with pytest.raises(Exception) as e:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "list", "--repository"]))
     assert mock_list_req.called
-    assert error_messages.LISTING_COMPONENTS_FAILED in e.value.args[0]
+    assert "some error" in e.value.args[0]
 
 
 def test_list_template_not_json(mocker):

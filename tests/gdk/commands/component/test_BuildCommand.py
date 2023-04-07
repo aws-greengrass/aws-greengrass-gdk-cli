@@ -81,8 +81,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build.default_build_component()
 
-        assert "\ngenerating" in e.value.args[0]
-        assert error_messages.BUILD_FAILED in e.value.args[0]
+        assert "generating" in e.value.args[0]
         assert mock_run_build_command.assert_called_once
         assert mock_transform.assert_called_once
         assert mock_build_info.assert_called_once
@@ -125,7 +124,7 @@ class BuildCommandTest(TestCase):
             build.run_build_command()
         assert not mock_build_system_zip.called
         assert mock_subprocess_run.called
-        assert "Error building the component with the given build system." in e.value.args[0]
+        assert "some error" in e.value.args[0]
 
         assert mock_get_supported_component_builds.called
         assert mock_get_cmd_from_platform.called
@@ -145,7 +144,7 @@ class BuildCommandTest(TestCase):
         build.project_config["component_build_config"]["build_system"] = "zip"
         with pytest.raises(Exception) as e:
             build.run_build_command()
-        assert "Error building the component with the given build system." in e.value.args[0]
+        assert "some error" in e.value.args[0]
         assert mock_build_system_zip.called
         assert mock_get_cmd_from_platform.call_count == 1
         assert mock_get_supported_component_builds.call_count == 1
@@ -294,7 +293,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert "Failed to zip the component in default build mode." in e.value.args[0]
+        assert "some error" in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         mock_clean_dir.assert_called_with(zip_build_path)
@@ -333,7 +332,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert "Failed to zip the component in default build mode." in e.value.args[0]
+        assert "some error" in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         mock_clean_dir.assert_called_with(zip_build_path)
@@ -345,11 +344,10 @@ class BuildCommandTest(TestCase):
         assert mock_get_supported_component_builds.call_count == 1
 
     def test_build_system_zip_error_get_build_folder_by_build_system(self):
-        zip_build_path = Path("zip-build").resolve()
         mock_build_info = self.mocker.patch.object(
             BuildCommand,
             "_get_build_folder_by_build_system",
-            return_value=zip_build_path,
+            side_effect=Error("some-error"),
         )
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
         mock_copytree = self.mocker.patch("shutil.copytree")
@@ -371,7 +369,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert "Failed to zip the component in default build mode." in e.value.args[0]
+        assert "some-error" in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         assert not mock_clean_dir.called
@@ -404,7 +402,7 @@ class BuildCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             build._build_system_zip()
 
-        assert "Failed to zip the component in default build mode." in e.value.args[0]
+        assert "some error" in e.value.args[0]
         assert not mock_subprocess_run.called
         mock_build_info.assert_called_with()
         assert mock_clean_dir.called

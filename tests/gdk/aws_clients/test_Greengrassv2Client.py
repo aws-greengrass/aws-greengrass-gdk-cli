@@ -53,8 +53,7 @@ class Greengrassv2ClientTest(TestCase):
             greengrass_client.get_highest_component_version_()
         assert mock_get_next_patch_component_version.call_args_list == [call(arn=c_arn)]
         assert (
-            "Error while getting the component versions of 'c_name' in 'test-region' from the account '1234' during"
-            " publish.\nlisting error"
+            "listing error"
             == e.value.args[0]
         )
 
@@ -70,13 +69,13 @@ class Greengrassv2ClientTest(TestCase):
     def test_create_gg_component_exception(self):
         greengrass_client = Greengrassv2Client(self.project_config, self.service_clients)
         mock_create_component = self.mocker.patch(
-            "boto3.client.create_component_version", return_value=None, side_effect=HTTPError("error")
+            "boto3.client.create_component_version", return_value=None, side_effect=HTTPError("gg error")
         )
         greengrass_client.project_config["publish_recipe_file"] = Path("some-recipe.yaml")
 
         with mock.patch("builtins.open", mock.mock_open(read_data="some-recipe-content")) as mock_file:
             with pytest.raises(Exception) as e:
                 greengrass_client.create_gg_component()
-            assert "Creating private version '1.0.0' of the component 'c_name' failed." in e.value.args[0]
+            assert "gg error" in e.value.args[0]
             assert mock_file.call_args_list == [call(Path("some-recipe.yaml"))]
             assert mock_create_component.call_args_list == [call(inlineRecipe="some-recipe-content")]

@@ -85,4 +85,5 @@ class PublishRecipeTransformer:
 
         """
         publish_recipe_file = Path(self.project_config["publish_recipe_file"]).resolve()
+        logging.debug("Creating component recipe at '%s'.", publish_recipe_file)
         CaseInsensitiveRecipeFile().write(publish_recipe_file, parsed_component_recipe)

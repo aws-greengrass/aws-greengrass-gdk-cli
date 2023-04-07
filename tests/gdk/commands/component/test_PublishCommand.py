@@ -115,7 +115,7 @@ class PublishCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             publish.get_next_version()
         assert mock_get_next_patch_component_version.call_count == 1
-        assert e.value.args[0] == "Failed to calculate the next version of the component during publish.\nsome error"
+        assert e.value.args[0] == "some error"
 
     def test_upload_artifacts_with_no_artifacts(self):
         publish = PublishCommand({})
@@ -288,7 +288,7 @@ class PublishCommandTest(TestCase):
         assert mock_project_built.call_count == 1
         assert publish.project_config["account_number"] == "1234"
         assert publish.project_config["bucket"] == "default-us-east-1-1234"
-        assert e.value.args[0] == "{}\n{}".format(error_messages.PUBLISH_FAILED, "some error")
+        assert e.value.args[0] == "some error"
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
 
@@ -296,11 +296,11 @@ class PublishCommandTest(TestCase):
         mock_client = self.mocker.patch("boto3.client", return_value=None)
         publish = PublishCommand({})
         publish.service_clients = {"sts_client": mock_client}
-        mock_get_caller_identity = self.mocker.patch("boto3.client.get_caller_identity", return_value=None)
+        mock_get_caller_identity = self.mocker.patch("boto3.client.get_caller_identity", side_effect=HTTPError("some error"))
         with pytest.raises(Exception) as e:
             publish.get_account_number()
         assert mock_get_caller_identity.call_count == 1
-        assert "Error while fetching account number from credentials." in e.value.args[0]
+        assert "some error" in e.value.args[0]
 
     def test_get_account_number(self):
         mock_client = self.mocker.patch("boto3.client", return_value=None)

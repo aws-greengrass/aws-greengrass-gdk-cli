@@ -103,8 +103,9 @@ class BuildCommand(Command):
             # Build the project with specified build system
             self.run_build_command()
             self.build_recipe_transformer.transform(self._get_build_folder_by_build_system())
-        except Exception as e:
-            raise Exception("""{}\n{}""".format(error_messages.BUILD_FAILED, e))
+        except Exception:
+            logging.error(error_messages.BUILD_FAILED)
+            raise
 
     def get_build_cmd_from_platform(self, build_system):
         """
@@ -152,8 +153,9 @@ class BuildCommand(Command):
             else:
                 logging.info("Running the build command '{}'".format(" ".join(build_command)))
                 sp.run(build_command, check=True)
-        except Exception as e:
-            raise Exception(f"Error building the component with the given build system.\n{e}")
+        except Exception:
+            logging.error("Error building the component with the given build system.")
+            raise
 
     def _build_system_zip(self):
         # Delegate to avoid breaking tests - TODO: We need to avoid testing private methods

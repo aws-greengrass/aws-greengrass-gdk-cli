@@ -174,7 +174,7 @@ class InitCommandTest(TestCase):
         init = InitCommand({})
         with pytest.raises(Exception) as e:
             init.init_with_template(template, language, project_dir)
-        assert "Could not initialize the project with component template" in e.value.args[0]
+        assert "Some error" in e.value.args[0]
         mock_download_and_clean.assert_any_call("template-language", "template", project_dir)
 
     def test_init_with_repository_valid(self):
@@ -196,7 +196,7 @@ class InitCommandTest(TestCase):
         init = InitCommand({})
         with pytest.raises(Exception) as e:
             init.init_with_repository(repository, project_dir)
-        assert "Could not initialize the project with component repository" in e.value.args[0]
+        assert "Some error" in e.value.args[0]
         mock_download_and_clean.assert_any_call(repository, "repository", project_dir)
 
     @patch("zipfile.ZipFile")
@@ -247,7 +247,7 @@ class InitCommandTest(TestCase):
             with pytest.raises(Exception) as e:
                 init.download_and_clean(formatted_template_name, template, project_dir)
 
-            assert "Failed to download the selected component" in e.value.args[0]
+            assert "some error" in e.value.args[0]
             assert mock_template_download.call_count == 1
             assert mock_get_available_templates.call_count == 1
             assert not mock_file.called
@@ -272,7 +272,7 @@ class InitCommandTest(TestCase):
             with pytest.raises(Exception) as e:
                 init.download_and_clean(formatted_template_name, template, project_dir)
 
-            assert "Failed to download the selected component" in e.value.args[0]
+            assert "some error" in e.value.args[0]
             assert mock_template_download.call_count == 1
             assert mock_get_available_templates.call_count == 1
             assert not mock_file.called

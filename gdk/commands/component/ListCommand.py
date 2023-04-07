@@ -31,9 +31,9 @@ class ListCommand(Command):
         response = requests.get(url)
         try:
             response.raise_for_status()
-        except Exception as e:
-            logging.error(e)
-            raise Exception(error_messages.LISTING_COMPONENTS_FAILED)
+        except Exception:
+            logging.error(error_messages.LISTING_COMPONENTS_FAILED)
+            raise
 
         try:
             return response.json()
@@ -49,8 +49,8 @@ class ListCommand(Command):
         HelloWorld-python, HelloWorld-java.
         """
         try:
-            language = re.search(r'\b(java|python)\b', template_name).group(1)
-            template_name = re.sub(r'\b\-(java|python)\b', '', template_name)
+            language = re.search(r"\b(java|python)\b", template_name).group(1)
+            template_name = re.sub(r"\b\-(java|python)\b", "", template_name)
             return f"{template_name} ({language})"
         except Exception:
             return template_name

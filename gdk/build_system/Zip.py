@@ -51,9 +51,9 @@ class Zip:
                                 root_dir=artifacts_zip_build)
             logging.debug("Archive complete.")
 
-        except Exception as e:
-            raise Exception(
-                """Failed to zip the component in default build mode.\n{}""".format(e))
+        except Exception:
+            logging.error("Failed to zip the component in default build mode.")
+            raise
 
     def get_ignored_file_patterns(self) -> list:
         """

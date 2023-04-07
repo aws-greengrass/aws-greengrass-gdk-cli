@@ -31,11 +31,14 @@ class Greengrassv2Client:
             if not component_versions:
                 return None
             return component_versions[0]["componentVersion"]
-        except Exception as exc:
-            raise Exception(
-                f"Error while getting the component versions of '{component_name}' in '{region}' from the account"
-                f" '{account_num}' during publish.\n{exc}"
-            ) from exc
+        except Exception:
+            logging.error(
+                "Error while getting the component versions of '%s' in '%s' from the account '%s' during publish.",
+                component_name,
+                region,
+                account_num,
+            )
+            raise
 
     def _get_component_version(self, component_arn) -> dict:
         comp_list_response = self.greengrass_client.list_component_versions(arn=component_arn)
@@ -57,8 +60,6 @@ class Greengrassv2Client:
                 logging.info(
                     "Created private version '%s' of the component '%s' in the account.", component_version, component_name
                 )
-            except Exception as exc:
+            except Exception:
                 logging.error("Failed to create the component using the recipe at '%s'.", publish_recipe_file)
-                raise Exception(
-                    f"Creating private version '{component_version}' of the component '{component_name}' failed.\n{exc}"
-                ) from exc
+                raise
