@@ -2,7 +2,6 @@ import logging
 
 import gdk.CLIParser as CLIParser
 import gdk.common.consts as consts
-import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.parse_args_actions as parse_args_actions
 import pytest
 from urllib3.exceptions import HTTPError

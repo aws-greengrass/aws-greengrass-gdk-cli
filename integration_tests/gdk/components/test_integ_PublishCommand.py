@@ -159,34 +159,9 @@ def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_projec
 
 @pytest.mark.parametrize(
     "options_arg",
-    ["file/path/not_exists.json", '{"invalid_json_string":{"missing":quotes"}}'],
-)
-def test_publish_with_invalid_options(mocker, options_arg, get_service_clients, mock_project_config):
-    mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    if options_arg == "file_exists.json":
-        mocker.patch(
-            "gdk.common.utils.file_exists",
-            return_value=True,
-        )
-
-    with pytest.raises(Exception) as e:
-        with patch("builtins.open", mock_open()):
-            parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(
-                    ["component", "publish", "-d", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", options_arg]
-                )
-            )
-    assert "The json file path provided in the command does not exist" in e.value.args[0]
-
-
-@pytest.mark.parametrize(
-    "options_arg",
     ["file/path/not_exists.json"],
 )
-def test_publish_with_invalid_options(mocker, options_arg, get_service_clients, mock_project_config):
+def test_publish_with_invalid_options_file_not_exists(mocker, options_arg, get_service_clients, mock_project_config):
     mocker.patch(
         "gdk.common.utils.dir_exists",
         return_value=True,

@@ -5,7 +5,6 @@ from gdk.commands.component.transformer.PublishRecipeTransformer import PublishR
 
 import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
-import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 from gdk.aws_clients.Greengrassv2Client import Greengrassv2Client
 from gdk.aws_clients.S3Client import S3Client

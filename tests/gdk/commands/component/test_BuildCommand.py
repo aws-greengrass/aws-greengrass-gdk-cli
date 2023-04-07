@@ -8,7 +8,6 @@ import pytest
 import gdk.common.utils as utils
 from gdk.build_system.Zip import Zip
 from gdk.commands.component.BuildCommand import BuildCommand
-from gdk.common.exceptions import error_messages
 from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
 
 

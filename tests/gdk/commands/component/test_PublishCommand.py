@@ -6,7 +6,6 @@ from gdk.commands.component.transformer.PublishRecipeTransformer import PublishR
 import pytest
 from urllib3.exceptions import HTTPError
 
-import gdk.common.exceptions.error_messages as error_messages
 from gdk.aws_clients.Greengrassv2Client import Greengrassv2Client
 from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.component.PublishCommand import PublishCommand
