@@ -74,15 +74,17 @@ class InitCommand(Command):
             template_name = "{}-{}".format(template, language)
             logging.info("Fetching the component template '{}' from Greengrass Software Catalog.".format(template_name))
             self.download_and_clean(template_name, "template", project_dir)
-        except Exception as e:
-            raise Exception("Could not initialize the project with component template '{}'.\n{}".format(template, e))
+        except Exception:
+            logging.error("Could not initialize the project with component template '%s'.", template)
+            raise
 
     def init_with_repository(self, repository, project_dir):
         try:
             logging.info("Fetching the component repository '{}' from Greengrass Software Catalog.".format(repository))
             self.download_and_clean(repository, "repository", project_dir)
-        except Exception as e:
-            raise Exception("Could not initialize the project with component repository '{}'.\n{}".format(repository, e))
+        except Exception:
+            logging.error("Could not initialize the project with component repository '%s'.", repository)
+            raise
 
     def download_and_clean(self, comp_name, comp_type, project_dir):
         """
@@ -105,11 +107,9 @@ class InitCommand(Command):
         if download_response.status_code != 200:
             try:
                 download_response.raise_for_status()
-            except Exception as e:
-                logging.error(e)
-                raise e
-            finally:
-                raise Exception(error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(comp_type))
+            except Exception:
+                logging.error(error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(comp_type))
+                raise
 
         logging.debug("Downloading the component {}...".format(comp_type))
         with zipfile.ZipFile(BytesIO(download_response.content)) as zfile:

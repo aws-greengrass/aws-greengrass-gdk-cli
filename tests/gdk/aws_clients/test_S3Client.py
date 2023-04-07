@@ -51,7 +51,7 @@ class S3ClientTest(TestCase):
         self.mocker.patch("boto3.client.create_bucket", side_effect=HTTPError("some error"))
         with pytest.raises(Exception) as e:
             s3_client_utils.create_bucket(bucket, region)
-        assert type(e.value.args[0]) == HTTPError
+        assert "some error" in e.value.args[0]
         assert mock_valid_bucket_exists.call_args_list == [call("test-bucket", "region")]
 
     def test_create_bucket_valid_bucket_for_artifacts_exists(self):
@@ -127,7 +127,7 @@ class S3ClientTest(TestCase):
         with pytest.raises(Exception) as e:
             s3_client_utils.valid_bucket_for_artifacts_exists("bucket", "us-east-1")
         mock_get_bucket_location.assert_called_with(Bucket="bucket")
-        assert "Could not verify if the bucket 'bucket' exists in the region 'us-east-1'.\nError:some-error" in e.value.args[0]
+        assert "some-error" in e.value.args[0]
 
     def test_valid_bucket_for_artifacts_exists_owned_by_someone(self):
         bucket = "test-bucket"
@@ -146,11 +146,7 @@ class S3ClientTest(TestCase):
             s3_client_utils.valid_bucket_for_artifacts_exists(bucket, region)
 
         assert mock_get_bucket_location.call_args_list == [call(Bucket=bucket)]
-        assert (
-            "Bucket 'test-bucket' already exists and is not owned by you. Please provide a different name for the bucket in"
-            " the configuration"
-            in str(e.value.args[0])
-        )
+        assert "An error occurred (403) when calling the GetBucketLocation" in str(e.value.args[0])
 
     def test_valid_bucket_for_artifacts_exists_not_exists(self):
         bucket = "test-bucket"
@@ -186,11 +182,7 @@ class S3ClientTest(TestCase):
             s3_client_utils.valid_bucket_for_artifacts_exists(bucket, region)
 
         assert mock_get_bucket_location.call_args_list == [call(Bucket=bucket)]
-        assert (
-            "Could not verify if the bucket 'test-bucket' exists in the region 'region'.\nError:An error occurred (400) when"
-            " calling the GetBucketLocation operation: Bad Request"
-            in e.value.args[0]
-        )
+        assert "An error occurred (400) when calling the GetBucketLocation operation: Bad Request" in e.value.args[0]
 
     def test_upload_artifacts(self):
         project_config = {

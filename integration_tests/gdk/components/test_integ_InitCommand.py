@@ -94,7 +94,7 @@ class CommandTest(TestCase):
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
 
-        assert "Could not initialize the project due to the following error." in e.value.args[0]
+        assert "Some exception" in e.value.args[0]
 
         assert mock_is_directory_empty.call_count == 0
         assert mock_init_with_template.call_count == 0
@@ -212,7 +212,7 @@ class CommandTest(TestCase):
                 CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
             )
 
-        assert "Could not initialize the project with component template 'template'." in e.value.args[0]
+        assert "error" in e.value.args[0]
         assert mock_is_directory_empty.call_count == 1
         assert mock_conflicting_args.call_count == 1
         mock_download_and_clean.assert_called_once_with("template-python", "template", utils.current_directory)
@@ -225,7 +225,7 @@ class CommandTest(TestCase):
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
 
-        assert "Could not initialize the project with component repository 'dummy'." in e.value.args[0]
+        assert "error" in e.value.args[0]
         assert mock_is_directory_empty.call_count == 1
         assert mock_conflicting_args.call_count == 1
         mock_download_and_clean.assert_called_once_with("dummy", "repository", utils.current_directory)
@@ -246,7 +246,7 @@ class CommandTest(TestCase):
                     CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
                 )
 
-                assert "Failed to download the selected component" in e.value.args[0]
+                assert "some error" in e.value.args[0]
                 assert mock_template_download.call_count == 1
                 assert mock_is_directory_empty.call_count == 1
                 assert mock_conflicting_args.called
@@ -268,7 +268,7 @@ class CommandTest(TestCase):
             with pytest.raises(Exception) as e:
                 parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-r", "repo"]))
 
-                assert "Failed to download the selected component" in e.value.args[0]
+                assert "some error" in e.value.args[0]
                 assert mock_template_download.call_count == 1
                 assert mock_is_directory_empty.call_count == 1
                 assert mock_conflicting_args.called

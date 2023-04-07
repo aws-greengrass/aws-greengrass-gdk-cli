@@ -52,7 +52,7 @@ class ListCommandTest(TestCase):
         list = ListCommand({})
         with pytest.raises(Exception) as e:
             list.get_component_list_from_github("url")
-        assert e.value.args[0] == error_messages.LISTING_COMPONENTS_FAILED
+        assert e.value.args[0] == "some error"
         assert mock_template_list.call_count == 1
 
     def test_run_template(self):

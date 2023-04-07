@@ -187,7 +187,8 @@ def main():
         args_namespace = cli_parser.parse_args()
         parse_args_actions.run_command(args_namespace)
     except Exception as e:
-        print(f"{utils.error_line}{e}")
+        print(f"{utils.error_line}")
+        logging.exception(e)
         exit(1)
 
 

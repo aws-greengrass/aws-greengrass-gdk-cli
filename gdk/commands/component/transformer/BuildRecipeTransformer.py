@@ -134,4 +134,5 @@ class BuildRecipeTransformer:
 
         component_recipe_file_name = self.project_config["component_recipe_file"].name
         gg_build_recipe_file = Path(self.project_config["gg_build_recipes_dir"]).joinpath(component_recipe_file_name).resolve()
+        logging.debug("Creating component recipe at '%s'.", gg_build_recipe_file)
         CaseInsensitiveRecipeFile().write(gg_build_recipe_file, parsed_component_recipe)

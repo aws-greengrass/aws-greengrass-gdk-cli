@@ -122,7 +122,10 @@ def test_build_command_instantiation_failed_conflicting_args(mocker):
 def test_build_run():
     with pytest.raises(Exception) as e:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert "Could not build the project due to the following error." in e.value.args[0]
+    assert (
+        error_messages.CONFIG_FILE_NOT_EXISTS
+        in e.value.args[0]
+    )
 
 
 def test_build_run_default_zip_json(mocker, supported_build_system, rglob_build_file):
@@ -284,7 +287,7 @@ def test_default_build_component_error_run_build_command(mocker, rglob_build_fil
     )
     with pytest.raises(Exception) as e:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert error_messages.BUILD_FAILED in e.value.args[0]
+    assert "err in run_build_command" in e.value.args[0]
     assert mock_run_build_command.assert_called_once
     assert not mock_transform.called
 

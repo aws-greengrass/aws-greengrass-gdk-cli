@@ -28,7 +28,7 @@ Feature: gdk component build works
     And we verify component zip build files
     And command output contains "Could not find"
     And command output contains "HelloWorld.zip"
-    And command output contains "Failed to build the component with the given project configuration."
+    And command output contains "Could not find artifact with URI 's3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld.zip' on s3 or inside the build folders."
 
   @version(min='1.1.0')
   @change_cwd

@@ -45,7 +45,7 @@ def test_component_build_exception(mocker):
     d_args = {"build": None}
     with pytest.raises(Exception) as e:
         component.build(d_args)
-    assert "Could not build the project due to the following error." in e.value.args[0]
+    assert "Error in build" in e.value.args[0]
     assert mock_component_build.call_count == 1
     assert mock_component_build_run.call_count == 0
     mock_component_build.assert_called_with(d_args)
@@ -67,7 +67,7 @@ def test_component_publish_exception(mocker):
     d_args = {"publish": None}
     with pytest.raises(Exception) as e:
         component.publish(d_args)
-    assert "Could not publish the component due to the following error." in e.value.args[0]
+    assert "Error in publish" in e.value.args[0]
     assert mock_component_publish.call_count == 1
     assert mock_component_publish_run.call_count == 0
     mock_component_publish.assert_called_with(d_args)
@@ -89,10 +89,7 @@ def test_component_list_exception(mocker):
     d_args = {"list": None}
     with pytest.raises(Exception) as e:
         component.list(d_args)
-    assert (
-        "Could not list the available components from Greengrass Software Catalog due to the following error"
-        in e.value.args[0]
-    )
+    assert "Error in list" in e.value.args[0]
     assert mock_component_list.call_count == 1
     assert mock_component_list_run.call_count == 0
     mock_component_list.assert_called_with(d_args)

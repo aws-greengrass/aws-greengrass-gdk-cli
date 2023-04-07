@@ -37,9 +37,9 @@ class S3Client:
             else:
                 location = {"LocationConstraint": region}
                 self.s3_client.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
-        except Exception as exc:
+        except Exception:
             logging.error("Failed to create the bucket '%s' in region '%s'", bucket, region)
-            raise Exception(exc) from exc
+            raise
         logging.info("Successfully created the artifacts bucket '%s' in region '%s'", bucket, region)
 
     def upload_artifacts(self, artifacts_to_upload):
@@ -68,8 +68,9 @@ class S3Client:
                 s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
                 logging.debug("Uploading artifact '%s' to the bucket '%s'.", artifact.resolve(), bucket)
                 self.s3_client.upload_file(str(artifact.resolve()), bucket, s3_file_path, ExtraArgs=s3_upload_file_args)
-        except Exception as exc:
-            raise Exception(f"Error while uploading the artifacts to s3 during publish.\n{exc}") from exc
+        except Exception:
+            logging.error("Failed to upload artifacts to s3 during publish.")
+            raise
 
     def valid_bucket_for_artifacts_exists(self, bucket, region) -> bool:
         location_constraint = None if region == "us-east-1" else region
@@ -84,16 +85,16 @@ class S3Client:
         except ClientError as exc:
             error_code = exc.response["Error"]["Code"]
             if error_code != "403" and error_code != "404":
-                raise Exception(
-                    f"Could not verify if the bucket '{bucket}' exists in the region '{region}'.\nError:{exc}"
-                ) from exc
+                logging.error("Could not verify if the bucket '%s' exists in the region '%s'.", bucket, region)
+                raise
             elif error_code == "403":
-                raise Exception(
-                    f"Bucket '{bucket}' already exists and is not owned by you. Please provide a different name for the"
-                    " bucket in the configuration."
-                ) from exc
+                logging.error(
+                    "Bucket '%s' already exists and is not owned by you. Please provide a different name for the"
+                    " bucket in the configuration.",
+                    bucket,
+                )
+                raise
             return False
-        except Exception as exc:
-            raise Exception(
-                f"Could not verify if the bucket '{bucket}' exists in the region '{region}'.\nError:{exc}"
-            ) from exc
+        except Exception:
+            logging.error("Could not verify if the bucket '%s' exists in the region '%s'.", bucket, region)
+            raise

@@ -27,7 +27,7 @@ class GdkProcess:
 
         try:
             if capture_output:
-                output = sp.run(["gdk"] + arguments, check=True, stdout=sp.PIPE)
+                output = sp.run(["gdk"] + arguments, check=True, stdout=sp.PIPE, stderr=sp.STDOUT)
                 return ProcessOutput(output.returncode, output.stdout.decode())
             else:
                 output = sp.run(["gdk"] + arguments)

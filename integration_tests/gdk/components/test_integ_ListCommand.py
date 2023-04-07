@@ -2,7 +2,6 @@ import logging
 
 import gdk.CLIParser as CLIParser
 import gdk.common.consts as consts
-import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.parse_args_actions as parse_args_actions
 import pytest
 from urllib3.exceptions import HTTPError
@@ -28,7 +27,7 @@ def test_list_template_failed_request(mocker):
     with pytest.raises(Exception) as e:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "list", "--template"]))
     assert mock_list_req.called
-    assert error_messages.LISTING_COMPONENTS_FAILED in e.value.args[0]
+    assert "some error" in e.value.args[0]
 
 
 def test_list_repository_failed_request(mocker):
@@ -37,7 +36,7 @@ def test_list_repository_failed_request(mocker):
     with pytest.raises(Exception) as e:
         parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "list", "--repository"]))
     assert mock_list_req.called
-    assert error_messages.LISTING_COMPONENTS_FAILED in e.value.args[0]
+    assert "some error" in e.value.args[0]
 
 
 def test_list_template_not_json(mocker):
