@@ -60,7 +60,7 @@ Configure AWS CLI with your credentials as shown here - https://docs.aws.amazon.
         "gdk_version": "1.0.0"
     }
    ```
-   2. Replace `<PLACEHOLDER_AUTHOR>` with your name, `<PLACEHOLDER_BUCKET>` with a s3 bucket name and `<PLACEHOLDER_REGION>` with an aws region.
+   2. Replace `<PLACEHOLDER_AUTHOR>` with your name, `<PLACEHOLDER_BUCKET>` with a prefix for an Amazon S3 bucket name and `<PLACEHOLDER_REGION>` with an AWS region. The specified bucket will be created in the specified region if it doesn't exist (name format: `{PLACEHOLDER_BUCKET}-{PLACEHOLDER_REGION}-{account_number}`).
    3. After replace these value the `gdk-config.json` file should look similar to:
    ```json
     {
