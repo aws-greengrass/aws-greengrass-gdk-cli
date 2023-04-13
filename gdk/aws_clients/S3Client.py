@@ -84,10 +84,10 @@ class S3Client:
             )
         except ClientError as exc:
             error_code = exc.response["Error"]["Code"]
-            if error_code != "403" and error_code != "404":
+            if error_code != "AccessDenied" and error_code != "NoSuchBucket":
                 logging.error("Could not verify if the bucket '%s' exists in the region '%s'.", bucket, region)
                 raise
-            elif error_code == "403":
+            elif error_code == "AccessDenied":
                 logging.error(
                     "Bucket '%s' already exists and is not owned by you. Please provide a different name for the"
                     " bucket in the configuration.",

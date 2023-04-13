@@ -1,11 +1,13 @@
+import json
+import tempfile
 from pathlib import Path
 from unittest import TestCase
-import tempfile
+
 import pytest
 import yaml
-from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
-import json
-from gdk.common.CaseInsensitive import CaseInsensitiveDict
+
+from gdk.common.CaseInsensitive import (CaseInsensitiveDict,
+                                        CaseInsensitiveRecipeFile)
 
 
 class CaseInsensitiveRecipeFileTest(TestCase):
@@ -79,11 +81,13 @@ class CaseInsensitiveDictTest(TestCase):
             "key1": "value1",
             "key2": [{"key21": "value21"}, {"key22": "value22"}],
             "key3": {"key31": {"key311": "key312"}},
+            "key4": ["entry1", "entry2"]
         }
         cis = CaseInsensitiveDict(dictionary)
         assert "KEY1" in cis
         assert cis["KEY2"][0]["KEy21"] == "value21"
         assert cis["KEy3"]["key31"]["KeY311"] == "key312"
+        assert len(cis["key4"]) == 2
         assert cis.to_dict() == dictionary
 
     def test_when_update_value_then_key_not_changed(self):

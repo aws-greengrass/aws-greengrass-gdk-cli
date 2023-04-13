@@ -135,7 +135,7 @@ class S3ClientTest(TestCase):
 
         def throw_err(*args, **kwargs):
             ex = boto3.client("s3").exceptions.ClientError(
-                {"Error": {"Code": "403", "Message": "Forbidden"}}, "GetBucketLocation"
+                {"Error": {"Code": "AccessDenied", "Message": "Forbidden"}}, "GetBucketLocation"
             )
             raise ex
 
@@ -146,7 +146,7 @@ class S3ClientTest(TestCase):
             s3_client_utils.valid_bucket_for_artifacts_exists(bucket, region)
 
         assert mock_get_bucket_location.call_args_list == [call(Bucket=bucket)]
-        assert "An error occurred (403) when calling the GetBucketLocation" in str(e.value.args[0])
+        assert "An error occurred (AccessDenied) when calling the GetBucketLocation" in str(e.value.args[0])
 
     def test_valid_bucket_for_artifacts_exists_not_exists(self):
         bucket = "test-bucket"
@@ -154,7 +154,7 @@ class S3ClientTest(TestCase):
 
         def throw_err(*args, **kwargs):
             ex = boto3.client("s3").exceptions.ClientError(
-                {"Error": {"Code": "404", "Message": "Not Found"}}, "GetBucketLocation"
+                {"Error": {"Code": "NoSuchBucket", "Message": "Not Found"}}, "GetBucketLocation"
             )
             raise ex
 

@@ -1,7 +1,7 @@
 import json
-import yaml
 from pathlib import Path
 
+import yaml
 from requests.structures import CaseInsensitiveDict as _CaseInsensitiveDict
 
 
@@ -27,7 +27,9 @@ class CaseInsensitiveDict(_CaseInsensitiveDict):
             if isinstance(value, dict):
                 case_insensitive_dict.update({key: CaseInsensitiveDict(value)})
             elif isinstance(value, list):
-                case_insensitive_dict.update({key: [CaseInsensitiveDict(val) for val in value if isinstance(val, dict)]})
+                case_insensitive_dict.update(
+                    {key: [CaseInsensitiveDict(val) if isinstance(val, dict) else val for val in value]}
+                )
 
     def _convert_nested_case_insensitive_dict(self, dictObj: dict) -> dict:
         for key, value in dictObj.items():
@@ -38,8 +40,9 @@ class CaseInsensitiveDict(_CaseInsensitiveDict):
                     {
                         key: [
                             self._convert_nested_case_insensitive_dict(dict(val))
-                            for val in value
                             if isinstance(val, CaseInsensitiveDict)
+                            else val
+                            for val in value
                         ]
                     }
                 )
