@@ -27,7 +27,9 @@ class CaseInsensitiveDict(_CaseInsensitiveDict):
             if isinstance(value, dict):
                 case_insensitive_dict.update({key: CaseInsensitiveDict(value)})
             elif isinstance(value, list):
-                case_insensitive_dict.update({key: [CaseInsensitiveDict(val) if isinstance(val, dict) else val for val in value ]})
+                case_insensitive_dict.update(
+                    {key: [CaseInsensitiveDict(val) if isinstance(val, dict) else val for val in value]}
+                )
 
     def _convert_nested_case_insensitive_dict(self, dictObj: dict) -> dict:
         for key, value in dictObj.items():
