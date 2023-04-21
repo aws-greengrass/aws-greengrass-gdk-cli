@@ -5,6 +5,7 @@ import gdk.common.consts as consts
 import gdk.common.model_actions as model_actions
 import gdk.common.parse_args_actions as parse_args_actions
 import gdk.common.utils as utils
+from gdk.telemetry.emit import Emit
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -180,6 +181,8 @@ class CLIParser:
 
 def main():
     try:
+        Emit().installed_metric()
+
         # Check the version of the cli before command parsing.
         utils.cli_version_check()
         args_namespace = cli_parser.parse_args()
