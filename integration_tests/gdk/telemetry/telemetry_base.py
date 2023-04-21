@@ -27,10 +27,10 @@ class TelemetryTestCase(TestCase):
         return super().tearDown()
 
     def disable_telemetry(self):
-        os.environ[GDK_CLI_TELEMETRY] = "False"
+        os.environ[GDK_CLI_TELEMETRY] = "0"
 
     def enable_telemetry(self):
-        os.environ[GDK_CLI_TELEMETRY] = "True"
+        os.environ[GDK_CLI_TELEMETRY] = "1"
 
 
 class TelemetryServer:

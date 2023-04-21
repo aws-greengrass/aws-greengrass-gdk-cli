@@ -11,9 +11,9 @@ def get_telemetry_url() -> str:
 
 def get_telemetry_enabled() -> bool:
     # Telemetry disabled by default - This will change to default to true
-    env_telemetry_setting = os.getenv(GDK_CLI_TELEMETRY, "False")
+    env_telemetry_setting = os.getenv(GDK_CLI_TELEMETRY, "0")
 
-    if env_telemetry_setting == "True":
+    if env_telemetry_setting == "1":
         return True
     else:
         return False
