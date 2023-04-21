@@ -33,7 +33,7 @@ def is_valid_model(cli_model, command):
 
     # Validate sub-commands
     if "sub-commands" in cli_model[command]:
-        if not is_valid_subcommand_model(cli_model, cli_model[command]["sub-commands"]):
+        if not is_valid_subcommand_model(cli_model[command]["sub-commands"]):
             return False
     return True
 
@@ -60,7 +60,7 @@ def is_valid_argument_model(argument):
     return True
 
 
-def is_valid_subcommand_model(cli_model, subcommands):
+def is_valid_subcommand_model(cli_model):
     """
     Validates CLI model specified subcommand level.
 
@@ -75,7 +75,7 @@ def is_valid_subcommand_model(cli_model, subcommands):
     -------
       (bool): Returns True when the subcommand is valid else False.
     """
-    for subc in subcommands:
+    for subc in cli_model:
         if not is_valid_model(cli_model, subc):
             return False
     return True

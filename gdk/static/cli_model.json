@@ -1,137 +1,132 @@
 {
     "gdk": {
-        "sub-commands": [
-            "component"
-        ],
+        "sub-commands": {
+            "component": {
+                "sub-commands": {
+                    "init": {
+                        "arguments": {
+                            "language": {
+                                "name": [
+                                    "-l",
+                                    "--language"
+                                ],
+                                "help": "Programming language of the template.",
+                                "choices": [
+                                    "python",
+                                    "java"
+                                ],
+                                "type": "str.lower"
+                            },
+                            "template": {
+                                "name": [
+                                    "-t",
+                                    "--template"
+                                ],
+                                "help": "Name of the template to be used."
+                            },
+                            "repository": {
+                                "name": [
+                                    "-r",
+                                    "--repository"
+                                ],
+                                "help": "Name of the repository to be used."
+                            },
+                            "name": {
+                                "name": [
+                                    "-n",
+                                    "--name"
+                                ],
+                                "help": "Name of the project directory to create."
+                            }
+                        },
+                        "conflicting_arg_groups": [
+                            [
+                                "language",
+                                "template"
+                            ],
+                            [
+                                "repository"
+                            ]
+                        ],
+                        "arg_groups": [
+                            {
+                                "title": "Greengrass component templates.",
+                                "args": [
+                                    "language",
+                                    "template"
+                                ],
+                                "description": "Initialize the project with a component template written in specified programming language."
+                            },
+                            {
+                                "title": "Greengrass repository catalog.",
+                                "args": [
+                                    "repository"
+                                ],
+                                "description": "Initialize the project with a component from Greengrass Repository Catalog."
+                            }
+                        ],
+                        "help": "Initialize the project with a component template or repository from Greengrass Software Catalog."
+                    },
+                    "build": {
+                        "help": "Build GreengrassV2 component artifacts and recipes from its source code."
+                    },
+                    "publish": {
+                        "help": "Create a new version of a GreengrassV2 component from its built artifacts and recipes.",
+                        "arguments": {
+                            "bucket": {
+                                "name": [
+                                    "-b",
+                                    "--bucket"
+                                ],
+                                "help": "Name of the s3 bucket to use for uploading component artifacts. This argument overrides the bucket name provided in the gdk configuration."
+                            },
+                            "region": {
+                                "name": [
+                                    "-r",
+                                    "--region"
+                                ],
+                                "help": "Name of the AWS region to use during component creation. This argument overrides the region name provided in the gdk configuration."
+                            },
+                            "options": {
+                                "name": [
+                                    "-o",
+                                    "--options"
+                                ],
+                                "help": "Extra configuration options used during component version creation. This argument needs to be a valid json string or file path to a JSON file containing the publish options. This argument overrides the options provided in the gdk configuration."
+                            }
+                        }
+                    },
+                    "list": {
+                        "help": "List all the available component templates and repositories from Greengrass Software Catalog",
+                        "arguments": {
+                            "template": {
+                                "name": [
+                                    "-t",
+                                    "--template"
+                                ],
+                                "help": "List all the available component templates.",
+                                "action": "store_true"
+                            },
+                            "repository": {
+                                "name": [
+                                    "-r",
+                                    "--repository"
+                                ],
+                                "help": "List all the available component repositories.",
+                                "action": "store_true"
+                            }
+                        },
+                        "conflicting_arg_groups": [
+                            [
+                                "template",
+                                "repository"
+                            ]
+                        ]
+                    }
+                },
+                "help": "Initialize, build and publish GreengrassV2 components using this command."
+            }
+        },
         "help": "Greengrass development kit - CLI for developing AWS IoT GreengrassV2 components."
-    },
-    "component": {
-        "sub-commands": [
-            "init",
-            "build",
-            "publish",
-            "list"
-        ],
-        "help": "Initialize, build and publish GreengrassV2 components using this command."
-    },
-    "init": {
-        "arguments": {
-            "language": {
-                "name": [
-                    "-l",
-                    "--language"
-                ],
-                "help": "Programming language of the template.",
-                "choices": [
-                    "python",
-                    "java"
-                ],
-                "type": "str.lower"
-            },
-            "template": {
-                "name": [
-                    "-t",
-                    "--template"
-                ],
-                "help": "Name of the template to be used."
-            },
-            "repository": {
-                "name": [
-                    "-r",
-                    "--repository"
-                ],
-                "help": "Name of the repository to be used."
-            },
-            "name": {
-                "name": [
-                    "-n",
-                    "--name"
-                ],
-                "help": "Name of the project directory to create."
-            }
-        },
-        "conflicting_arg_groups": [
-            [
-                "language",
-                "template"
-            ],
-            [
-                "repository"
-            ]
-        ],
-        "arg_groups": [
-            {
-                "title": "Greengrass component templates.",
-                "args": [
-                    "language",
-                    "template"
-                ],
-                "description": "Initialize the project with a component template written in specified programming language."
-            },
-            {
-                "title": "Greengrass repository catalog.",
-                "args": [
-                    "repository"
-                ],
-                "description": "Initialize the project with a component from Greengrass Repository Catalog."
-            }
-        ],
-        "help": "Initialize the project with a component template or repository from Greengrass Software Catalog."
-    },
-    "build": {
-        "help": "Build GreengrassV2 component artifacts and recipes from its source code."
-    },
-    "publish": {
-        "help": "Create a new version of a GreengrassV2 component from its built artifacts and recipes.",
-        "arguments": {
-            "bucket": {
-                "name": [
-                    "-b",
-                    "--bucket"
-                ],
-                "help": "Name of the s3 bucket to use for uploading component artifacts. This argument overrides the bucket name provided in the gdk configuration."
-            },
-            "region": {
-                "name": [
-                    "-r",
-                    "--region"
-                ],
-                "help": "Name of the AWS region to use during component creation. This argument overrides the region name provided in the gdk configuration."
-            },
-            "options": {
-                "name": [
-                    "-o",
-                    "--options"
-                ],
-                "help": "Extra configuration options used during component version creation. This argument needs to be a valid json string or file path to a JSON file containing the publish options. This argument overrides the options provided in the gdk configuration."
-            }
-        }
-    },
-    "list": {
-        "help": "List all the available component templates and repositories from Greengrass Software Catalog",
-        "arguments": {
-            "template": {
-                "name": [
-                    "-t",
-                    "--template"
-                ],
-                "help": "List all the available component templates.",
-                "action": "store_true"
-            },
-            "repository": {
-                "name": [
-                    "-r",
-                    "--repository"
-                ],
-                "help": "List all the available component repositories.",
-                "action": "store_true"
-            }
-        },
-        "conflicting_arg_groups": [
-            [
-                "template",
-                "repository"
-            ]
-        ]
     }
 }

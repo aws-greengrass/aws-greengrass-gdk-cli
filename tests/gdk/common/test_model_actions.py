@@ -1,9 +1,10 @@
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
+import pytest
+
 import gdk.common.consts as consts
 import gdk.common.model_actions as model_actions
-import pytest
 
 
 def test_get_validated_model_file_not_exists(mocker):
@@ -66,58 +67,68 @@ def test_is_valid_argument_model_without_help():
 def test_is_valid_subcommand_model_valid():
     # Valid subcommand with valid commmand key in the cli model.
     model = {
-        "gdk": {"sub-commands": ["component"], "help": "help"},
-        "component": {"help": "help", "sub-commands": ["init", "build"]},
-        "build": {"help": "help"},
-        "init": {"help": "help"},
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "help": "help",
+                    "sub-commands": {
+                        "build": {"help": "help"},
+                        "init": {"help": "help"},
+                    },
+                }
+            },
+            "help": "help",
+        },
     }
-    valid_model_subcommands = ["component"]
-    assert model_actions.is_valid_subcommand_model(model, valid_model_subcommands)
+    assert model_actions.is_valid_subcommand_model(model["gdk"]["sub-commands"])
 
 
 def test_is_valid_subcommand_model_valid_without_help():
     # Valid subcommand without help in the cli model.
     model = {
-        "gdk": {"sub-commands": ["component"]},
-        "component": {"sub-commands": ["init", "build"]},
-        "build": {},
-        "init": {},
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "help": "help",
+                    "sub-commands": {
+                        "build": {},
+                        "init": {},
+                    },
+                }
+            },
+            "help": "help",
+        },
     }
-    valid_model_subcommands = ["component"]
-    assert not model_actions.is_valid_subcommand_model(model, valid_model_subcommands)
-
-
-def test_is_valid_subcommand_model_invalid():
-    # Invalid subcommand with no key in the cli model.
-    model = {
-        "gdk": {"sub-commands": ["component"]},
-        "component": {"sub-commands": ["init", "build"]},
-        "init": {},
-        "build": {},
-    }
-    invalid_model_subcommands = ["component", "invalid-subcommand-that-is-not-present-as-key"]
-    assert not model_actions.is_valid_subcommand_model(model, invalid_model_subcommands)
+    assert not model_actions.is_valid_subcommand_model(model["gdk"]["sub-commands"])
 
 
 def test_is_valid_model_call_counts(mocker):
     valid_model = {
-        "gdk": {"sub-commands": ["component"], "help": "help"},
-        "component": {"sub-commands": ["init", "build"], "help": "help"},
-        "init": {
-            "arguments": {
-                "lang": {"name": ["-l", "--lang"], "help": "help"},
-                "temp": {"name": ["-t", "--temp"], "help": "help"},
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "sub-commands": {
+                        "init": {
+                            "arguments": {
+                                "lang": {"name": ["-l", "--lang"], "help": "help"},
+                                "temp": {"name": ["-t", "--temp"], "help": "help"},
+                            },
+                            "arg_groups": [
+                                {
+                                    "title": "Greengrass component templates.",
+                                    "args": ["lang"],
+                                    "description": "description",
+                                }
+                            ],
+                            "help": "help",
+                        },
+                        "build": {"help": "help"},
+                    },
+                    "help": "help",
+                },
             },
-            "arg_groups": [
-                {
-                    "title": "Greengrass component templates.",
-                    "args": ["lang"],
-                    "description": "description",
-                }
-            ],
             "help": "help",
-        },
-        "build": {"help": "help"},
+        }
     }
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
@@ -131,24 +142,32 @@ def test_is_valid_model_call_counts(mocker):
 
 def test_is_valid_model_invalid_argument_model(mocker):
     invalid_model = {
-        "gdk": {"sub-commands": ["component"], "help": "help"},
-        "component": {"sub-commands": ["init", "build"], "help": "help"},
-        "init": {
-            "arguments": {
-                "lang": {"name": ["-l", "--lang"]},
-                "temp": {"name": ["-t", "--temp"]},
-            },
-            "arg_groups": [
-                {
-                    "title": "Greengrass component templates.",
-                    "args": ["lang"],
-                    "description": "description",
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "sub-commands": {
+                        "init": {
+                            "arguments": {
+                                "lang": {"name": ["-l", "--lang"]},
+                                "temp": {"name": ["-t", "--temp"]},
+                            },
+                            "arg_groups": [
+                                {
+                                    "title": "title",
+                                    "args": ["lang"],
+                                    "description": "description",
+                                }
+                            ],
+                            "help": "help",
+                        },
+                    },
+                    "help": "help",
                 }
-            ],
+            },
             "help": "help",
         },
-        "build": {"help": "help"},
     }
+
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
     spy_is_valid_argument_group_model = mocker.spy(model_actions, "is_valid_argument_group_model")
@@ -161,22 +180,26 @@ def test_is_valid_model_invalid_argument_model(mocker):
 
 def test_is_valid_model_invalid_argument_group_model(mocker):
     valid_model = {
-        "gdk": {"sub-commands": ["init"], "help": "help"},
-        "init": {
-            "arguments": {
-                "lang": {"name": ["-l", "--lang"], "help": "help"},
-                "temp": {"name": ["-t", "--temp"], "help": "help"},
+        "gdk": {
+            "sub-commands": {
+                "init": {
+                    "arguments": {
+                        "lang": {"name": ["-l", "--lang"], "help": "help"},
+                        "temp": {"name": ["-t", "--temp"], "help": "help"},
+                    },
+                    "arg_groups": [
+                        {
+                            "title": "Greengrass component templates.",
+                            "args": ["lang", "template"],
+                            "description": "description",
+                        }
+                    ],
+                    "help": "help",
+                },
+                "build": {"help": "help"},
             },
-            "arg_groups": [
-                {
-                    "title": "Greengrass component templates.",
-                    "args": ["lang", "template"],
-                    "description": "description",
-                }
-            ],
             "help": "help",
-        },
-        "build": {"help": "help"},
+        }
     }
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
@@ -190,23 +213,32 @@ def test_is_valid_model_invalid_argument_group_model(mocker):
 
 def test_is_valid_model_invalid_sub_commands(mocker):
     valid_model = {
-        "gdk": {"sub-commands": ["component"], "help": "help"},
-        "component": {"sub-commands": ["init", "not-valid"], "help": "help"},
-        "init": {
-            "arguments": {
-                "lang": {"name": ["-l", "--lang"], "help": "help"},
-                "temp": {"name": ["-t", "--temp"], "help": "help"},
-            },
-            "arg_groups": [
-                {
-                    "title": "Greengrass component templates.",
-                    "args": ["lang", "temp"],
-                    "description": "description",
+        "gdk": {
+            "sub-commands": {
+                "component": {
+                    "sub-commands": {
+                        "init": {
+                            "arguments": {
+                                "lang": {"name": ["-l", "--lang"], "help": "help"},
+                                "temp": {"name": ["-t", "--temp"], "help": "help"},
+                            },
+                            "arg_groups": [
+                                {
+                                    "title": "Greengrass component templates.",
+                                    "args": ["lang", "temp"],
+                                    "description": "description",
+                                }
+                            ],
+                            "help": "help",
+                        },
+                        "not-valid": {},
+                        "build": {"help": "help"},
+                    },
+                    "help": "help",
                 }
-            ],
+            },
             "help": "help",
         },
-        "build": {"help": "help"},
     }
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
