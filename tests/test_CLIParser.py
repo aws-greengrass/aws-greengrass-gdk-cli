@@ -86,33 +86,6 @@ def test_add_arg_to_group_or_parser_with_parser(mocker):
     assert cli_tool._add_arg_to_group_or_parser(arg, group)
 
 
-def test_model_file():
-    model = {
-        "gdk": {"sub-commands": ["component"]},
-        "component": {"sub-commands": ["init", "build", "publish"]},
-        "init": {
-            "arguments": {
-                "language": {"name": ["-l", "--language"], "help": "help", "choices": ["python", "java"]},
-                "template": {"name": ["-t", "--template"], "help": "help"},
-                "repository": {"name": ["-r", "--repository"], "help": "help"},
-                "project-name": {
-                    "name": ["-n", "--project-name"],
-                    "help": "Specify the name of the directory you want to create in",
-                },
-            },
-            "conflicting_arg_groups": [["language", "template"], ["repository"]],
-            "arg_groups": [
-                {"title": "Title", "args": ["language", "template"], "description": "Description"},
-                {"title": "Title", "args": ["repository"], "description": "Description"},
-            ],
-        },
-        "build": {},
-        "publish": {},
-    }
-
-    return model
-
-
 def test_main(mocker):
     args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
     mock_cli_parser = mocker.patch("gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace)
