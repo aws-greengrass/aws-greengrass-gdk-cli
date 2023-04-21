@@ -2,7 +2,7 @@
 import time
 
 from gdk._version import __version__
-from gdk.telemetry.metric import Metric
+from gdk.telemetry.metric import Metric, MetricType
 from gdk.telemetry.telemetry import Telemetry
 from integration_tests.gdk.telemetry.telemetry_base import (TelemetryServer,
                                                             TelemetryTestCase)
@@ -17,7 +17,7 @@ class TestTelemetryServerSetup(TelemetryTestCase):
         self.enable_telemetry()
 
         epoch = int(time.time())
-        sample_metric = Metric("PING", epoch)
+        sample_metric = Metric(MetricType.PING, epoch)
         sample_metric.add_dimension("hello", "world")
 
         with TelemetryServer() as server:
@@ -51,7 +51,7 @@ class TestTelemetryServerSetup(TelemetryTestCase):
         self.disable_telemetry()
 
         epoch = int(time.time())
-        sample_metric = Metric("PING", epoch)
+        sample_metric = Metric(MetricType.PING, epoch)
         sample_metric.add_dimension("hello", "world")
 
         with TelemetryServer() as server:

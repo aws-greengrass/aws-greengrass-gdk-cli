@@ -3,10 +3,10 @@ from unittest import TestCase
 
 import mock
 
-from gdk.telemetry.metric import Metric
-from gdk.telemetry.telemetry import Telemetry
 from gdk.telemetry import (GDK_CLI_TELEMETRY, GDK_CLI_TELEMETRY_ENDPOINT_URL,
                            get_telemetry_enabled, get_telemetry_url)
+from gdk.telemetry.metric import Metric, MetricType
+from gdk.telemetry.telemetry import Telemetry
 
 
 class TestTelemetry(TestCase):
@@ -28,7 +28,7 @@ class TestTelemetry(TestCase):
     @mock.patch('requests.post')
     def test_emit_telemtry_when_disbaled(self, post):
         os.environ[GDK_CLI_TELEMETRY] = "0"
-        metric = Metric("PING")
+        metric = Metric(MetricType.PING)
         telemetry = Telemetry()
 
         telemetry.emit(metric)
@@ -39,7 +39,7 @@ class TestTelemetry(TestCase):
     def test_emit_telemetry_when_enabled(self, post):
         os.environ[GDK_CLI_TELEMETRY] = "1"
 
-        metric = Metric("PING")
+        metric = Metric(MetricType.PING)
         telemetry = Telemetry()
 
         telemetry.emit(metric)

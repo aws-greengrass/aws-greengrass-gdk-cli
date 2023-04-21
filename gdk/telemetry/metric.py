@@ -1,17 +1,17 @@
 import logging
 import time
-from typing import Literal
+from enum import Enum
 
 from gdk._version import __version__
 
 logger = logging.getLogger(__name__)
 
 
-MetricTypes = Literal["INSTALLED", "BUILD", "PUBLISH", "TEMPLATE", "PING"]
+MetricType = Enum('MetricTypes', ["INSTALLED", "BUILD", "PUBLISH", "TEMPLATE", "PING"])
 
 
 class Metric:
-    def __init__(self, type: MetricTypes, epoch=int(time.time())):
+    def __init__(self, type: MetricType, epoch=int(time.time())):
         self.type = type
         self.dimensions = dict()
         self.timestamp = epoch
@@ -25,7 +25,7 @@ class MetricEncoder:
 
     def encode(self, m: Metric):
         return {
-            "name": m.type,
+            "name": m.type.name,
             "meta": m.meta,
             "timestamp": m.timestamp,
             "dimensions": m.dimensions
