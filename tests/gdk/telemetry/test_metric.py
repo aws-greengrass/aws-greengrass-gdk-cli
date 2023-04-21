@@ -3,6 +3,8 @@
 import time
 from unittest import TestCase
 
+from mock import ANY
+
 from gdk._version import __version__
 from gdk.telemetry.metric import Metric, MetricEncoder, MetricType
 
@@ -32,4 +34,24 @@ class TestMetric(TestCase):
             "timestamp": epoch,
             "dimensions": {"hello": "world"}
         }
+        self.assertEqual(expected, encoded)
+
+    def test_build_install_metric(self):
+        epoch = int(time.time())
+        metric = Metric.Factory.installed_metric(epoch)
+        encoded = MetricEncoder().encode(metric)
+
+        expected = {
+            "name": "INSTALLED",
+            "meta": {"gdk_version": __version__},
+            "timestamp": epoch,
+            "dimensions": {
+                "osPlatform": ANY,
+                "osRelease": ANY,
+                "machine": ANY,
+                "arch": ANY,
+                "pythonVersion": ANY
+            }
+        }
+
         self.assertEqual(expected, encoded)

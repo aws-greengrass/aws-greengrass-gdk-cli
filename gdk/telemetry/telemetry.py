@@ -1,14 +1,22 @@
 import logging
+from abc import ABC, abstractmethod
 
 import requests
 
-from gdk.telemetry import get_telemetry_url, get_telemetry_enabled
+from gdk.telemetry import get_telemetry_enabled, get_telemetry_url
 from gdk.telemetry.metric import Metric, MetricEncoder
 
 logger = logging.getLogger(__name__)
 
 
-class Telemetry:
+class ITelemetry(ABC):
+
+    @abstractmethod
+    def emit(self, metric: Metric):
+        pass
+
+
+class Telemetry(ITelemetry):
     """
     Wrapper around requests to sends telemetry data to the telemetry service.
     """

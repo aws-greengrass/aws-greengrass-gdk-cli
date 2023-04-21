@@ -1,4 +1,5 @@
 import logging
+import platform
 import time
 from enum import Enum
 
@@ -7,7 +8,7 @@ from gdk._version import __version__
 logger = logging.getLogger(__name__)
 
 
-MetricType = Enum('MetricTypes', ["INSTALLED", "BUILD", "PUBLISH", "TEMPLATE", "PING"])
+MetricType = Enum('MetricTypes', ["INSTALLED", "COMPONENT_BUILD", "COMPONENT_PUBLISH", "TEMPLATE", "PING"])
 
 
 class Metric:
@@ -19,6 +20,19 @@ class Metric:
 
     def add_dimension(self, key: str, value: str):
         self.dimensions[key] = value
+
+    class Factory:
+
+        @staticmethod
+        def installed_metric(epoch=int(time.time())):
+            metric = Metric(MetricType.INSTALLED, epoch)
+            metric.add_dimension("osPlatform", platform.system())
+            metric.add_dimension("osRelease", platform.release())
+            metric.add_dimension("machine", platform.machine())
+            metric.add_dimension("arch", platform.architecture()[0])
+            metric.add_dimension("pythonVersion", platform.python_version())
+
+            return metric
 
 
 class MetricEncoder:
