@@ -65,7 +65,6 @@ class TestRuntimeConfig(TelemetryTestCase):
         config = RuntimeConfig(force_create=True)
         self.assertIsNone(config.get(ConfigKey.INSTALLED))
 
-<<<<<<< HEAD
     def test_it_gracefully_fails_writing_config_to_disk(self):
         mock_path = mock.MagicMock(spec=Path)
         mock_path.write_text.side_effect = IOError("Write failure")
@@ -77,16 +76,10 @@ class TestRuntimeConfig(TelemetryTestCase):
         version = config.get(ConfigKey.INSTALLED)
         self.assertEqual(__version__, version)
 
-=======
->>>>>>> b27f20d (feat: send install metric when version changes)
     def test_it_can_load_the_config_path_from_an_env_variable(self):
         temp_dir = tempfile.mktemp()
         os.environ[GDK_RUNTIME_CONFIG_DIR] = temp_dir
 
-<<<<<<< HEAD
         config = RuntimeConfig(force_create=True)
-=======
-        config = RuntimeConfig()
->>>>>>> b27f20d (feat: send install metric when version changes)
         expected_path = Path(temp_dir, "runtime.json")
         self.assertEqual(str(expected_path), str(config.config_path))
