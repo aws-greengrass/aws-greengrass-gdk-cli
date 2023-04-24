@@ -1,6 +1,6 @@
 import pytest
 
-from gdk.runtime_config import ConfigKey, RuntimeConfig
+from gdk.telemetry.telemetry_config import ConfigKey, TelemetryConfig
 
 from .telemetry_base import TelemetryServer, TelemetryTestCase
 
@@ -12,7 +12,7 @@ class TestEmitTelemetry(TelemetryTestCase):
         Simualtes the gdk runtime config having recorded an older version of the gdk. Than
         the one currently recorded on the _version.py file.
         """
-        config = RuntimeConfig()
+        config = TelemetryConfig()
         config.set(ConfigKey.INSTALLED, "1.0.0")
 
     def test_emit_installed_metric_on_first_run_only(self):
