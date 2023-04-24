@@ -44,6 +44,7 @@ class RuntimeConfig(metaclass=Singleton):
 
     def __init__(self, *args, **kwargs):
         self._config = dict()
+        self._config_path = None
         self._load_config()
 
     def set(self, key: ConfigKey, value: str):
@@ -62,7 +63,14 @@ class RuntimeConfig(metaclass=Singleton):
 
     @property
     def config_path(self) -> Path:
-        return Path(self.config_dir, self.DEFAULT_CONFIG_FILE_NAME)
+        if not self._config_path:
+            self._config_path = Path(self.config_dir, self.DEFAULT_CONFIG_FILE_NAME)
+
+        return self._config_path
+
+    @config_path.setter
+    def config_path(self, config_path: Path) -> None:
+        self._config_path = config_path
 
     def _load_config(self):
         """

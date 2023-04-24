@@ -5,6 +5,8 @@ import os
 import tempfile
 from pathlib import Path
 
+import mock
+
 from gdk._version import __version__
 from gdk.runtime_config import (GDK_RUNTIME_CONFIG_DIR, ConfigKey,
                                 RuntimeConfig)
@@ -63,10 +65,21 @@ class TestRuntimeConfig(TelemetryTestCase):
         config = RuntimeConfig(force_create=True)
         self.assertIsNone(config.get(ConfigKey.INSTALLED))
 
+    def test_it_gracefully_fails_writing_config_to_disk(self):
+        mock_path = mock.MagicMock(spec=Path)
+        mock_path.write_text.side_effect = IOError("Write failure")
+
+        config = RuntimeConfig()
+        config.config_path = mock_path
+        config.set(ConfigKey.INSTALLED, __version__)
+
+        version = config.get(ConfigKey.INSTALLED)
+        self.assertEqual(__version__, version)
+
     def test_it_can_load_the_config_path_from_an_env_variable(self):
         temp_dir = tempfile.mktemp()
         os.environ[GDK_RUNTIME_CONFIG_DIR] = temp_dir
 
-        config = RuntimeConfig()
+        config = RuntimeConfig(force_create=True)
         expected_path = Path(temp_dir, "runtime.json")
         self.assertEqual(str(expected_path), str(config.config_path))
