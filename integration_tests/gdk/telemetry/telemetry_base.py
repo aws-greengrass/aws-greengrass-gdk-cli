@@ -1,4 +1,5 @@
 import os
+
 import sys
 import time
 from threading import Thread
@@ -8,6 +9,7 @@ from flask import Flask, Response, request
 from mock import patch
 from werkzeug.serving import make_server
 from gdk import CLIParser
+from gdk.runtime_config import RuntimeConfig
 
 from gdk.telemetry import GDK_CLI_TELEMETRY_ENDPOINT_URL, GDK_CLI_TELEMETRY
 
@@ -23,6 +25,12 @@ class TelemetryTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        config = RuntimeConfig(force_create=True)
+
+        # Delete the persisted config file if exists after each test
+        if os.path.exists(config.config_path):
+            os.remove(config.config_path)
+
         os.environ[GDK_CLI_TELEMETRY_ENDPOINT_URL] = TELEMETRY_ENDPOINT_URL
 
     def tearDown(self) -> None:

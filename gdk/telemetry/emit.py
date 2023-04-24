@@ -1,3 +1,5 @@
+from gdk._version import __version__
+from gdk.runtime_config import ConfigKey, RuntimeConfig
 from gdk.telemetry.metric import Metric
 from gdk.telemetry.telemetry import ITelemetry, Telemetry
 
@@ -9,8 +11,16 @@ class Emit:
     """
 
     def __init__(self, emiter: ITelemetry = None):
+        self.runtime_config = RuntimeConfig()
         self._emiter = emiter or Telemetry()
 
     def installed_metric(self):
+        """
+        Sends an installed metric only once after the cli has been installed
+        """
+        if self.runtime_config.has(ConfigKey.INSTALLED):
+            return
+
         metric = Metric.Factory.installed_metric()
         self._emiter.emit(metric)
+        self.runtime_config.set(ConfigKey.INSTALLED, __version__)
