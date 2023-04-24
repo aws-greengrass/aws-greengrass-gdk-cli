@@ -18,7 +18,9 @@ class Emit:
         """
         Sends an installed metric only once after the cli has been installed
         """
-        if self.runtime_config.has(ConfigKey.INSTALLED):
+        installed_version = self.runtime_config.get(ConfigKey.INSTALLED)
+
+        if installed_version == __version__:
             return
 
         metric = Metric.Factory.installed_metric()

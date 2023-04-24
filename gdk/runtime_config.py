@@ -32,6 +32,9 @@ class Singleton(type):
         return cls.__instance
 
 
+GDK_RUNTIME_CONFIG_DIR = "__GDK_RUNTIME_CONFIG_PATH"
+
+
 class RuntimeConfig(metaclass=Singleton):
     """
     Wrapper around a dict that persists values used by the application by flushing them to
@@ -50,11 +53,11 @@ class RuntimeConfig(metaclass=Singleton):
     def get(self, key: ConfigKey):
         return self._config.get(key, None)
 
-    def has(self, key: ConfigKey) -> bool:
-        return key in self._config
-
     @property
     def config_dir(self) -> Path:
+        if os.getenv(GDK_RUNTIME_CONFIG_DIR):
+            return Path(os.getenv(GDK_RUNTIME_CONFIG_DIR))
+
         return Path(os.path.expanduser('~/.gdk'))
 
     @property

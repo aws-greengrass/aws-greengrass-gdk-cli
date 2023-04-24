@@ -2,20 +2,16 @@
 
 import json
 import os
-from unittest import TestCase
+import tempfile
+from pathlib import Path
 
 from gdk._version import __version__
-from gdk.runtime_config import ConfigKey, RuntimeConfig
+from gdk.runtime_config import (GDK_RUNTIME_CONFIG_DIR, ConfigKey,
+                                RuntimeConfig)
+from integration_tests.gdk.telemetry.telemetry_base import TelemetryTestCase
 
 
-class TestRuntimeConfig(TestCase):
-
-    def tearDown(self) -> None:
-        config = RuntimeConfig(force_create=True)
-
-        # Delete the persisted config file if exists after each test
-        if os.path.exists(config.config_path):
-            os.remove(config.config_path)
+class TestRuntimeConfig(TelemetryTestCase):
 
     def test_there_is_a_single_instance(self):
         config_a = RuntimeConfig()
@@ -66,3 +62,11 @@ class TestRuntimeConfig(TestCase):
 
         config = RuntimeConfig(force_create=True)
         self.assertIsNone(config.get(ConfigKey.INSTALLED))
+
+    def test_it_can_load_the_config_path_from_an_env_variable(self):
+        temp_dir = tempfile.mktemp()
+        os.environ[GDK_RUNTIME_CONFIG_DIR] = temp_dir
+
+        config = RuntimeConfig()
+        expected_path = Path(temp_dir, "runtime.json")
+        self.assertEqual(str(expected_path), str(config.config_path))
