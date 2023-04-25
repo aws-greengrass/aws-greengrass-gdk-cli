@@ -1,4 +1,4 @@
-import click
+import sys
 
 from gdk._version import __version__
 from gdk.telemetry.telemetry_config import ConfigKey, TelemetryConfig
@@ -38,7 +38,7 @@ def send_metric(func):
         first_install = not bool(config.get(ConfigKey.INSTALLED))
 
         if first_install and telemetry_enabled:
-            click.secho(TELEMETRY_PROMPT, fg="yellow", err=True)
+            sys.stdout.write(TELEMETRY_PROMPT)
 
         return func(*args, **kwargs)
 
