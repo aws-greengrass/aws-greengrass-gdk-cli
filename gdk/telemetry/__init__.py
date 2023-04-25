@@ -21,6 +21,9 @@ def get_telemetry_enabled() -> bool:
 
 
 def get_aws_credentials():
+    """
+    Retrieves the aws credentials for the user using boto.
+    """
     session = boto3.Session()
     credentials = session.get_credentials()
     return credentials.get_frozen_credentials()

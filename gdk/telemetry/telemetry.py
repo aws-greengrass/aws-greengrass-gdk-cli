@@ -5,7 +5,7 @@ import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
-from gdk.telemetry import get_aws_credentials, get_telemetry_enabled, get_telemetry_url
+from gdk import telemetry
 from gdk.telemetry.metric import Metric, MetricEncoder
 
 logger = logging.getLogger(__name__)
@@ -29,9 +29,16 @@ class Telemetry(ITelemetry):
     AWS_SERVICE = 'execute-api'
 
     def __init__(self, url=None, credentials=None):
-        self.url = url or get_telemetry_url()
-        self.credentials = credentials or get_aws_credentials()
-        self.enabled = get_telemetry_enabled()
+        self.url = url or telemetry.get_telemetry_url()
+        self.enabled = telemetry.get_telemetry_enabled()
+        self._credentials = credentials
+
+    @property
+    def credentials(self):
+        if self._credentials is None:
+            self._credentials = telemetry.get_aws_credentials()
+
+        return self._credentials
 
     def emit(self, metric: Metric):
         """

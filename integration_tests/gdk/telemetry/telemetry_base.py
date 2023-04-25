@@ -114,7 +114,6 @@ class TelemetryServer:
     """
     HTTP Server used for integration tests to simulate the the GDK Telemetry service
     """
-    AWS_SERVICE = 'execute-api'
 
     def __init__(self, aws_crendtials, shutdown_timeout=2):
         super().__init__()

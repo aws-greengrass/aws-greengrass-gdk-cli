@@ -26,7 +26,7 @@ class TestTelemetryServerSetup(TelemetryTestCase):
             all_requests = server.get_all_requests()
             self.assertEqual(0, len(all_requests))
 
-            telemetry = Telemetry()
+            telemetry = Telemetry(credentials=self.aws_creds)
             telemetry.emit(sample_metric)
 
             all_requests = server.get_all_requests()
@@ -59,7 +59,7 @@ class TestTelemetryServerSetup(TelemetryTestCase):
 
         with TelemetryServer(self.aws_creds) as server:
 
-            telemetry = Telemetry()
+            telemetry = Telemetry(credentials=self.aws_creds)
             telemetry.emit(sample_metric)
 
             all_requests = server.get_all_requests()
@@ -72,10 +72,10 @@ class TestTelemetryServerSetup(TelemetryTestCase):
         sample_metric = Metric(MetricType.PING, epoch)
         sample_metric.add_dimension("hello", "world")
 
-        with TelemetryServer(self.aws_creds, shutdown_timeout=3) as server:
+        with TelemetryServer(self.aws_creds, shutdown_timeout=5) as server:
             # Try posting a metric directly without using the Telemetry class
             payload = {'metrics': [MetricEncoder().encode(sample_metric)]}
-            response = requests.post(server.metrics_endpoint, json=payload, timeout=5)
+            response = requests.post(server.metrics_endpoint, json=payload, timeout=3)
 
             self.assertEqual(403, response.status_code)
             all_requests = server.get_all_requests()
