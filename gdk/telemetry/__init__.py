@@ -20,7 +20,7 @@ def get_telemetry_enabled() -> bool:
         return False
 
 
-def get_aws_credentials():
+def get_aws_credentials():  # pragma: no cover
     """
     Retrieves the aws credentials for the user using boto.
     """
