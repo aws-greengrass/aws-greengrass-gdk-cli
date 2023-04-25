@@ -1,8 +1,10 @@
 
 import time
 
+import requests
+
 from gdk._version import __version__
-from gdk.telemetry.metric import Metric, MetricType
+from gdk.telemetry.metric import Metric, MetricEncoder, MetricType
 from gdk.telemetry.telemetry import Telemetry
 from integration_tests.gdk.telemetry.telemetry_base import (TelemetryServer,
                                                             TelemetryTestCase)
@@ -20,7 +22,7 @@ class TestTelemetryServerSetup(TelemetryTestCase):
         sample_metric = Metric(MetricType.PING, epoch)
         sample_metric.add_dimension("hello", "world")
 
-        with TelemetryServer() as server:
+        with TelemetryServer(self.aws_creds) as server:
             all_requests = server.get_all_requests()
             self.assertEqual(0, len(all_requests))
 
@@ -55,10 +57,26 @@ class TestTelemetryServerSetup(TelemetryTestCase):
         sample_metric = Metric(MetricType.PING, epoch)
         sample_metric.add_dimension("hello", "world")
 
-        with TelemetryServer() as server:
+        with TelemetryServer(self.aws_creds) as server:
 
             telemetry = Telemetry()
             telemetry.emit(sample_metric)
 
+            all_requests = server.get_all_requests()
+            self.assertEqual(0, len(all_requests))
+
+    def test_emit_a_metric_without_sigv4(self):
+        self.enable_telemetry()
+
+        epoch = int(time.time())
+        sample_metric = Metric(MetricType.PING, epoch)
+        sample_metric.add_dimension("hello", "world")
+
+        with TelemetryServer(self.aws_creds, shutdown_timeout=3) as server:
+            # Try posting a metric directly without using the Telemetry class
+            payload = {'metrics': [MetricEncoder().encode(sample_metric)]}
+            response = requests.post(server.metrics_endpoint, json=payload, timeout=5)
+
+            self.assertEqual(403, response.status_code)
             all_requests = server.get_all_requests()
             self.assertEqual(0, len(all_requests))
