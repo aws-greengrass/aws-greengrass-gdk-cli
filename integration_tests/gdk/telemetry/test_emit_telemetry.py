@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from gdk.telemetry.telemetry_config import ConfigKey, TelemetryConfig
