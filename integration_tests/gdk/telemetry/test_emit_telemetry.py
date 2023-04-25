@@ -18,7 +18,7 @@ class TestEmitTelemetry(TelemetryTestCase):
     def test_emit_installed_metric_on_first_run_only(self):
         self.enable_telemetry()
 
-        with TelemetryServer() as server:
+        with TelemetryServer(self.aws_creds) as server:
             self.run_command(["component", "list", "--template"])
 
             all_requests = server.get_all_requests()
@@ -32,7 +32,7 @@ class TestEmitTelemetry(TelemetryTestCase):
     def test_emit_installed_metric_if_a_new_version_is_installed(self):
         self.enable_telemetry()
 
-        with TelemetryServer() as server:
+        with TelemetryServer(self.aws_creds) as server:
             self.run_command(["component", "list", "--template"])
 
             self.setup_previous_version_installed()

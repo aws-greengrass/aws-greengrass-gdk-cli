@@ -1,5 +1,4 @@
 import os
-from unittest import TestCase
 
 import mock
 
@@ -7,9 +6,10 @@ from gdk.telemetry import (GDK_CLI_TELEMETRY, GDK_CLI_TELEMETRY_ENDPOINT_URL,
                            get_telemetry_enabled, get_telemetry_url)
 from gdk.telemetry.metric import Metric, MetricType
 from gdk.telemetry.telemetry import Telemetry
+from integration_tests.gdk.telemetry.telemetry_base import TelemetryTestCase
 
 
-class TestTelemetry(TestCase):
+class TestTelemetry(TelemetryTestCase):
 
     def test_get_telemetry_url(self):
         fake_url = "http://test.com"
@@ -29,7 +29,7 @@ class TestTelemetry(TestCase):
     def test_emit_telemtry_when_disbaled(self, post):
         os.environ[GDK_CLI_TELEMETRY] = "0"
         metric = Metric(MetricType.PING)
-        telemetry = Telemetry()
+        telemetry = Telemetry(credentials=self.aws_creds)
 
         telemetry.emit(metric)
 
@@ -40,7 +40,7 @@ class TestTelemetry(TestCase):
         os.environ[GDK_CLI_TELEMETRY] = "1"
 
         metric = Metric(MetricType.PING)
-        telemetry = Telemetry()
+        telemetry = Telemetry(credentials=self.aws_creds)
 
         telemetry.emit(metric)
 
