@@ -55,7 +55,8 @@ class Telemetry(ITelemetry):
         """
         request = AWSRequest(method='POST', url=url, data=json)
         SigV4Auth(self.credentials, self.AWS_SERVICE, self.AWS_REGION).add_auth(request)
-        return requests.post(url=url, headers=dict(request.headers), json=json, timeout=5)
+        prepped = request.prepare()
+        return requests.post(prepped.url, headers=prepped.headers, json=json, timeout=5)
 
     def _emit(self, metric: Metric):
         """
