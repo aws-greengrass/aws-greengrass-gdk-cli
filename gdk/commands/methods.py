@@ -1,4 +1,5 @@
 from gdk.commands.component import component
+from gdk.commands.test import test
 import gdk.CLIParser
 
 
@@ -21,3 +22,11 @@ def _gdk_component_publish(d_args):
 
 def _gdk_component_list(d_args):
     component.list(d_args)
+
+
+def _gdk_test_init(d_args):
+    test.init(d_args)
+
+
+def _gdk_test_run(d_args):
+    test.run(d_args)

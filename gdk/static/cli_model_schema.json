@@ -13,11 +13,15 @@
             "properties": {
                 "sub-commands": {
                     "required": [
-                        "component"
+                        "component",
+                        "test"
                     ],
                     "properties": {
                         "component": {
                             "$ref": "#/$defs/component"
+                        },
+                        "test": {
+                            "$ref": "#/$defs/test"
                         }
                     },
                     "additionalProperties": false
@@ -231,6 +235,56 @@
         "build": {
             "type": "object",
             "description": "Sub command under 'component' command. This is one of the sub-parsers under 'component' parser.",
+            "required": [
+                "help"
+            ],
+            "properties": {
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
+        },
+        "test": {
+            "type": "object",
+            "description": "A command of gdk cli tool. This is one of the sub parsers under the top-level parser ('gdk') of the cli.",
+            "properties": {
+                "sub-commands": {
+                    "required": [
+                        "init",
+                        "run"
+                    ],
+                    "properties": {
+                        "init": {
+                            "$ref": "#/$defs/test-init"
+                        },
+                        "run": {
+                            "$ref": "#/$defs/test-run"
+                        }
+                    }
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
+        },
+        "test-init": {
+            "type": "object",
+            "description": "Sub command under 'test' command. This is one of the sub-parsers under 'test' parser.",
+            "required": [
+                "help"
+            ],
+            "properties": {
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
+        },
+        "test-run": {
+            "type": "object",
+            "description": "Sub command under 'test' command. This is one of the sub-parsers under 'test' parser.",
             "required": [
                 "help"
             ],
