@@ -6,7 +6,7 @@ import tempfile
 import time
 from threading import Thread
 from unittest import TestCase
-
+import json
 import botocore.credentials
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -205,7 +205,7 @@ class TelemetryServer:
         Handles Flask requests
         """
         if not self._is_sigv4_signed():
-            return Response(response={}, status=403)
+            return Response(response=json.dumps({}), status=403, mimetype="application/json")
 
         # `request` is a variable populated by Flask automatically when handler method is called
         request_data = {
@@ -216,5 +216,4 @@ class TelemetryServer:
         }
 
         self._requests.append(request_data)
-
-        return Response(response={}, status=200)
+        return Response(response=json.dumps({}), status=200, mimetype="application/json")
