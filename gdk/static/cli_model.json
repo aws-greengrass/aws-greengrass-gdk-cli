@@ -125,6 +125,17 @@
                     }
                 },
                 "help": "Initialize, build and publish GreengrassV2 components using this command."
+            },
+            "test": {
+                "sub-commands": {
+                    "init": {
+                        "help": "Initialize GDK project with user acceptance testing module"
+                    },
+                    "run": {
+                        "help": "Run user acceptance tests on GreengrassV2 components."
+                    }
+                },
+                "help": "Test component features using open-source test framework"
             }
         },
         "help": "Greengrass development kit - CLI for developing AWS IoT GreengrassV2 components."
