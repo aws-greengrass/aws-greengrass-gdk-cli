@@ -33,6 +33,20 @@ def test_main_parse_args_list(mocker):
     assert mock_component_list.called
 
 
+def test_main_parse_args_test_init(mocker):
+    mock_test_init = mocker.patch("gdk.commands.test.test.init", return_value=None)
+    args = CLIParser.cli_parser.parse_args(["test", "init"])
+    parse_args_actions.run_command(args)
+    assert mock_test_init.called
+
+
+def test_main_parse_args_test_run(mocker):
+    mock_test_run = mocker.patch("gdk.commands.test.test.run", return_value=None)
+    args = CLIParser.cli_parser.parse_args(["test", "run"])
+    parse_args_actions.run_command(args)
+    assert mock_test_run.called
+
+
 def test_main_parse_args_gdk(capsys):
     args = CLIParser.cli_parser.parse_args([])
     parse_args_actions.run_command(args)
