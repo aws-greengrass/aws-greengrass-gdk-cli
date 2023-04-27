@@ -132,7 +132,7 @@
                         "help": "Initialize GDK project with user acceptance testing module"
                     },
                     "run": {
-                        "help": "Run user acceptance tests on Greengrassv2 components."
+                        "help": "Run user acceptance tests on GreengrassV2 components."
                     }
                 },
                 "help": "Test component features using open-source test framework"
