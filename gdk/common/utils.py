@@ -142,6 +142,10 @@ def get_next_patch_version(version_number: str) -> str:
     return f"{major}.{minor}.{str(next_patch_version)}"
 
 
+def get_current_directory() -> Path:
+    return Path(".").resolve()
+
+
 error_line = "\n=============================== ERROR ===============================\n"
 help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()
