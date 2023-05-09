@@ -20,5 +20,5 @@ class GradleWrapper(GDKBuildSystem):
     def build_system_identifier(self):
         return ["build.gradle", "build.gradle.kts"]
 
-    def build(self):
-        sp.run(self.build_command, check=True)
+    def build(self, path=None):
+        sp.run(self.build_command, check=True, cwd=path)

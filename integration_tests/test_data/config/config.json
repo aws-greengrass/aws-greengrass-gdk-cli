@@ -1,0 +1,23 @@
+{
+    "component": {
+        "abc": {
+            "author": "abc",
+            "version": "1.0.0",
+            "build": {
+                "build_system": "zip"
+            },
+            "publish": {
+                "bucket": "default",
+                "region": "us-east-1"
+            }
+        }
+    },
+    "test": {
+        "otf_version": "1.2.0",
+        "otf_options": {
+            "tags": "testtags",
+            "ggc.version": "2.0.0"
+        }
+    },
+    "gdk_version": "1.0.0"
+}
