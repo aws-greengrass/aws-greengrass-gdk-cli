@@ -18,9 +18,9 @@ class UATBuildSystemTests(TestCase):
         assert build_system.build_folder == ["target"]
         assert build_system.build_system_identifier == ["pom.xml"]
         if platform.system() == "Windows":
-            assert mock_subprocess.call_args_list == [call(["mvn.cmd", "clean", "package"], check=True)]
+            assert mock_subprocess.call_args_list == [call(["mvn.cmd", "package"], check=True)]
         else:
-            assert mock_subprocess.call_args_list == [call(["mvn", "clean", "package"], check=True)]
+            assert mock_subprocess.call_args_list == [call(["mvn", "package"], check=True)]
 
     def test_gradle_build_system(self):
         mock_subprocess = self.mocker.patch("subprocess.run")

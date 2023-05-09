@@ -8,9 +8,9 @@ class Maven(GDKBuildSystem):
     def build_command(self):
         os_platform = platform.system()
         if os_platform == "Windows":
-            return ["mvn.cmd", "clean", "package"]
+            return ["mvn.cmd", "package"]
         else:
-            return ["mvn", "clean", "package"]
+            return ["mvn", "package"]
 
     @property
     def build_folder(self):
