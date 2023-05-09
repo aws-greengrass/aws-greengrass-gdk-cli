@@ -6,7 +6,7 @@ from gdk.build_system.GDKBuildSystem import GDKBuildSystem
 class Gradle(GDKBuildSystem):
     @property
     def build_command(self):
-        return ["gradle", "clean", "build"]
+        return ["gradle", "build"]
 
     @property
     def build_folder(self):

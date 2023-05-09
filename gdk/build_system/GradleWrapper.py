@@ -8,9 +8,9 @@ class GradleWrapper(GDKBuildSystem):
     def build_command(self):
         os_platform = platform.system()
         if os_platform == "Windows":
-            return ["./gradlew.bat", "clean", "build"]
+            return ["./gradlew.bat", "build"]
         else:
-            return ["./gradlew", "clean", "build"]
+            return ["./gradlew", "build"]
 
     @property
     def build_folder(self):
