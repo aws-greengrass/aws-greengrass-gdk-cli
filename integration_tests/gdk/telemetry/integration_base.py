@@ -1,35 +1,12 @@
-import os
-import time
 from threading import Thread
-from unittest import TestCase
+import time
 from flask import Flask, Response, request
 from werkzeug.serving import make_server
 
-from gdk.telemetry import GDK_CLI_TELEMETRY_ENDPOINT_URL, GDK_CLI_TELEMETRY
 
 TELEMETRY_ENDPOINT_PORT = "18298"
 TELEMETRY_ENDPOINT_HOST = "localhost"
 TELEMETRY_ENDPOINT_URL = "http://{}:{}".format(TELEMETRY_ENDPOINT_HOST, TELEMETRY_ENDPOINT_PORT)
-
-
-class TelemetryTestCase(TestCase):
-    """
-    Base case for all telemetry related tests
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        os.environ[GDK_CLI_TELEMETRY_ENDPOINT_URL] = f"{TELEMETRY_ENDPOINT_URL}/metrics"
-
-    def tearDown(self) -> None:
-        self.disable_telemetry()
-        return super().tearDown()
-
-    def disable_telemetry(self):
-        os.environ[GDK_CLI_TELEMETRY] = "0"
-
-    def enable_telemetry(self):
-        os.environ[GDK_CLI_TELEMETRY] = "1"
 
 
 class TelemetryServer:
