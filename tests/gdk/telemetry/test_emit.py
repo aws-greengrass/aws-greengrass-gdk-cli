@@ -17,7 +17,7 @@ class TestEmit(TelemetryTestCase):
         self.enable_telemetry()
         stdout = io.StringIO()
 
-        with contextlib.redirect_stdout(stdout):
+        with contextlib.redirect_stderr(stdout):
             Emit(self.telemetry).installed_metric()
 
         captured_out = stdout.getvalue()
@@ -27,7 +27,7 @@ class TestEmit(TelemetryTestCase):
         self.disable_telemetry()
         stdout = io.StringIO()
 
-        with contextlib.redirect_stdout(stdout):
+        with contextlib.redirect_stderr(stdout):
             Emit(self.telemetry).installed_metric()
 
         captured_out = stdout.getvalue()
