@@ -1,6 +1,5 @@
 import os
 
-import boto3
 
 GDK_CLI_TELEMETRY_ENDPOINT_URL = "__GDK_CLI_TELEMETRY_ENDPOINT_URL"
 GDK_CLI_TELEMETRY = "GDK_CLI_TELEMETRY"
@@ -18,12 +17,3 @@ def get_telemetry_enabled() -> bool:
         return True
     else:
         return False
-
-
-def get_aws_credentials():  # pragma: no cover
-    """
-    Retrieves the aws credentials for the user using boto.
-    """
-    session = boto3.Session()
-    credentials = session.get_credentials()
-    return credentials.get_frozen_credentials()

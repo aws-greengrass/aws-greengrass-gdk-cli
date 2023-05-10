@@ -2,10 +2,8 @@ import logging
 from abc import ABC, abstractmethod
 
 import requests
-from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
 
-from gdk import telemetry
+from gdk.telemetry import get_telemetry_enabled, get_telemetry_url
 from gdk.telemetry.metric import Metric, MetricEncoder
 
 logger = logging.getLogger(__name__)
@@ -25,20 +23,10 @@ class Telemetry(ITelemetry):
     """
     Wrapper around requests to sends telemetry data to the telemetry service.
     """
-    AWS_REGION = 'us-west-2'
-    AWS_SERVICE = 'execute-api'
 
-    def __init__(self, url=None, credentials=None):
-        self.url = url or telemetry.get_telemetry_url()
-        self.enabled = telemetry.get_telemetry_enabled()
-        self._credentials = credentials
-
-    @property
-    def credentials(self):
-        if self._credentials is None:
-            self._credentials = telemetry.get_aws_credentials()
-
-        return self._credentials
+    def __init__(self, url=None):
+        self.url = url or get_telemetry_url()
+        self.enabled = get_telemetry_enabled()
 
     def emit(self, metric: Metric):
         """
@@ -49,15 +37,6 @@ class Telemetry(ITelemetry):
         else:
             logger.debug("Telemetry disabled. Metric not being sent")
 
-    def _signed_request(self, url: str, json: dict) -> requests.Request:
-        """
-        Uses sigv4 to sign the request before sending it.
-        """
-        request = AWSRequest(method='POST', url=url, data=json)
-        SigV4Auth(self.credentials, self.AWS_SERVICE, self.AWS_REGION).add_auth(request)
-        prepped = request.prepare()
-        return requests.post(prepped.url, headers=prepped.headers, json=json, timeout=5)
-
     def _emit(self, metric: Metric):
         """
         Sends telemetry data to the telemetry service.
@@ -66,7 +45,7 @@ class Telemetry(ITelemetry):
         payload = {'metrics': [MetricEncoder().encode(metric)]}
 
         try:
-            r = self._signed_request(self.url, json=payload)
+            r = requests.post(self.url, json=payload, timeout=5)
             logger.debug("Telemetry data sent. response: %s", r.status_code)
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             logger.debug(str(e))
