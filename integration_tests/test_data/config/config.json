@@ -2,7 +2,7 @@
     "component": {
         "abc": {
             "author": "abc",
-            "version": "1.0.0",
+            "version": "NEXT_PATCH",
             "build": {
                 "build_system": "zip"
             },
