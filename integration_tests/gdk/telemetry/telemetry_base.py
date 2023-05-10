@@ -1,16 +1,14 @@
 import os
 import sys
-import tempfile
 import time
 from threading import Thread
 from unittest import TestCase
 from flask import Flask, Response, request
 from mock import patch
 from werkzeug.serving import make_server
-
 from gdk import CLIParser
-from gdk.runtime_config import GDK_RUNTIME_CONFIG_DIR, RuntimeConfig
-from gdk.telemetry import GDK_CLI_TELEMETRY, GDK_CLI_TELEMETRY_ENDPOINT_URL
+
+from gdk.telemetry import GDK_CLI_TELEMETRY_ENDPOINT_URL, GDK_CLI_TELEMETRY
 
 TELEMETRY_ENDPOINT_PORT = "18298"
 TELEMETRY_ENDPOINT_HOST = "localhost"
@@ -22,14 +20,13 @@ class TelemetryTestCase(TestCase):
     Base case for all telemetry related tests
     """
 
-    def setUp(self) -> None:
-        self.setup_telemetry_url()
-        self.setup_runtime_config_path()
-        self.teardown_runtime_config()
+    @classmethod
+    def setUpClass(cls):
+        os.environ[GDK_CLI_TELEMETRY_ENDPOINT_URL] = TELEMETRY_ENDPOINT_URL
 
     def tearDown(self) -> None:
-        self.teardown_runtime_config()
         self.disable_telemetry()
+        return super().tearDown()
 
     def run_command(self, command_list=[]):
         if len(command_list) == 0:
@@ -40,19 +37,6 @@ class TelemetryTestCase(TestCase):
 
         with patch.object(sys, 'argv', argv):
             CLIParser.main()
-
-    def setup_telemetry_url(self) -> None:
-        os.environ[GDK_CLI_TELEMETRY_ENDPOINT_URL] = TELEMETRY_ENDPOINT_URL
-
-    def setup_runtime_config_path(self) -> None:
-        temp_dir = tempfile.mktemp()
-        os.environ[GDK_RUNTIME_CONFIG_DIR] = temp_dir
-
-    def teardown_runtime_config(self) -> None:
-        config = RuntimeConfig(force_create=True)
-        # Delete the persisted config file if exists after each test
-        if config.config_path.exists():
-            os.remove(config.config_path)
 
     def disable_telemetry(self):
         os.environ[GDK_CLI_TELEMETRY] = "0"

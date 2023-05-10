@@ -13,9 +13,6 @@ class ITelemetry(ABC):
 
     @abstractmethod
     def emit(self, metric: Metric):
-        """
-        Abstract method for a telemetry class to send telemetry metrics to a destination.
-        """
         pass
 
 

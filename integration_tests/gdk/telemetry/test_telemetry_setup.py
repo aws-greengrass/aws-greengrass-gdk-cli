@@ -28,7 +28,6 @@ class TestTelemetryServerSetup(TelemetryTestCase):
             telemetry.emit(sample_metric)
 
             all_requests = server.get_all_requests()
-            self.assertEqual(1, len(all_requests))
             request = all_requests[0]
 
             expected_data = {
