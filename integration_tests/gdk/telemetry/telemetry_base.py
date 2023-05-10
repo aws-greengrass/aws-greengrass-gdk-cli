@@ -1,18 +1,15 @@
 import os
-import sys
 import time
 from threading import Thread
 from unittest import TestCase
 from flask import Flask, Response, request
-from mock import patch
 from werkzeug.serving import make_server
-from gdk import CLIParser
 
 from gdk.telemetry import GDK_CLI_TELEMETRY_ENDPOINT_URL, GDK_CLI_TELEMETRY
 
 TELEMETRY_ENDPOINT_PORT = "18298"
 TELEMETRY_ENDPOINT_HOST = "localhost"
-TELEMETRY_ENDPOINT_URL = "http://{}:{}/metrics".format(TELEMETRY_ENDPOINT_HOST, TELEMETRY_ENDPOINT_PORT)
+TELEMETRY_ENDPOINT_URL = "http://{}:{}".format(TELEMETRY_ENDPOINT_HOST, TELEMETRY_ENDPOINT_PORT)
 
 
 class TelemetryTestCase(TestCase):
@@ -22,21 +19,11 @@ class TelemetryTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        os.environ[GDK_CLI_TELEMETRY_ENDPOINT_URL] = TELEMETRY_ENDPOINT_URL
+        os.environ[GDK_CLI_TELEMETRY_ENDPOINT_URL] = f"{TELEMETRY_ENDPOINT_URL}/metrics"
 
     def tearDown(self) -> None:
         self.disable_telemetry()
         return super().tearDown()
-
-    def run_command(self, command_list=[]):
-        if len(command_list) == 0:
-            raise Exception("No command was specified")
-
-        argv = ["gdk"]
-        argv.extend(command_list)
-
-        with patch.object(sys, 'argv', argv):
-            CLIParser.main()
 
     def disable_telemetry(self):
         os.environ[GDK_CLI_TELEMETRY] = "0"
