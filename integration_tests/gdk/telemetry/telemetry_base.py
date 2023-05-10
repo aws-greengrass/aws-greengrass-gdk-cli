@@ -9,7 +9,7 @@ from mock import patch
 from werkzeug.serving import make_server
 
 from gdk import CLIParser
-from gdk.telemetry.telemetry_config import GDK_TELEMETRY_CONFIG_DIR, TelemetryConfig
+from gdk.runtime_config import GDK_RUNTIME_CONFIG_DIR, RuntimeConfig
 from gdk.telemetry import GDK_CLI_TELEMETRY, GDK_CLI_TELEMETRY_ENDPOINT_URL
 
 TELEMETRY_ENDPOINT_PORT = "18298"
@@ -24,11 +24,11 @@ class TelemetryTestCase(TestCase):
 
     def setUp(self) -> None:
         self.setup_telemetry_url()
-        self.setup_telemetry_config_path()
-        self.teardown_telemetry_config()
+        self.setup_runtime_config_path()
+        self.teardown_runtime_config()
 
     def tearDown(self) -> None:
-        self.teardown_telemetry_config()
+        self.teardown_runtime_config()
         self.disable_telemetry()
 
     def run_command(self, command_list=[]):
@@ -44,12 +44,12 @@ class TelemetryTestCase(TestCase):
     def setup_telemetry_url(self) -> None:
         os.environ[GDK_CLI_TELEMETRY_ENDPOINT_URL] = TELEMETRY_ENDPOINT_URL
 
-    def setup_telemetry_config_path(self) -> None:
+    def setup_runtime_config_path(self) -> None:
         temp_dir = tempfile.mktemp()
-        os.environ[GDK_TELEMETRY_CONFIG_DIR] = temp_dir
+        os.environ[GDK_RUNTIME_CONFIG_DIR] = temp_dir
 
-    def teardown_telemetry_config(self) -> None:
-        config = TelemetryConfig(force_create=True)
+    def teardown_runtime_config(self) -> None:
+        config = RuntimeConfig(force_create=True)
         # Delete the persisted config file if exists after each test
         if config.config_path.exists():
             os.remove(config.config_path)

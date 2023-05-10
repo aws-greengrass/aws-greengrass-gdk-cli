@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class ConfigKey(Enum):
-    INSTALLED = 'installed_gdk_version'
+    INSTALLED = 'installed'
 
 
 class Singleton(type):
@@ -32,15 +32,15 @@ class Singleton(type):
         return cls.__instance
 
 
-GDK_TELEMETRY_CONFIG_DIR = "__GDK_TELEMETRY_CONFIG_PATH"
+GDK_RUNTIME_CONFIG_DIR = "__GDK_RUNTIME_CONFIG_PATH"
 
 
-class TelemetryConfig(metaclass=Singleton):
+class RuntimeConfig(metaclass=Singleton):
     """
     Wrapper around a dict that persists values used by the application by flushing them to
     disk.
     """
-    DEFAULT_CONFIG_FILE_NAME = 'telemetry.json'
+    DEFAULT_CONFIG_FILE_NAME = 'runtime.json'
 
     def __init__(self, *args, **kwargs):
         self._config = dict()
@@ -56,8 +56,8 @@ class TelemetryConfig(metaclass=Singleton):
 
     @property
     def config_dir(self) -> Path:
-        if os.getenv(GDK_TELEMETRY_CONFIG_DIR):
-            return Path(os.getenv(GDK_TELEMETRY_CONFIG_DIR))
+        if os.getenv(GDK_RUNTIME_CONFIG_DIR):
+            return Path(os.getenv(GDK_RUNTIME_CONFIG_DIR))
 
         return Path(os.path.expanduser('~/.gdk'))
 
