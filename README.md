@@ -9,7 +9,13 @@ The AWS IoT Greengrass Development Kit Command-Line Interface (GDK CLI) provides
 
 Please follow the [GDK CLI public documentation](https://docs.aws.amazon.com/greengrass/v2/developerguide/greengrass-development-kit-cli.html) to learn more about the available commands and configuration that GDK CLI has to offer.
 
-### Getting Started
+<br />
+
+---
+
+<br />
+
+## Getting Started
 
 #### Prerequisites
  1. [Python3](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/latest/installation/): As the GDK CLI tool is written in python, you need to have python3 and pip installed. The most recent version of python includes pip.
@@ -88,3 +94,18 @@ Configure AWS CLI with your credentials as shown here - https://docs.aws.amazon.
 5. Creates new version of the component in your AWS account.
 
 `gdk component publish`
+
+
+<br />
+
+---
+
+
+<br />
+
+## Running Tests
+
+<br />
+
+* Unit tests: `make tests_unit`
+* Integration tests: `make tests_integration`
