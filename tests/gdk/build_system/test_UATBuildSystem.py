@@ -18,9 +18,9 @@ class UATBuildSystemTests(TestCase):
         assert build_system.build_folder == ["target"]
         assert build_system.build_system_identifier == ["pom.xml"]
         if platform.system() == "Windows":
-            assert mock_subprocess.call_args_list == [call(["mvn.cmd", "package"], check=True)]
+            assert mock_subprocess.call_args_list == [call(["mvn.cmd", "package"], check=True, cwd=None)]
         else:
-            assert mock_subprocess.call_args_list == [call(["mvn", "package"], check=True)]
+            assert mock_subprocess.call_args_list == [call(["mvn", "package"], check=True, cwd=None)]
 
     def test_gradle_build_system(self):
         mock_subprocess = self.mocker.patch("subprocess.run")
@@ -29,7 +29,7 @@ class UATBuildSystemTests(TestCase):
 
         assert build_system.build_folder == ["build", "libs"]
         assert build_system.build_system_identifier == ["build.gradle", "build.gradle.kts"]
-        assert mock_subprocess.call_args_list == [call(["gradle", "build"], check=True)]
+        assert mock_subprocess.call_args_list == [call(["gradle", "build"], check=True, cwd=None)]
 
     def test_gradle_wrapper_build_system(self):
         mock_subprocess = self.mocker.patch("subprocess.run")
@@ -40,9 +40,9 @@ class UATBuildSystemTests(TestCase):
         assert build_system.build_system_identifier == ["build.gradle", "build.gradle.kts"]
 
         if platform.system() == "Windows":
-            assert mock_subprocess.call_args_list == [call(["./gradlew.bat", "build"], check=True)]
+            assert mock_subprocess.call_args_list == [call(["./gradlew.bat", "build"], check=True, cwd=None)]
         else:
-            assert mock_subprocess.call_args_list == [call(["./gradlew", "build"], check=True)]
+            assert mock_subprocess.call_args_list == [call(["./gradlew", "build"], check=True, cwd=None)]
 
     def test_build_system_not_supported(self):
         with pytest.raises(Exception) as e:

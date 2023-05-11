@@ -52,14 +52,14 @@ jobs:
           pip install -r test-requirements.txt
       - name: Unit Testing CLI
         run: |
-          coverage run --source=gdk -m pytest -v -s tests && coverage xml --fail-under=98
+          make tests_unit
       - name: Upload tests coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           flags: unit
       - name: Integration Testing CLI
         run: |
-          coverage run --source=gdk -m pytest -v -s integration_tests && coverage xml --fail-under=90
+          make tests_integration
       - name: Upload integration tests coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -78,7 +78,7 @@ jobs:
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'}}
       - name: Run UATs with code coverage
         run: |
-          coverage run --source=gdk -m behave -v uat/ -D instrumented=true && coverage xml --fail-under=70
+          make tests_uat
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'}}
       - name: Upload UAT coverage to Codecov
         uses: codecov/codecov-action@v3
