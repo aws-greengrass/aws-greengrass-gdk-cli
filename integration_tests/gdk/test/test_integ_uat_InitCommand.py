@@ -1,40 +1,72 @@
 from unittest import TestCase
-
-import gdk.CLIParser as CLIParser
-import gdk.common.parse_args_actions as parse_args_actions
+from unittest.mock import call
 import pytest
 from pathlib import Path
 import os
 from gdk.commands.test.InitCommand import InitCommand
+import shutil
 
 
-class CommandUATTest(TestCase):
+class UATInitCommandTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
         self.tmpdir = tmpdir
         self.c_dir = Path(".").resolve()
+        template_path = Path(self.c_dir).joinpath("integration_tests/test_data/templates/TestTemplateForCLI.zip").resolve()
+        with open(template_path, "rb") as f:
+            template_content = f.read()
+        mock_response = self.mocker.Mock(status_code=200, content=template_content)
+        self.mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
+        self.url_for_template = (
+            "https://github.com/aws-greengrass/aws-greengrass-component-templates/releases/download/v1.0/"
+            + "TestTemplateForCLI.zip"
+        )
         os.chdir(tmpdir)
         yield
         os.chdir(self.c_dir)
 
     def test_init_run_gdk_project(self):
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["test", "init", "-d"]))
+        self.setup_test_data_config("config.json")
+        self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
+        InitCommand({}).run()
+        assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
         uat_folder = Path(self.tmpdir).joinpath("uat-features")
         assert uat_folder.exists()
         assert uat_folder.joinpath("pom.xml") in list(uat_folder.iterdir())
+        # Downloaded template has GDK_TESTING_VERSION variable in pom.xml
+        with open(uat_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
+            content = f.read()
+            assert "GDK_TESTING_VERSION" in content
 
     def test_init_run_gdk_project_already_initiated(self):
+        self.setup_test_data_config("config.json")
+        self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
         # uat-features already exists but is empty
         Path(self.tmpdir).joinpath("uat-features").mkdir()
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["test", "init", "-d"]))
+
+        InitCommand({}).run()
+        assert not self.mock_template_download.called
         # existing uat-features folder is not overridden
         assert Path(self.tmpdir).resolve("uat-features").exists()
         assert list(Path(self.tmpdir).joinpath("uat-features").iterdir()) == []
 
-    def test_init_run_gdk_project_template_not_exists(self):
-        with pytest.raises(Exception) as e:
-            init_command = InitCommand({})
-            init_command.template_name = "doesnotexist"
-            init_command.run()
-        assert f"404 Client Error: Not Found for url: {init_command.template_url}" in e.value.args[0]
+    def test_init_run_gdk_project_update_otf_version(self):
+        self.setup_test_data_config("config.json")
+        InitCommand({}).run()
+        assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
+
+        # existing uat-features folder is not overridden
+        uat_folder = Path(self.tmpdir).joinpath("uat-features")
+        assert uat_folder.exists()
+        # OTF version is updated in pom.xml
+        with open(uat_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
+            content = f.read()
+            assert "GDK_TESTING_VERSION" not in content
+            # OTF version set in config file
+            assert "<otf.version>1.2.0</otf.version>" in content
+
+    def setup_test_data_config(self, config_file):
+        # Setup test data
+        source = Path(self.c_dir).joinpath("integration_tests/test_data/config/").joinpath(config_file).resolve()
+        shutil.copy(source, Path(self.tmpdir).joinpath("gdk-config.json"))

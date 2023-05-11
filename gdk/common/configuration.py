@@ -88,7 +88,7 @@ def _get_project_config_file():
     -------
        config_file(pathlib.Path): Path of the config file.
     """
-    config_file = Path(utils.current_directory).joinpath(consts.cli_project_config_file).resolve()
+    config_file = Path(utils.get_current_directory()).joinpath(consts.cli_project_config_file).resolve()
     if not utils.file_exists(config_file):
         raise Exception(error_messages.CONFIG_FILE_NOT_EXISTS)
     return config_file
