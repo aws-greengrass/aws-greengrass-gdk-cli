@@ -1,10 +1,10 @@
 from pathlib import Path
 import pytest
 from unittest import TestCase
-from gdk.common.config.GDKConfiguration import GDKConfiguration
+from gdk.common.config.GDKProject import GDKProject
 
 
-class GDKConfigurationTest(TestCase):
+class GDKProjectTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
@@ -17,10 +17,9 @@ class GDKConfigurationTest(TestCase):
             .joinpath("config_without_test.json")
             .resolve(),
         )
+        self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value="recipe.yaml")
 
-        self.mocker.patch.object(GDKConfiguration, "get_recipe_file", return_value="recipe.yaml")
-
-        gdk_config = GDKConfiguration()
+        gdk_config = GDKProject()
         assert gdk_config.component_name == "abc"
         assert gdk_config.test_config.otf_version == "1.1.0-SNAPSHOT"
         assert gdk_config.test_config.test_build_system == "maven"
@@ -39,9 +38,9 @@ class GDKConfigurationTest(TestCase):
             "gdk.common.configuration._get_project_config_file",
             return_value=Path(".").joinpath("integration_tests/test_data/config").joinpath("config.json").resolve(),
         )
-        self.mocker.patch.object(GDKConfiguration, "get_recipe_file", return_value="recipe.json")
+        self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value="recipe.json")
 
-        gdk_config = GDKConfiguration()
+        gdk_config = GDKProject()
         assert gdk_config.component_name == "abc"
         assert gdk_config.test_config.otf_version == "1.2.0"
         assert gdk_config.test_config.test_build_system == "maven"
