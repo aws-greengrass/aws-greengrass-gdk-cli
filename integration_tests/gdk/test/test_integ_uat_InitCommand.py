@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 from gdk.commands.test.InitCommand import InitCommand
 import shutil
+from urllib3.exceptions import HTTPError
 
 
 class UATInitCommandTest(TestCase):
@@ -65,6 +66,19 @@ class UATInitCommandTest(TestCase):
             assert "GDK_TESTING_VERSION" not in content
             # OTF version set in config file
             assert "<otf.version>1.2.0</otf.version>" in content
+
+    def test_init_run_error_downloading_template(self):
+        self.setup_test_data_config("config.json")
+        mock_response = self.mocker.Mock(
+            status_code=404, raise_for_status=self.mocker.Mock(side_effect=HTTPError("some error"))
+        )
+        self.mocker.patch("requests.get", return_value=mock_response)
+
+        with pytest.raises(Exception) as e:
+            InitCommand({}).run()
+            assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
+            assert "some error" in e.value.args[0]
+        assert not Path(self.tmpdir).joinpath("uat-features").exists()
 
     def setup_test_data_config(self, config_file):
         # Setup test data
