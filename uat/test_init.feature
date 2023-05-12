@@ -7,6 +7,7 @@ Feature: gdk test init works
         When we run gdk component init -t HelloWorld -l python -n test-dir
         Then command was successful
         And we change directory to test-dir
+        And change component name to com.example.PythonHelloWorld
         And we verify gdk project files
         When we run gdk test init
         Then we verify gdk test files
