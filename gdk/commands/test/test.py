@@ -12,3 +12,9 @@ def run(d_args):
     """
     gdk test run
     """
+
+
+def build(d_args):
+    """
+    gdk test build
+    """

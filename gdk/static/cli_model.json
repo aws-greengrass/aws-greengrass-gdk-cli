@@ -131,6 +131,9 @@
                     "init": {
                         "help": "Initialize GDK project with user acceptance testing module"
                     },
+                    "build": {
+                        "help": "Build user acceptance testing module."
+                    },
                     "run": {
                         "help": "Run user acceptance tests on GreengrassV2 components."
                     }
