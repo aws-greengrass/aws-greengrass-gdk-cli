@@ -1,4 +1,5 @@
 from gdk.commands.test.InitCommand import InitCommand
+from gdk.commands.test.BuildCommand import BuildCommand
 
 
 def init(d_args):
@@ -18,3 +19,4 @@ def build(d_args):
     """
     gdk test build
     """
+    BuildCommand(d_args).run()
