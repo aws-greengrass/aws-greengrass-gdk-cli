@@ -47,6 +47,13 @@ def test_main_parse_args_test_run(mocker):
     assert mock_test_run.called
 
 
+def test_main_parse_args_test_build(mocker):
+    mock_test_build = mocker.patch("gdk.commands.test.test.build", return_value=None)
+    args = CLIParser.cli_parser.parse_args(["test", "build"])
+    parse_args_actions.run_command(args)
+    assert mock_test_build.called
+
+
 def test_main_parse_args_gdk(capsys):
     args = CLIParser.cli_parser.parse_args([])
     parse_args_actions.run_command(args)

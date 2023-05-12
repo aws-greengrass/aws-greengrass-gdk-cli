@@ -30,3 +30,7 @@ def _gdk_test_init(d_args):
 
 def _gdk_test_run(d_args):
     test.run(d_args)
+
+
+def _gdk_test_build(d_args):
+    test.build(d_args)
