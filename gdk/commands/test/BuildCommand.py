@@ -5,6 +5,7 @@ from pathlib import Path
 import gdk.common.utils as utils
 import shutil
 import logging
+from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
 
 
 class BuildCommand(Command):
@@ -90,12 +91,16 @@ class BuildCommand(Command):
         if not self.should_create_uat_recipe:
             return
 
-        artifact_uri = f"{utils.s3_prefix}BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
-
-        with open(build_recipe_file, "r", encoding="utf-8") as f:
-            content = f.read()
-            content = content.replace(artifact_uri, self._gdk_project.gg_build_component_artifacts_dir.as_uri())
-
-        logging.info("Creating the UAT recipe file: %s", uat_recipe_file.as_uri())
-        with open(uat_recipe_file, "w", encoding="utf-8") as f:
-            f.write(content)
+        _recipe = CaseInsensitiveRecipeFile().read(build_recipe_file)
+        for manifest in _recipe.get("manifests", []):
+            for artifact in manifest.get("artifacts", []):
+                artifact_uri = artifact.get("uri", "")
+                if not artifact_uri.startswith(utils.s3_prefix):
+                    continue
+                artifact_path = self._gdk_project.gg_build_component_artifacts_dir.joinpath(Path(artifact_uri).name).resolve()
+                if not artifact_path.exists():
+                    logging.debug("Artifact %s does not exist in the build directory", artifact_uri)
+                    continue
+                artifact.update_value("Uri", artifact_path.as_uri())
+        logging.info("Creating the UAT recipe file: %s", uat_recipe_file.resolve())
+        CaseInsensitiveRecipeFile().write(uat_recipe_file, _recipe)

@@ -27,6 +27,10 @@ class UATBuildCommandTest(TestCase):
             Path(self.tmpdir).joinpath("greengrass-build/recipes").joinpath("recipe.yaml").resolve(),
         )
 
+        artifact_path = Path(self.tmpdir).joinpath("greengrass-build/artifacts/abc/NEXT_PATCH").joinpath("hello_world.py")
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.touch()
+
         # Test
         build_command = BuildCommand({})
         build_command.run()

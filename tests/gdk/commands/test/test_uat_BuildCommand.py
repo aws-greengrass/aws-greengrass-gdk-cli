@@ -1,16 +1,20 @@
 import pytest
 from unittest import TestCase
-from unittest.mock import call
+from unittest.mock import call, ANY
 from gdk.commands.test.BuildCommand import BuildCommand
 from pathlib import Path
 from unittest import mock
 import platform
+from gdk.common.CaseInsensitive import CaseInsensitiveDict, CaseInsensitiveRecipeFile
+import os
 
 
 class BuildCommandUnitTest(TestCase):
     @pytest.fixture(autouse=True)
-    def __inject_fixtures(self, mocker):
+    def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
+        self.tmpdir = tmpdir
+        self.c_dir = Path(".").resolve()
 
         config = {
             "component": {
@@ -25,6 +29,9 @@ class BuildCommandUnitTest(TestCase):
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value=Path("."))
+        os.chdir(tmpdir)
+        yield
+        os.chdir(self.c_dir)
 
     def test_update_features_with_no_interpolation(self):
         build_cmd = BuildCommand({})
@@ -91,13 +98,16 @@ class BuildCommandUnitTest(TestCase):
         self.mocker.patch("pathlib.Path.as_uri", return_value="file:///abc.feature")
         build_cmd = BuildCommand({})
         build_cmd.should_create_uat_recipe = True
-        with mock.patch("builtins.open", mock.mock_open(read_data="recipe with s3://BUCKET/abc.feature")) as mock_file:
-            build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
-            assert mock_file.call_args_list == [
-                call(Path(".").joinpath("recipe.yaml"), "r", encoding="utf-8"),
-                call(Path(".").joinpath("uat_recipe.yaml"), "w", encoding="utf-8"),
-            ]
-            assert mock_file.return_value.write.call_args_list == [call("recipe with s3://BUCKET/abc.feature")]
+        test_recipe = {"manifests": [{"artifacts": [{"Uri": "docker://somefile.json"}]}]}
+        mock_read = self.mocker.patch(
+            "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
+            return_value=CaseInsensitiveDict(test_recipe),
+        )
+        spy_write = self.mocker.spy(CaseInsensitiveRecipeFile, "write")
+
+        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        assert mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
+        assert spy_write.call_args_list == [call(ANY, Path("uat_recipe.yaml"), test_recipe)]
 
     def test_create_uat_recipe_from_build_recipe_with_replacing_s3_uri(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
@@ -108,23 +118,31 @@ class BuildCommandUnitTest(TestCase):
         self.mocker.patch.object(Path, "as_uri", get_as_uris)
         build_cmd = BuildCommand({})
         build_cmd.should_create_uat_recipe = True
-        with mock.patch(
-            "builtins.open",
-            mock.mock_open(read_data="recipe with s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/somefile.json"),
-        ) as mock_file:
-            build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
-            assert mock_file.call_args_list == [
-                call(Path(".").joinpath("recipe.yaml"), "r", encoding="utf-8"),
-                call(Path(".").joinpath("uat_recipe.yaml"), "w", encoding="utf-8"),
+        test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
+        updated_recipe = {
+            "manifests": [
+                {
+                    "artifacts": [
+                        {
+                            "Uri": Path()
+                            .absolute()
+                            .joinpath("greengrass-build/artifacts/abc/1.0.0/somefile.json")
+                            .resolve()
+                            .as_uri()
+                        }
+                    ]
+                }
             ]
+        }
+        mock_read = self.mocker.patch(
+            "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
+            return_value=CaseInsensitiveDict(test_recipe),
+        )
 
-            print(mock_file.return_value.write.call_args_list)
-            assert mock_file.return_value.write.call_args_list == [
-                call(
-                    "recipe with "
-                    + Path().absolute().joinpath("greengrass-build/artifacts/abc/1.0.0/somefile.json").resolve().as_uri()
-                )
-            ]
+        spy_write = self.mocker.spy(CaseInsensitiveRecipeFile, "write")
+        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        assert mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
+        assert spy_write.call_args_list == [call(ANY, Path("uat_recipe.yaml"), updated_recipe)]
 
     def test_create_uat_recipe_from_should_not_create_uat_recipe(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
@@ -135,12 +153,13 @@ class BuildCommandUnitTest(TestCase):
         self.mocker.patch.object(Path, "as_uri", get_as_uris)
         build_cmd = BuildCommand({})
         build_cmd.should_create_uat_recipe = False
-        with mock.patch(
-            "builtins.open",
-            mock.mock_open(read_data="recipe with s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/somefile.json"),
-        ) as mock_file:
-            build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
-            assert mock_file.call_args_list == []
+        test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
+        mock_read = self.mocker.patch(
+            "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
+            return_value=CaseInsensitiveDict(test_recipe),
+        )
+        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        assert not mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
 
     def test_build_uat_module(self):
         uat_build_cmd = self.mocker.patch("subprocess.run", return_value=None)
