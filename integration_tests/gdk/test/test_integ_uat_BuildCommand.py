@@ -20,7 +20,7 @@ class UATBuildCommandTest(TestCase):
         yield
         os.chdir(self.c_dir)
 
-    def test_when_test_module_build_then_update_features(self):
+    def test_when_test_module_build_then_update_features_create_uat_recipe(self):
         self.setup_test_data_config("config.json")
         shutil.copy(
             Path(self.c_dir).joinpath("integration_tests/test_data/recipes/").joinpath("build_recipe.yaml").resolve(),
@@ -52,6 +52,27 @@ class UATBuildCommandTest(TestCase):
         ) as f:
             content = f.read()
             assert uat_recipe_file.as_uri() not in content
+
+    def test_when_test_module_build_then_cleanup_if_uat_folder_exists(self):
+        self.setup_test_data_config("config.json")
+        shutil.copy(
+            Path(self.c_dir).joinpath("integration_tests/test_data/recipes/").joinpath("build_recipe.yaml").resolve(),
+            Path(self.tmpdir).joinpath("greengrass-build/recipes").joinpath("recipe.yaml").resolve(),
+        )
+
+        uat_build_folder = Path(self.tmpdir).joinpath("greengrass-build/uat-features")
+        uat_build_folder.parent.mkdir(parents=True, exist_ok=True)
+
+        self.mocker.patch("shutil.copytree", return_value=None)
+        self.mocker.patch.object(BuildCommand, "update_feature_files", return_value=None)
+        self.mocker.patch.object(BuildCommand, "create_uat_recipe_file", return_value=None)
+        self.mocker.patch.object(BuildCommand, "build_uat_module", return_value=None)
+
+        # Test
+        build_command = BuildCommand({})
+        build_command.run()
+
+        assert not uat_build_folder.exists()
 
     def test_when_test_module_build_with_no_interpolation_then_do_not_create_uat_recipe_file(self):
         # Setup test data. Update the feature files ahead so the build command has nothing to update.

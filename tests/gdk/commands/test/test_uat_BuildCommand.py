@@ -161,6 +161,25 @@ class BuildCommandUnitTest(TestCase):
         build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
         assert not mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
 
+    def test_create_uat_recipe_when_artifact_does_not_exist_then_no_update_in_recipe(self):
+        self.mocker.patch("pathlib.Path.exists", return_value=False)
+
+        def get_as_uris(self):
+            return str(self)
+
+        self.mocker.patch.object(Path, "as_uri", get_as_uris)
+        build_cmd = BuildCommand({})
+        build_cmd.should_create_uat_recipe = True
+        test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
+        mock_read = self.mocker.patch(
+            "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
+            return_value=CaseInsensitiveDict(test_recipe),
+        )
+        spy_write = self.mocker.spy(CaseInsensitiveRecipeFile, "write")
+        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        assert mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
+        assert spy_write.call_args_list == [call(ANY, Path("uat_recipe.yaml"), test_recipe)]
+
     def test_build_uat_module(self):
         uat_build_cmd = self.mocker.patch("subprocess.run", return_value=None)
         self.mocker.patch("pathlib.Path.exists", return_value=True)
