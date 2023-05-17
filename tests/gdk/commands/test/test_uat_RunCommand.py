@@ -78,3 +78,12 @@ class RunCommandUnitTest(TestCase):
                 "--tags=Sample",
             ]
         )
+
+    def test_given_default_config_when_error_running_jar_then_raise_exception(self):
+        self.mocker.patch("pathlib.Path.exists", return_value=True)
+        self.mock_sp = self.mocker.patch("subprocess.run", side_effect=Exception("Error running jar"))
+        run_cmd = RunCommand({})
+        with pytest.raises(Exception) as e:
+            run_cmd.run()
+        assert "Error running jar" in e.value.args[0]
+        self.mock_sp.assert_called_once_with(ANY, check=True)

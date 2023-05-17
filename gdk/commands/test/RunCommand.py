@@ -57,7 +57,7 @@ class RunCommand(Command):
         """
         return _nucleus_path == Path(self._config.default_nucleus_archive_path).resolve() and not _nucleus_path.exists()
 
-    def _run_testing_jar(self) -> bool:
+    def _run_testing_jar(self) -> None:
         """
         Run the testing jar from the build folder using the configured options.
         """
@@ -66,13 +66,15 @@ class RunCommand(Command):
         _commands = ["java", "-jar", _jar_path]
         _commands.extend(self._get_options_as_list())
         logging.info("Running test jar with command %s", " ".join(_commands))
-        sp.run(_commands, check=True)
+
+        try:
+            sp.run(_commands, check=True)
+        except Exception:
+            logging.error("Exception occurred while running the test jar.")
+            raise
 
     def _get_options_as_list(self) -> list:
         """
         Return options as list of arguments to the jar
         """
-        _options_list = []
-        for opt, val in self._config.options.items():
-            _options_list.append(f"--{opt}={val}")
-        return _options_list
+        return [f"--{opt}={val}" for opt, val in self._config.options.items()]
