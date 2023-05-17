@@ -8,7 +8,7 @@ class RunConfiguration:
         self._gdk_project = _gdk_project
         self._test_options_from_config = self._gdk_project.test_config.otf_options
         self._default_tags = "Sample"
-        self._default_nucleus_archive_path = self._gdk_project.gg_build_dir.joinpath("greengrass-nucleus-latest.zip").resolve()
+        self.default_nucleus_archive_path = self._gdk_project.gg_build_dir.joinpath("greengrass-nucleus-latest.zip").resolve()
         self.options = {}
         self._update_options()
 
@@ -30,7 +30,7 @@ class RunConfiguration:
         """
         _nucleus_archive = self._test_options_from_config.get("ggc-archive", None)
         if not _nucleus_archive:
-            return self._default_nucleus_archive_path
+            return self.default_nucleus_archive_path
 
         _nucleus_archive_path = Path(_nucleus_archive).resolve()
         if not _nucleus_archive_path.exists():
