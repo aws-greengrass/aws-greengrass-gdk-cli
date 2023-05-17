@@ -1,5 +1,6 @@
 import pytest
 from unittest import TestCase
+from unittest.mock import ANY
 from gdk.commands.test.RunCommand import RunCommand
 from pathlib import Path
 import os
@@ -26,6 +27,7 @@ class RunCommandUnitTest(TestCase):
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value=Path("."))
+        self.mock_sp = self.mocker.patch("subprocess.run", return_value=None)
         os.chdir(tmpdir)
         yield
         os.chdir(self.c_dir)
@@ -60,3 +62,28 @@ class RunCommandUnitTest(TestCase):
         run_cmd.run()
 
         mock_downloader.assert_called_once_with(default_path)
+
+    def test_given_default_config_when_run_uats_then_run_testing_jar_with_default_options(self):
+        self.mocker.patch("pathlib.Path.exists", return_value=True)
+        run_cmd = RunCommand({})
+        run_cmd.run()
+        self.mock_sp.assert_called_once_with(ANY, check=True)
+        command_arguments = self.mock_sp.call_args_list[0][0][0]
+        assert set(command_arguments) == set(
+            [
+                "java",
+                "-jar",
+                Path().resolve().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").__str__(),
+                "--ggc-archive=" + Path().resolve().joinpath("greengrass-build/greengrass-nucleus-latest.zip").__str__(),
+                "--tags=Sample",
+            ]
+        )
+
+    def test_given_default_config_when_error_running_jar_then_raise_exception(self):
+        self.mocker.patch("pathlib.Path.exists", return_value=True)
+        self.mock_sp = self.mocker.patch("subprocess.run", side_effect=Exception("Error running jar"))
+        run_cmd = RunCommand({})
+        with pytest.raises(Exception) as e:
+            run_cmd.run()
+        assert "Error running jar" in e.value.args[0]
+        self.mock_sp.assert_called_once_with(ANY, check=True)

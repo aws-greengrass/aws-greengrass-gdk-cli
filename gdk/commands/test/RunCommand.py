@@ -5,6 +5,7 @@ from gdk.commands.test.config.RunConfiguration import RunConfiguration
 from pathlib import Path
 from gdk.common.URLDownloader import URLDownloader
 import logging
+import subprocess as sp
 
 
 class RunCommand(Command):
@@ -22,7 +23,7 @@ class RunCommand(Command):
 
         1. Check if the test module is built. Otherwise, raise an exception.
         2. If 'ggc-archive' path is set to default, then download the latest nucleus archive from url if it doesn't exist.
-        3. TODO: Run the test module jar with configured options.
+        3. Run the test module jar with configured options.
         """
         if not self._is_test_module_built():
             raise Exception(
@@ -34,14 +35,20 @@ class RunCommand(Command):
             logging.info("Downloading latest nucleus archive from url %s", self._nucleus_archive_link)
             URLDownloader(self._nucleus_archive_link).download(_nucleus_path)
 
+        self._run_testing_jar()
+
     def _is_test_module_built(self) -> bool:
         """
         Return true if the test module build folder exists
         """
-        uat_build_system = UATBuildSystem.get(self._test_build_system)
-        test_build_folder = self._test_directory.joinpath(*uat_build_system.build_folder).resolve()
+        return self._test_build_directory().exists()
 
-        return test_build_folder.exists()
+    def _test_build_directory(self) -> Path:
+        """
+        Return the test build directory
+        """
+        uat_build_system = UATBuildSystem.get(self._test_build_system)
+        return self._test_directory.joinpath(*uat_build_system.build_folder).resolve()
 
     def _should_download_nucleus_archive(self, _nucleus_path: Path) -> bool:
         """
@@ -49,3 +56,25 @@ class RunCommand(Command):
         nucleus archive from url.
         """
         return _nucleus_path == Path(self._config.default_nucleus_archive_path).resolve() and not _nucleus_path.exists()
+
+    def _run_testing_jar(self) -> None:
+        """
+        Run the testing jar from the build folder using the configured options.
+        """
+        # TODO: identify jar from the build output
+        _jar_path = str(self._test_build_directory().joinpath("uat-features-1.0.0.jar").resolve())
+        _commands = ["java", "-jar", _jar_path]
+        _commands.extend(self._get_options_as_list())
+        logging.info("Running test jar with command %s", " ".join(_commands))
+
+        try:
+            sp.run(_commands, check=True)
+        except Exception:
+            logging.error("Exception occurred while running the test jar.")
+            raise
+
+    def _get_options_as_list(self) -> list:
+        """
+        Return options as list of arguments to the jar
+        """
+        return [f"--{opt}={val}" for opt, val in self._config.options.items()]
