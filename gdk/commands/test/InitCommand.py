@@ -14,7 +14,7 @@ from gdk.build_system.UATBuildSystem import UATBuildSystem
 
 class InitCommand(Command):
     def __init__(self, command_args) -> None:
-        super().__init__(command_args, "run")
+        super().__init__(command_args, "init")
         self.template_name = "TestTemplateForCLI"
         self.test_directory = Path(utils.get_current_directory()).joinpath("uat-features").resolve()
         self._gdk_project = GDKProject()
