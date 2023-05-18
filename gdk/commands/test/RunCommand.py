@@ -35,7 +35,7 @@ class RunCommand(Command):
             logging.info("Downloading latest nucleus archive from url %s", self._nucleus_archive_link)
             URLDownloader(self._nucleus_archive_link).download(_nucleus_path)
 
-        self._run_testing_jar()
+        self.run_testing_jar()
 
     def _is_test_module_built(self) -> bool:
         """
@@ -57,12 +57,12 @@ class RunCommand(Command):
         """
         return _nucleus_path == Path(self._config.default_nucleus_archive_path).resolve() and not _nucleus_path.exists()
 
-    def _run_testing_jar(self) -> None:
+    def run_testing_jar(self) -> None:
         """
         Run the testing jar from the build folder using the configured options.
         """
-        # TODO: identify jar from the build output
-        _jar_path = str(self._test_build_directory().joinpath("uat-features-1.0.0.jar").resolve())
+        _jar_path = self._identify_testing_jar().__str__()
+        logging.debug("Identified %s in the build folder as the testing jar", _jar_path)
         _commands = ["java", "-jar", _jar_path]
         _commands.extend(self._get_options_as_list())
         logging.info("Running test jar with command %s", " ".join(_commands))
@@ -72,6 +72,37 @@ class RunCommand(Command):
         except Exception:
             logging.error("Exception occurred while running the test jar.")
             raise
+
+    def _identify_testing_jar(self) -> Path:
+        """
+        Identify testing jar from the build folder.
+
+        If uat-features-1.0.0.jar is in the build folder and is a testing jar, then return it.
+        Otherwise, find all the *.jar files in the build folder and return the first one that is a testing jar.
+        If nothing is found, an exception in thrown.
+        """
+        _test_build_dir = self._test_build_directory()
+        default_jar_path = _test_build_dir.joinpath("uat-features-1.0.0.jar").resolve()
+
+        if default_jar_path.exists() and self._is_testing_jar(default_jar_path):
+            return default_jar_path
+
+        jar_list = list(Path(_test_build_dir).glob("*.jar"))
+        for jar in jar_list:
+            if self._is_testing_jar(jar):
+                return jar
+        raise Exception("Unable to find testing jar in the build folder")
+
+    def _is_testing_jar(self, _jar_path: Path):
+        """
+        Run java -jar /path/to/jar --help. If the command succeeds and has "gg-test" in its output, then it could be the
+        testing jar.
+        """
+        completed_proc = sp.run(["java", "-jar", str(_jar_path), "--help"], check=False, stderr=sp.STDOUT, stdout=sp.PIPE)
+        _cmd_output = completed_proc.stdout.decode("utf-8")
+        _cmd_successful = completed_proc.returncode != 1
+
+        return _cmd_successful and "gg-test" in _cmd_output
 
     def _get_options_as_list(self) -> list:
         """
