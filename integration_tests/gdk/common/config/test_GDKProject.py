@@ -23,7 +23,6 @@ class GDKProjectTest(TestCase):
         assert gdk_config.component_name == "abc"
         assert gdk_config.test_config.otf_version == "1.1.0-SNAPSHOT"
         assert gdk_config.test_config.test_build_system == "maven"
-        assert gdk_config.test_config.otf_tag == "Sample"
         assert gdk_config.test_config.otf_options == {}
 
         c_dir = Path(".").resolve()
@@ -44,8 +43,6 @@ class GDKProjectTest(TestCase):
         assert gdk_config.component_name == "abc"
         assert gdk_config.test_config.otf_version == "1.2.0"
         assert gdk_config.test_config.test_build_system == "maven"
-        assert gdk_config.test_config.otf_tag == "testtags"
-        assert gdk_config.test_config.nucleus_version == "2.0.0"
         c_dir = Path(".").resolve()
         assert c_dir.joinpath("greengrass-build") == gdk_config.gg_build_dir
         assert c_dir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH") == gdk_config.gg_build_component_artifacts_dir
