@@ -1,10 +1,12 @@
 import pytest
 from unittest import TestCase
-from unittest.mock import ANY
+from unittest.mock import call
 from gdk.commands.test.RunCommand import RunCommand
 from pathlib import Path
 import os
 from gdk.common.URLDownloader import URLDownloader
+
+import subprocess as sp
 
 
 class RunCommandUnitTest(TestCase):
@@ -28,6 +30,7 @@ class RunCommandUnitTest(TestCase):
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value=Path("."))
         self.mock_sp = self.mocker.patch("subprocess.run", return_value=None)
+
         os.chdir(tmpdir)
         yield
         os.chdir(self.c_dir)
@@ -36,6 +39,7 @@ class RunCommandUnitTest(TestCase):
         def file_exists(self):
             return str(self) != str(Path().resolve().joinpath("greengrass-build/uat-features/target"))
 
+        self.mock_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
         self.mocker.patch.object(Path, "exists", file_exists)
         run_cmd = RunCommand({})
         with pytest.raises(Exception) as e:
@@ -44,6 +48,7 @@ class RunCommandUnitTest(TestCase):
 
     def test_given_nucleus_archive_at_default_path_when_run_uats_then_do_not_download_nucleus(self):
         mock_downloader = self.mocker.patch.object(URLDownloader, "download")
+        self.mock_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
         self.mocker.patch("pathlib.Path.exists", return_value=True)
         run_cmd = RunCommand({})
         run_cmd.run()
@@ -52,6 +57,7 @@ class RunCommandUnitTest(TestCase):
 
     def test_given_nucleus_does_not_exists_at_default_path_when_run_uats_then_download_nucleus(self):
         default_path = Path().resolve().joinpath("greengrass-build/greengrass-nucleus-latest.zip")
+        self.mock_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
 
         def file_exists(self):
             return str(self) != str(default_path)
@@ -63,27 +69,101 @@ class RunCommandUnitTest(TestCase):
 
         mock_downloader.assert_called_once_with(default_path)
 
-    def test_given_default_config_when_run_uats_then_run_testing_jar_with_default_options(self):
+    def test_given_default_jar_exists_when_run_jar_then_default_jar_is_identified_and_run_as_testing_jar(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
+        _jar_identifier_args = [
+            "java",
+            "-jar",
+            Path().absolute().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").__str__(),
+            "--help",
+        ]
+
+        _jar_testing_args = [
+            "java",
+            "-jar",
+            Path().absolute().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").__str__(),
+            "--tags=Sample",
+            "--ggc-archive=" + Path().absolute().joinpath("greengrass-build/greengrass-nucleus-latest.zip").__str__(),
+        ]
+
+        def sp_run(*args, **kwargs):
+            if args[0] == _jar_identifier_args:
+                return sp.CompletedProcess(args[0], 0, stdout="gg-test help text of testing jar".encode())
+            else:
+                return None
+
+        self.mock_sp = self.mocker.patch("subprocess.run", side_effect=sp_run)
         run_cmd = RunCommand({})
         run_cmd.run()
-        self.mock_sp.assert_called_once_with(ANY, check=True)
-        command_arguments = self.mock_sp.call_args_list[0][0][0]
-        assert set(command_arguments) == set(
-            [
-                "java",
-                "-jar",
-                Path().resolve().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").__str__(),
-                "--ggc-archive=" + Path().resolve().joinpath("greengrass-build/greengrass-nucleus-latest.zip").__str__(),
-                "--tags=Sample",
-            ]
-        )
+
+        assert len(self.mock_sp.call_args_list) == 2
+        assert self.mock_sp.call_args_list[0] == call(_jar_identifier_args, check=False, stderr=-2, stdout=-1)
+        _second_call = self.mock_sp.call_args_list[1]
+        # jar args can be appened in any order
+        set(_second_call[0][0]) == set(_jar_testing_args)
 
     def test_given_default_config_when_error_running_jar_then_raise_exception(self):
-        self.mocker.patch("pathlib.Path.exists", return_value=True)
-        self.mock_sp = self.mocker.patch("subprocess.run", side_effect=Exception("Error running jar"))
+        # self.mocker.patch("pathlib.Path.exists", return_value=True)
+
+        def file_exists(self):
+            return str(self) != str(Path().resolve().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar"))
+
+        def glob(self, _name):
+            return [Path().absolute().joinpath("a.jar")]
+
+        self.mocker.patch.object(Path, "exists", file_exists)
+
+        self.mocker.patch.object(Path, "glob", glob)
+        _jar_identifier_args = [
+            "java",
+            "-jar",
+            Path().absolute().joinpath("a.jar").__str__(),
+            "--help",
+        ]
+
+        _jar_testing_args = [
+            "java",
+            "-jar",
+            Path().absolute().joinpath("a.jar").__str__(),
+            "--tags=Sample",
+            "--ggc-archive=" + Path().absolute().joinpath("greengrass-build/greengrass-nucleus-latest.zip").__str__(),
+        ]
+
+        def sp_run(*args, **kwargs):
+            if args[0] == _jar_identifier_args:
+                return sp.CompletedProcess(args[0], 0, stdout="gg-test help text of testing jar".encode())
+            else:
+                raise Exception("Error running jar")
+
+        self.mock_sp = self.mocker.patch("subprocess.run", side_effect=sp_run)
         run_cmd = RunCommand({})
         with pytest.raises(Exception) as e:
             run_cmd.run()
         assert "Error running jar" in e.value.args[0]
-        self.mock_sp.assert_called_once_with(ANY, check=True)
+        assert len(self.mock_sp.call_args_list) == 2
+        assert self.mock_sp.call_args_list[0] == call(_jar_identifier_args, check=False, stderr=-2, stdout=-1)
+        _second_call = self.mock_sp.call_args_list[1]
+        # jar args can be appened in any order
+        set(_second_call[0][0]) == set(_jar_testing_args)
+
+    def test_given_multiple_jars_when_no_testing_jar_identified_then_raise_Exception(self):
+        def file_exists(self):
+            return str(self) != str(Path().resolve().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar"))
+
+        def glob(self, _name):
+            return ["a.jar", "b.jar"]
+
+        self.mocker.patch.object(Path, "exists", file_exists)
+
+        self.mocker.patch.object(Path, "glob", glob)
+
+        def sp_run(*args, **kwargs):
+            return sp.CompletedProcess(args[0], 1, stdout="Error running jar".encode())
+
+        self.mock_sp = self.mocker.patch("subprocess.run", side_effect=sp_run)
+        run_cmd = RunCommand({})
+
+        with pytest.raises(Exception) as e:
+            run_cmd.run_testing_jar()
+
+        assert "Unable to find testing jar in the build folder" in e.value.args[0]
