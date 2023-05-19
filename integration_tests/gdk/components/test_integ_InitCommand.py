@@ -1,401 +1,211 @@
 from unittest import TestCase
-from unittest.mock import Mock, mock_open, patch
-
+from unittest.mock import call
 import gdk.CLIParser as CLIParser
-import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.parse_args_actions as parse_args_actions
 import gdk.common.utils as utils
 import pytest
-from gdk.commands.component.InitCommand import InitCommand
-from gdk.commands.component.ListCommand import ListCommand
 from urllib3.exceptions import HTTPError
+from pathlib import Path
+import os
+import requests
 
 
-class CommandTest(TestCase):
+class InitCommandIntegTest(TestCase):
     @pytest.fixture(autouse=True)
-    def __inject_fixtures(self, mocker):
+    def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
+        self.tmpdir = Path(tmpdir).resolve()
+        self.c_dir = Path(".").resolve()
+        self.url = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/"
+        os.chdir(self.tmpdir)
+        yield
+        os.chdir(self.c_dir)
 
-    def test_init_run_non_empty_dir(self):
+    def test_given_cur_dir_not_empty_when_init_in_cur_dir_then_raise_an_exception(self):
+        # Given
+        _file = Path(self.tmpdir).joinpath("some-file").resolve()
+        _file.touch()
+
         with pytest.raises(Exception) as e:
+            # When
             parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-d"]))
+        # Then
         assert error_messages.INIT_NON_EMPTY_DIR_ERROR in e.value.args[0]
 
-        mock_non_empty_dir = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=False)
-        mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
-        mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        with pytest.raises(Exception) as e:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-d"]))
-        assert error_messages.INIT_NON_EMPTY_DIR_ERROR in e.value.args[0]
-        assert mock_non_empty_dir.call_count == 1
-        assert not mock_init_with_template.called
-        assert not mock_init_with_repository.called
-        assert mock_conflicting_args.called
-
-    def test_init_run_empty_dir(self):
-        mock_non_empty_dir = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
-        mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
-
-        assert mock_non_empty_dir.call_count == 1
-        assert not mock_init_with_template.called
-        assert mock_init_with_repository.call_count == 1
-        assert mock_conflicting_args.call_count == 1
-
-    def test_init_run_new_dir_repo_success(self):
-        mock_non_empty_dir = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=False)
-        mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
-        mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        mock_new_dir = self.mocker.patch("pathlib.Path.mkdir", return_value=None)
+    def test_given_cur_dir_empty_when_init_with_template__then_dir_is_initialized(self):
+        # When
         parse_args_actions.run_command(
-            CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy", "-n", "new-dir"])
+            CLIParser.cli_parser.parse_args(["component", "init", "-t", "HelloWorld", "-l", "python"])
         )
 
-        assert not mock_non_empty_dir.called
-        assert mock_new_dir.call_count == 1
-        assert not mock_init_with_template.called
-        assert mock_init_with_repository.call_count == 1
-        assert mock_conflicting_args.call_count == 1
+        # Then
+        assert self.tmpdir.joinpath("gdk-config.json").exists()
 
-    def test_init_run_new_dir_repo_fail(self):
-        mock_non_empty_dir = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=False)
-        mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
-        mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        mock_new_dir = self.mocker.patch("pathlib.Path.mkdir", side_effect=FileExistsError("File exists"))
+    def test_given_dir_doesnt_exist_when_init_with_repo_and_dir_name_then_dir_is_initialized(self):
+        # When
+        parse_args_actions.run_command(
+            CLIParser.cli_parser.parse_args(
+                ["component", "init", "--repository", "aws-greengrass-labs-database-postgresql", "-n", "new-dir"]
+            )
+        )
+        _new_dir = Path(self.tmpdir).joinpath("new-dir").resolve()
+
+        # Then
+        assert _new_dir.exists()
+        assert _new_dir.joinpath("gdk-config.json").exists()
+
+    def test_given_dir_exists_and_not_empty_when_init_with_template_and_dir_name_then_raise_an_exception(self):
+        # Given
+        _new_dir = Path(self.tmpdir).joinpath("new-dir").resolve()
+        _new_dir.mkdir()
+        _file = Path(_new_dir).joinpath("gdk-config.json")
+        _file.touch()
+
+        # When and Then
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy", "-n", "new-dir"])
+                CLIParser.cli_parser.parse_args(
+                    ["component", "init", "--template", "HelloWorld", "-l", "python", "-n", "new-dir"]
+                )
             )
+
         assert (
-            "Could not initialize the project as the directory 'new-dir' already exists. Please initialize the project"
-            " with a new directory."
+            "Could not initialize the project as the directory is not empty. Please initialize the project in an empty"
+            " directory.\nTry `gdk component init --help`"
             in e.value.args[0]
         )
-        assert not mock_non_empty_dir.called
-        assert mock_new_dir.call_count == 1
-        assert not mock_init_with_template.called
-        assert mock_init_with_repository.call_count == 0
-        assert mock_conflicting_args.call_count == 1
+        # The directory and files in it should not be modified
+        assert _file.exists()
 
-    def test_init_run_with_conflicting_args(self):
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
-        mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(
-            InitCommand, "check_if_arguments_conflict", side_effect=Exception("Some exception")
-        )
-
-        with pytest.raises(Exception) as e:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
-
-        assert "Some exception" in e.value.args[0]
-
-        assert mock_is_directory_empty.call_count == 0
-        assert mock_init_with_template.call_count == 0
-        assert mock_init_with_repository.call_count == 0
-        assert mock_conflicting_args.call_count == 1
-
-    def test_init_run_invalid_args(self):
-        mock_non_empty_dir = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=False)
-        mock_init_with_template = self.mocker.patch.object(InitCommand, "init_with_template", return_value=None)
-        mock_init_with_repository = self.mocker.patch.object(InitCommand, "init_with_repository", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        mock_new_dir = self.mocker.patch("pathlib.Path.mkdir", return_value=None)
+    def test_given_cur_dir_when_init_with_repo_and_template_then_raise_an_exception(self):
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(["component", "init", "-t", "dummy", "-n", "new-dir"])
+                CLIParser.cli_parser.parse_args(["component", "init", "-r", "dummy", "-t", "template"])
             )
+
+        assert (
+            "The command provided is invalid.\nArguments 'template' and 'repository' are conflicting and cannot be used"
+            " together in a command."
+            in e.value.args[0]
+        )
+
+        assert utils.is_directory_empty(self.tmpdir)
+
+    def test_given_cur_dir_when_init_with_template_but_not_language_then_raise_an_exception(self):
+        with pytest.raises(Exception) as e:
+            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-t", "dummy"]))
+
         assert (
             "Could not initialize the project as the arguments passed are invalid. Please initialize the project with"
             " correct arguments."
             in e.value.args[0]
         )
-        assert not mock_non_empty_dir.called
-        assert mock_new_dir.call_count == 1
-        assert not mock_init_with_template.called
-        assert mock_init_with_repository.call_count == 0
-        assert mock_conflicting_args.call_count == 1
 
-    def test_init_run_with_template_download(self):
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_download_and_clean = self.mocker.patch.object(InitCommand, "download_and_clean", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
+        assert utils.is_directory_empty(self.tmpdir)
 
-        parse_args_actions.run_command(
-            CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
+    def test_given_error_during_download_when_init_with_template_then_raise_an_exception(self):
+        mock_response = self.mocker.Mock(
+            status_code=404, raise_for_status=self.mocker.Mock(side_effect=HTTPError("Not found"))
         )
 
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.call_count == 1
-        mock_download_and_clean.assert_called_once_with("template-python", "template", utils.current_directory)
+        def requests_get(*args, **kwargs):
+            if args[0] == "https://dummy-link":
+                return mock_response
+            else:
+                res = requests.Response()
+                res.status_code = 200
+                res._content = '{"dummy-python": "https://dummy-link"}'.encode()
+                return res
 
-    def test_init_run_with_repository_download(self):
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_download_and_clean = self.mocker.patch.object(InitCommand, "download_and_clean", return_value=None)
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-r", "repo"]))
-
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.call_count == 1
-        mock_download_and_clean.assert_called_once_with("repo", "repository", utils.current_directory)
-
-    @patch("zipfile.ZipFile")
-    def test_init_run_with_repository_url(self, mock_zip):
-        mock_response = self.mocker.Mock(status_code=200, content="".encode())
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-
-        mock_za = Mock()
-        mock_za.return_value.namelist.return_value = ["one"]
-        mock_za.return_value.extractall.return_value = None
-        mock_zip.return_value.__enter__ = mock_za
-
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=["dummy-folder1"])
-        mock_move = self.mocker.patch("shutil.move", return_value=None)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_get_download_url = self.mocker.patch.object(InitCommand, "get_download_url", return_value="url")
-
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-r", "repo"]))
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.called
-        mock_get_download_url.assert_called_once_with("repo", "repository")
-        mock_template_download.assert_called_once_with("url", stream=True)
-        assert mock_iter_dir.call_count == 1
-        assert mock_move.call_count == 1
-        mock_move.assert_any_call("dummy-folder1", utils.current_directory)
-        assert mock_template_download.call_count == 1
-
-    @patch("zipfile.ZipFile")
-    def test_init_run_with_template_url(self, mock_zip):
-        mock_response = self.mocker.Mock(status_code=200, content="".encode())
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-
-        mock_za = Mock()
-        mock_za.return_value.namelist.return_value = ["one"]
-        mock_za.return_value.extractall.return_value = None
-        mock_zip.return_value.__enter__ = mock_za
-
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=["dummy-folder1"])
-        mock_move = self.mocker.patch("shutil.move", return_value=None)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_get_download_url = self.mocker.patch.object(InitCommand, "get_download_url", return_value="url")
-
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-
-        parse_args_actions.run_command(
-            CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
-        )
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.called
-        mock_get_download_url.assert_called_once_with("template-python", "template")
-        mock_template_download.assert_called_once_with("url", stream=True)
-        assert mock_iter_dir.call_count == 1
-        assert mock_move.call_count == 1
-        mock_move.assert_any_call("dummy-folder1", utils.current_directory)
-        assert mock_template_download.call_count == 1
-
-    def test_init_run_with_template_download_fail(self):
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_download_and_clean = self.mocker.patch.object(InitCommand, "download_and_clean", side_effect=HTTPError("error"))
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
+        mock_requests_get = self.mocker.patch("requests.get", side_effect=requests_get)
 
         with pytest.raises(Exception) as e:
             parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
+                CLIParser.cli_parser.parse_args(["component", "init", "-t", "dummy", "-l", "python"])
             )
+        assert "Not found" in e.value.args[0]
+        assert mock_requests_get.call_args_list == [
+            call(self.url + "templates.json"),
+            call("https://dummy-link", stream=True),
+        ]
 
-        assert "error" in e.value.args[0]
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.call_count == 1
-        mock_download_and_clean.assert_called_once_with("template-python", "template", utils.current_directory)
+        assert utils.is_directory_empty(self.tmpdir)
 
-    def test_init_run_with_repository_download_fail(self):
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_download_and_clean = self.mocker.patch.object(InitCommand, "download_and_clean", side_effect=HTTPError("error"))
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
+    def test_given_error_during_download_when_init_with_repository_then_raise_an_exception(self):
+        mock_response = self.mocker.Mock(
+            status_code=404, raise_for_status=self.mocker.Mock(side_effect=HTTPError("Not found"))
+        )
+
+        def requests_get(*args, **kwargs):
+            if args[0] == "https://dummy-link":
+                return mock_response
+            else:
+                res = requests.Response()
+                res.status_code = 200
+                res._content = '{"dummy": "https://dummy-link"}'.encode()
+                return res
+
+        mock_requests_get = self.mocker.patch("requests.get", side_effect=requests_get)
 
         with pytest.raises(Exception) as e:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "--repository", "dummy"]))
+            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-r", "dummy"]))
+        assert "Not found" in e.value.args[0]
+        assert mock_requests_get.call_args_list == [
+            call(self.url + "community-components.json"),
+            call("https://dummy-link", stream=True),
+        ]
 
-        assert "error" in e.value.args[0]
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.call_count == 1
-        mock_download_and_clean.assert_called_once_with("dummy", "repository", utils.current_directory)
+        assert utils.is_directory_empty(self.tmpdir)
 
-    def test_init_with_template_invalid_url(self):
-        # Raises an exception when the template url is not valid.
-        mock_response = self.mocker.Mock(
-            status_code=404, raise_for_status=self.mocker.Mock(side_effect=HTTPError("some error"))
-        )
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_get_download_url = self.mocker.patch.object(InitCommand, "get_download_url", return_value="url")
+    def test_given_template_doesnt_exist_when_init_with_template_and_name_then_raise_an_exception_and_do_not_create_new_dir(
+        self,
+    ):
+        def requests_get(*args, **kwargs):
+            res = requests.Response()
+            res.status_code = 200
+            res._content = '{"dummy": "https://dummy-link"}'.encode()
+            return res
 
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        with patch("builtins.open", mock_open()) as mock_file:
-            with pytest.raises(Exception) as e:
-                parse_args_actions.run_command(
-                    CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
+        mock_requests_get = self.mocker.patch("requests.get", side_effect=requests_get)
+
+        with pytest.raises(Exception) as e:
+            parse_args_actions.run_command(
+                CLIParser.cli_parser.parse_args(
+                    ["component", "init", "-t", "template-not-exists", "-l", "python", "-n", "new-dir"]
                 )
-
-                assert "some error" in e.value.args[0]
-                assert mock_template_download.call_count == 1
-                assert mock_is_directory_empty.call_count == 1
-                assert mock_conflicting_args.called
-                mock_get_download_url.assert_called_once_with("template-python", "template")
-                mock_template_download.assert_called_once_with("url", stream=True)
-                assert not mock_file.called
-
-    def test_init_with_repository_invalid_url(self):
-        # Raises an exception when the template url is not valid.
-        mock_response = self.mocker.Mock(
-            status_code=404, raise_for_status=self.mocker.Mock(side_effect=HTTPError("some error"))
-        )
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_get_download_url = self.mocker.patch.object(InitCommand, "get_download_url", return_value="url")
-
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        with patch("builtins.open", mock_open()) as mock_file:
-            with pytest.raises(Exception) as e:
-                parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-r", "repo"]))
-
-                assert "some error" in e.value.args[0]
-                assert mock_template_download.call_count == 1
-                assert mock_is_directory_empty.call_count == 1
-                assert mock_conflicting_args.called
-                mock_get_download_url.assert_called_once_with("repo", "repository")
-                mock_template_download.assert_called_once_with("url", stream=True)
-                assert not mock_file.called
-
-    @patch("zipfile.ZipFile")
-    def test_init_run_with_template_catalog(self, mock_zip):
-        mock_response = self.mocker.Mock(status_code=200, content="".encode())
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-
-        mock_za = Mock()
-        mock_za.return_value.namelist.return_value = ["one"]
-        mock_za.return_value.extractall.return_value = None
-        mock_zip.return_value.__enter__ = mock_za
-
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=["dummy-folder1"])
-        mock_move = self.mocker.patch("shutil.move", return_value=None)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        # mock_get_download_url = self.mocker.patch.object(InitCommand, "get_download_url", return_value="url")
-        mock_get_component_list_from_github = self.mocker.patch.object(
-            ListCommand,
-            "get_component_list_from_github",
-            return_value={"template-python": "template-url"},
-        )
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        parse_args_actions.run_command(
-            CLIParser.cli_parser.parse_args(["component", "init", "-t", "template", "-l", "python"])
-        )
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.called
-        mock_get_component_list_from_github.assert_called_once_with(consts.templates_list_url)
-        mock_template_download.assert_called_once_with("template-url", stream=True)
-        assert mock_iter_dir.call_count == 1
-        assert mock_move.call_count == 1
-        mock_move.assert_any_call("dummy-folder1", utils.current_directory)
-        assert mock_template_download.call_count == 1
-
-    @patch("zipfile.ZipFile")
-    def test_init_run_with_repository_catalog_url(self, mock_zip):
-        mock_response = self.mocker.Mock(status_code=200, content="".encode())
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-
-        mock_za = Mock()
-        mock_za.return_value.namelist.return_value = ["one"]
-        mock_za.return_value.extractall.return_value = None
-        mock_zip.return_value.__enter__ = mock_za
-
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=["dummy-folder1"])
-        mock_move = self.mocker.patch("shutil.move", return_value=None)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_get_component_list_from_github = self.mocker.patch.object(
-            ListCommand,
-            "get_component_list_from_github",
-            return_value={"repo": "repo-url"},
-        )
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-r", "repo"]))
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.called
-        mock_get_component_list_from_github.assert_called_once_with(consts.repository_list_url)
-        mock_template_download.assert_called_once_with("repo-url", stream=True)
-        assert mock_iter_dir.call_count == 1
-        assert mock_move.call_count == 1
-        mock_move.assert_any_call("dummy-folder1", utils.current_directory)
-        assert mock_template_download.call_count == 1
-
-    @patch("zipfile.ZipFile")
-    def test_init_run_with_repository_catalog_url_not_found(self, mock_zip):
-        mock_response = self.mocker.Mock(status_code=200, content="".encode())
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-
-        mock_za = Mock()
-        mock_za.return_value.namelist.return_value = ["one"]
-        mock_za.return_value.extractall.return_value = None
-        mock_zip.return_value.__enter__ = mock_za
-
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=["dummy-folder1"])
-        mock_move = self.mocker.patch("shutil.move", return_value=None)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_get_component_list_from_github = self.mocker.patch.object(
-            ListCommand,
-            "get_component_list_from_github",
-            return_value={"repo": "repo-url"},
-        )
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        with pytest.raises(Exception) as e:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "init", "-r", "repo-not-found"]))
-        assert "Could not find the component repository 'repo-not-found' in Greengrass Software Catalog." in e.value.args[0]
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.called
-        mock_get_component_list_from_github.assert_called_once_with(consts.repository_list_url)
-        assert not mock_iter_dir.called
-        assert not mock_move.called
-        assert not mock_template_download.called
-
-    @patch("zipfile.ZipFile")
-    def test_init_run_with_template_catalog_url_not_found(self, mock_zip):
-        mock_response = self.mocker.Mock(status_code=200, content="".encode())
-        mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-
-        mock_za = Mock()
-        mock_za.return_value.namelist.return_value = ["one"]
-        mock_za.return_value.extractall.return_value = None
-        mock_zip.return_value.__enter__ = mock_za
-
-        mock_iter_dir = self.mocker.patch("pathlib.Path.iterdir", return_value=["dummy-folder1"])
-        mock_move = self.mocker.patch("shutil.move", return_value=None)
-        mock_is_directory_empty = self.mocker.patch("gdk.common.utils.is_directory_empty", return_value=True)
-        mock_get_component_list_from_github = self.mocker.patch.object(
-            ListCommand,
-            "get_component_list_from_github",
-            return_value={"repo": "repo-url"},
-        )
-        mock_conflicting_args = self.mocker.patch.object(InitCommand, "check_if_arguments_conflict", return_value=None)
-        with pytest.raises(Exception) as e:
-            parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(["component", "init", "-t", "template-not-found", "-l", "python"])
             )
+
         assert (
-            "Could not find the component template 'template-not-found-python' in Greengrass Software Catalog."
+            "Could not find the component template 'template-not-exists-python' in Greengrass Software Catalog."
             in e.value.args[0]
         )
-        assert mock_is_directory_empty.call_count == 1
-        assert mock_conflicting_args.called
-        mock_get_component_list_from_github.assert_called_once_with(consts.templates_list_url)
-        assert not mock_iter_dir.called
-        assert not mock_move.called
-        assert not mock_template_download.called
+
+        assert mock_requests_get.call_args_list == [call(self.url + "templates.json")]
+        _new_dir = Path(self.tmpdir).joinpath("new-dir").resolve()
+
+        # Then
+        assert not _new_dir.exists()
+
+    def test_given_repo_doesnt_exist_when_init_with_repository_and_name_then_raise_an_exception_and_do_not_create_new_dir(
+        self,
+    ):
+        def requests_get(*args, **kwargs):
+            res = requests.Response()
+            res.status_code = 200
+            res._content = '{"dummy": "https://dummy-link"}'.encode()
+            return res
+
+        mock_requests_get = self.mocker.patch("requests.get", side_effect=requests_get)
+
+        with pytest.raises(Exception) as e:
+            parse_args_actions.run_command(
+                CLIParser.cli_parser.parse_args(["component", "init", "--repository", "repo-not-exists", "-n", "new-dir"])
+            )
+
+        assert "Could not find the component repository 'repo-not-exists' in Greengrass Software Catalog." in e.value.args[0]
+        assert mock_requests_get.call_args_list == [call(self.url + "community-components.json")]
+        _new_dir = Path(self.tmpdir).joinpath("new-dir").resolve()
+
+        # Then
+        assert not _new_dir.exists()
