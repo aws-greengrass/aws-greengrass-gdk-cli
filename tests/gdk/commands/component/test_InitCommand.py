@@ -197,7 +197,7 @@ class InitCommandTest(TestCase):
 
         mock_response = self.mocker.Mock(status_code=200, content="".encode())
         mock_template_download = self.mocker.patch("requests.get", return_value=mock_response)
-
+        mock_make_dir = self.mocker.patch("pathlib.Path.mkdir", return_value=None)
         mock_za = Mock()
         mock_za.return_value.namelist.return_value = ["one"]
         mock_za.return_value.extractall.return_value = None
@@ -214,6 +214,7 @@ class InitCommandTest(TestCase):
         mock_move.assert_any_call("dummy-folder1", project_dir)
         assert mock_template_download.call_count == 1
         assert mock_get_available_templates.call_count == 1
+        assert mock_make_dir.call_count == 1
 
     def test_init_with_template_invalid_url_server_error(self):
         template = "template"
