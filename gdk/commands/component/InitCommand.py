@@ -1,16 +1,11 @@
 import logging
-import shutil
-import tempfile
-import zipfile
-from io import BytesIO
-from pathlib import Path
 
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
-import requests
 from gdk.commands.Command import Command
 from gdk.commands.component.ListCommand import ListCommand
+from gdk.common.URLDownloader import URLDownloader
 
 
 class InitCommand(Command):
@@ -92,33 +87,7 @@ class InitCommand(Command):
             None
         """
         comp_url = self.get_download_url(comp_name, comp_type)
-
-        download_response = requests.get(comp_url, stream=True)
-        if download_response.status_code != 200:
-            try:
-                download_response.raise_for_status()
-            except Exception:
-                logging.error(error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(comp_type))
-                raise
-
-        logging.debug("Downloading the component {}...".format(comp_type))
-        with zipfile.ZipFile(BytesIO(download_response.content)) as zfile:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                # Extracts the zip file into temporary directory - /some-temp-dir/downloaded-zip-folder/
-                zfile.extractall(tmpdirname)
-                self._create_project_dir(project_dir)
-                # Moves the unarchived contents from temporary folder (downloaded-zip-folder) to current directory.
-                for f in Path(tmpdirname).joinpath(zfile.namelist()[0]).iterdir():
-                    shutil.move(str(f), project_dir)
-
-    def _create_project_dir(self, project_dir: Path):
-        """
-        Creates a new directory if it does not exist already.
-        """
-        if project_dir.exists():
-            return
-        logging.debug("Creating a new project directory '%s'", str(project_dir))
-        project_dir.mkdir(parents=True, exist_ok=False)
+        URLDownloader(comp_url).download_and_extract(project_dir)
 
     def get_download_url(self, comp_name, comp_type):
         if comp_type == "template":
