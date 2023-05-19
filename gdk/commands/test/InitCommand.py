@@ -1,15 +1,12 @@
 import logging
-import tempfile
-import zipfile
-from io import BytesIO
 from pathlib import Path
 
-import requests
 from gdk.common.config.GDKProject import GDKProject
 
 import gdk.common.utils as utils
 from gdk.commands.Command import Command
 from gdk.build_system.UATBuildSystem import UATBuildSystem
+from gdk.common.URLDownloader import URLDownloader
 
 
 class InitCommand(Command):
@@ -31,23 +28,8 @@ class InitCommand(Command):
         if self.test_directory.exists():
             logging.warning("Not downloading the uat template as 'uat-features' already exists in the current directory.")
             return
-        self.download_template()
+        URLDownloader(self.template_url).download_and_extract(self.test_directory)
         self.update_testing_module_build_identifiers(self._test_config.test_build_system, self._test_config.otf_version)
-
-    def download_template(self):
-        download_response = requests.get(self.template_url, stream=True, timeout=30)
-        if download_response.status_code != 200:
-            try:
-                download_response.raise_for_status()
-            except Exception:
-                logging.error("Failed to download the uat template from GitHub")
-                raise
-
-        logging.info("Downloading the UAT module from GitHub")
-        with zipfile.ZipFile(BytesIO(download_response.content)) as zfile:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                zfile.extractall(tmpdirname)
-                Path(tmpdirname).joinpath(self.template_name).rename(self.test_directory)
 
     def update_testing_module_build_identifiers(self, build_system_str, otf_version):
         build_system = UATBuildSystem.get(build_system_str)

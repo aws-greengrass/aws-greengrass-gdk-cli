@@ -127,7 +127,7 @@ class InitCommandIntegTest(TestCase):
         assert "Not found" in e.value.args[0]
         assert mock_requests_get.call_args_list == [
             call(self.url + "templates.json"),
-            call("https://dummy-link", stream=True),
+            call("https://dummy-link", stream=True, timeout=30),
         ]
 
         assert utils.is_directory_empty(self.tmpdir)
@@ -153,7 +153,7 @@ class InitCommandIntegTest(TestCase):
         assert "Not found" in e.value.args[0]
         assert mock_requests_get.call_args_list == [
             call(self.url + "community-components.json"),
-            call("https://dummy-link", stream=True),
+            call("https://dummy-link", stream=True, timeout=30),
         ]
 
         assert utils.is_directory_empty(self.tmpdir)
