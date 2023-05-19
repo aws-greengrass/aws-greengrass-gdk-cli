@@ -17,12 +17,12 @@ class InitCommand(Command):
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "init")
 
-    def run(self):
+    def run(self) -> None:
         """
         Initializes the current directory in which the command runs based on the command arguments.
 
         This function creates a new directory if name argument is passed in the command and initializes the project inside it.
-        Errors out if the directory already exists.
+        Errors out if the directory is not empty.
 
         If no name argument is passed, then it checks if the current directory is empty before initiating the project.
         Raises an exception otherwise.
@@ -30,24 +30,14 @@ class InitCommand(Command):
         Parameters
         ----------
           command_args(dict): A dictionary object that contains parsed args namespace of a command.
-
-        Returns
-        -------
-            None
         """
-        project_dir = utils.current_directory
-        if not self.arguments["name"]:
-            # Check if directory is not empty
-            if not utils.is_directory_empty(project_dir):
-                raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
-        else:
-            # Create a new directory with name.
-            project_dir = Path(project_dir).joinpath(self.arguments["name"]).resolve()
-            try:
-                logging.debug("Creating new project directory '{}' in the current directory.".format(project_dir.name))
-                Path(project_dir).mkdir(exist_ok=False)
-            except FileExistsError:
-                raise Exception(error_messages.INIT_DIR_EXISTS_ERROR.format(project_dir.name))
+        _name = self.arguments.get("name")
+        project_dir = utils.get_current_directory()
+        if _name:
+            project_dir = project_dir.joinpath(_name).resolve()
+
+        if project_dir.exists() and not utils.is_directory_empty(project_dir):
+            raise Exception(error_messages.INIT_NON_EMPTY_DIR_ERROR)
 
         # Choose appropriate action based on commands
         if self.arguments["template"] and self.arguments["language"]:
@@ -116,9 +106,19 @@ class InitCommand(Command):
             with tempfile.TemporaryDirectory() as tmpdirname:
                 # Extracts the zip file into temporary directory - /some-temp-dir/downloaded-zip-folder/
                 zfile.extractall(tmpdirname)
+                self._create_project_dir(project_dir)
                 # Moves the unarchived contents from temporary folder (downloaded-zip-folder) to current directory.
                 for f in Path(tmpdirname).joinpath(zfile.namelist()[0]).iterdir():
                     shutil.move(str(f), project_dir)
+
+    def _create_project_dir(self, project_dir: Path):
+        """
+        Creates a new directory if it does not exist already.
+        """
+        if project_dir.exists():
+            return
+        logging.debug("Creating a new project directory '%s'", str(project_dir))
+        project_dir.mkdir(parents=True, exist_ok=False)
 
     def get_download_url(self, comp_name, comp_type):
         if comp_type == "template":
