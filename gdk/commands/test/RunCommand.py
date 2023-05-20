@@ -67,11 +67,11 @@ class RunCommand(Command):
         _commands.extend(self._get_options_as_list())
         logging.info("Running test jar with command %s", " ".join(_commands))
 
-        try:
-            sp.run(_commands, check=True)
-        except Exception:
-            logging.error("Exception occurred while running the test jar.")
-            raise
+        _test_run_proc = sp.run(_commands, check=True, stdout=sp.PIPE, stderr=sp.STDOUT)
+        _cmd_successful = _test_run_proc.returncode == 0
+
+        if not _cmd_successful:
+            raise Exception("Exception occurred while running the test jar.\n " + _test_run_proc.stderr.decode("utf-8"))
 
     def _identify_testing_jar(self) -> Path:
         """
@@ -99,8 +99,10 @@ class RunCommand(Command):
         testing jar.
         """
         completed_proc = sp.run(["java", "-jar", str(_jar_path), "--help"], check=False, stderr=sp.STDOUT, stdout=sp.PIPE)
-        _cmd_output = completed_proc.stdout.decode("utf-8")
         _cmd_successful = completed_proc.returncode != 1
+        _cmd_output = ""
+        if _cmd_successful:
+            _cmd_output = completed_proc.stdout.decode("utf-8")
 
         return _cmd_successful and "gg-test" in _cmd_output
 
