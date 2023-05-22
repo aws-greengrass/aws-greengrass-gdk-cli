@@ -49,8 +49,8 @@ def get_recipe_file():
     """
     # Search for json files in current directory that contain component name and ends in .json.
     logging.debug("Looking for recipe file in the project directory.")
-    json_file = list(Path(utils.current_directory).glob("recipe.json"))
-    yaml_file = list(Path(utils.current_directory).glob("recipe.yaml"))
+    json_file = list(Path(utils.get_current_directory()).glob("recipe.json"))
+    yaml_file = list(Path(utils.get_current_directory()).glob("recipe.yaml"))
 
     if not json_file and not yaml_file:
         logging.error("Could not find 'recipe.json' or 'recipe.yaml' in the project directory.")
@@ -66,7 +66,6 @@ def get_recipe_file():
 
 
 def get_project_config_values():
-
     # Get component configuration from the greengrass project config file.
     logging.info("Getting project configuration from {}".format(consts.cli_project_config_file))
     project_config = config_actions.get_configuration()["component"]

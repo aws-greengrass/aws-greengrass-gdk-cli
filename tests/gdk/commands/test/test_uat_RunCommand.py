@@ -90,7 +90,7 @@ class RunCommandUnitTest(TestCase):
             if args[0] == _jar_identifier_args:
                 return sp.CompletedProcess(args[0], 0, stdout="gg-test help text of testing jar".encode())
             else:
-                return None
+                return sp.CompletedProcess(args[0], 0, stdout="running testing jar".encode())
 
         self.mock_sp = self.mocker.patch("subprocess.run", side_effect=sp_run)
         run_cmd = RunCommand({})
