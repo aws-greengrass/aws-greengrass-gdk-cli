@@ -7,6 +7,7 @@ from packaging.version import Version
 
 import gdk
 import gdk._version as version
+import gdk.aws_clients.AWSClient as AWSClient
 
 
 def get_static_file_path(file_name):
@@ -144,6 +145,31 @@ def get_next_patch_version(version_number: str) -> str:
 
 def get_current_directory() -> Path:
     return Path(".").resolve()
+
+
+def get_greengrass_supported_regions() -> list:
+    _regions_list = []
+    _parameter_paginator = AWSClient.ssm().get_paginator("get_parameters_by_path")
+    for page in _parameter_paginator.paginate(Path="/aws/service/global-infrastructure/services/greengrass/regions"):
+        for parameter in page.get("Parameters", []):
+            _regions_list.append(parameter.get("Value"))
+    return _regions_list
+
+
+def get_account_number(region) -> str:
+    """
+    Uses STS client to get account number from the credentials provided using AWS cli.
+
+    Raises an exception when the request is unsuccessful.
+    """
+    try:
+        caller_identity_response = AWSClient.sts(region).get_caller_identity()
+        account_num = caller_identity_response["Account"]
+        logging.debug("Identified account number as '{}'.".format(account_num))
+        return account_num
+    except Exception:
+        logging.error("Error while fetching account number from credentials.")
+        raise
 
 
 error_line = "\n=============================== ERROR ===============================\n"

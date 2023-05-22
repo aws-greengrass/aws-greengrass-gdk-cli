@@ -20,6 +20,10 @@ class PublishCommandTest(TestCase):
             return_value=project_config(),
         )
 
+        self.mock_region = self.mocker.patch(
+            "gdk.common.utils.get_greengrass_supported_regions", return_value=["us-east-1", "us-west-2"]
+        )
+
     def test_get_component_version_from_config(self):
         mock_get_next_version = self.mocker.patch.object(PublishCommand, "get_next_version", return_value="")
         publish = PublishCommand({})
@@ -56,7 +60,6 @@ class PublishCommandTest(TestCase):
         assert e.value.args[0] == "some error"
 
     def test_get_next_version_component_not_exists(self):
-
         mock_get_next_patch_component_version = self.mocker.patch.object(
             Greengrassv2Client, "get_highest_component_version_", return_value=None
         )
@@ -77,7 +80,8 @@ class PublishCommandTest(TestCase):
         assert mock_get_next_patch_component_version.call_count == 1
 
     def test_client_built_with_correct_region(self):
-        self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
+        self.mocker.patch("gdk.common.utils.get_account_number", return_value="1234")
+        self.mocker.patch("gdk.common.utils.get_greengrass_supported_regions", return_value=["ca-central-1"])
         self.mocker.patch.object(PublishCommand, "get_component_version_from_config", return_value=None)
         self.mocker.patch.object(PublishCommand, "upload_artifacts_s3", return_value=None)
         self.mocker.patch.object(PublishRecipeTransformer, "transform")
@@ -149,7 +153,8 @@ class PublishCommandTest(TestCase):
         assert mock_upload_file.call_args_list == [call([Path("a.py")])]
 
     def test_publish_run_not_build(self):
-        mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
+        mock_get_account_num = self.mocker.patch("gdk.common.utils.get_account_number", return_value="1234")
+        self.mocker.patch("gdk.common.utils.get_greengrass_supported_regions", return_value=["us-west-2"])
         mock_get_component_version_from_config = self.mocker.patch.object(
             PublishCommand, "get_component_version_from_config", return_value=None
         )
@@ -174,7 +179,8 @@ class PublishCommandTest(TestCase):
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_not_build_command_bucket(self):
-        mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
+        mock_get_account_num = self.mocker.patch("gdk.common.utils.get_account_number", return_value="1234")
+        self.mocker.patch("gdk.common.utils.get_greengrass_supported_regions", return_value=["us-east-1"])
         mock_get_component_version_from_config = self.mocker.patch.object(
             PublishCommand, "get_component_version_from_config", return_value=None
         )
@@ -196,7 +202,8 @@ class PublishCommandTest(TestCase):
         assert mock_create_gg_component.call_count == 1
 
     def test_publish_run_build(self):
-        mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
+        mock_get_account_num = self.mocker.patch("gdk.common.utils.get_account_number", return_value="1234")
+        self.mocker.patch("gdk.common.utils.get_greengrass_supported_regions", return_value=["us-east-1"])
         mock_get_component_version_from_config = self.mocker.patch.object(
             PublishCommand, "get_component_version_from_config", return_value=None
         )
@@ -224,6 +231,7 @@ class PublishCommandTest(TestCase):
         publish.project_config["bucket"] = "default"
         publish.project_config["account_number"] = "1234"
         publish.project_config["component_version"] = "1.0.0"
+        publish.project_config["region"] = "us-east-1"
         publish._override_config_with_command_args()
         assert publish.project_config["bucket"] == "my-bucket"
         assert publish.project_config["options"] == {"metadata": "test"}
@@ -272,7 +280,8 @@ class PublishCommandTest(TestCase):
         assert "JSON string is incorrectly formatted" in e.value.args[0]
 
     def test_publish_run_exception(self):
-        mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
+        mock_get_account_num = self.mocker.patch("gdk.common.utils.get_account_number", return_value="1234")
+        self.mocker.patch("gdk.common.utils.get_greengrass_supported_regions", return_value=["us-east-1"])
         mock_get_component_version_from_config = self.mocker.patch.object(
             PublishCommand,
             "get_component_version_from_config",
@@ -290,25 +299,6 @@ class PublishCommandTest(TestCase):
         assert e.value.args[0] == "some error"
         assert mock_get_account_num.call_count == 1
         assert mock_get_component_version_from_config.call_count == 1
-
-    def test_get_account_number_exception(self):
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish = PublishCommand({})
-        publish.service_clients = {"sts_client": mock_client}
-        mock_get_caller_identity = self.mocker.patch("boto3.client.get_caller_identity", side_effect=HTTPError("some error"))
-        with pytest.raises(Exception) as e:
-            publish.get_account_number()
-        assert mock_get_caller_identity.call_count == 1
-        assert "some error" in e.value.args[0]
-
-    def test_get_account_number(self):
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        publish = PublishCommand({})
-        publish.service_clients = {"sts_client": mock_client}
-        mock_get_caller_identity = self.mocker.patch("boto3.client.get_caller_identity", return_value={"Account": 124})
-        num = publish.get_account_number()
-        assert mock_get_caller_identity.call_count == 1
-        assert num == 124
 
 
 def project_config():

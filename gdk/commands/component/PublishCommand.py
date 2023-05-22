@@ -60,7 +60,7 @@ class PublishCommand(Command):
         self._update_component_version()
 
     def _update_account_number(self):
-        self.project_config["account_number"] = self.get_account_number()
+        self.project_config["account_number"] = utils.get_account_number(self._get_region())
 
     def _override_config_with_command_args(self):
         logging.debug("Overridig gdk configuration with the command arguments")
@@ -107,9 +107,26 @@ class PublishCommand(Command):
             return json.loads(o_file.read())
 
     def _get_region(self) -> str:
+        _region = ""
         if self.arguments.get("region"):
-            return self.arguments["region"]
-        return self.project_config["region"]
+            _region = self.arguments["region"]
+        else:
+            _region = self.project_config.get("region", _region)
+
+        if not _region:
+            raise InvalidArgumentsError(
+                "region",
+                "Region cannot be empty. Please provide a region argument or set the region in the gdk config file",
+            )
+        self._validate_region(_region)
+        return _region
+
+    def _validate_region(self, _region):
+        _supported_regions = utils.get_greengrass_supported_regions()
+        if _region not in _supported_regions:
+            raise InvalidArgumentsError(
+                "region", "Region '{}' is not supported.\nSupported regions are: {}".format(_region, _supported_regions)
+            )
 
     def _update_region(self):
         self.project_config["region"] = self._get_region()
@@ -190,29 +207,6 @@ class PublishCommand(Command):
             return next_version
         except Exception:
             logging.error("Failed to calculate the next version of the component during publish.")
-            raise
-
-    def get_account_number(self):
-        """
-        Uses STS client to get account number from the credentials provided using AWS cli.
-
-        Raises an exception when the request is unsuccessful.
-
-        Parameters
-        ----------
-            None
-
-        Returns
-        -------
-            account_num: Returns account number.
-        """
-        try:
-            caller_identity_response = self.service_clients["sts_client"].get_caller_identity()
-            account_num = caller_identity_response["Account"]
-            logging.debug("Identified account number as '{}'.".format(account_num))
-            return account_num
-        except Exception:
-            logging.error("Error while fetching account number from credentials.")
             raise
 
     def get_component_version_from_config(self):
