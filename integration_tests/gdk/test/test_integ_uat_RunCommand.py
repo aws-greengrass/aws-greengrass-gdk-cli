@@ -30,7 +30,7 @@ class UATRunCommandTest(TestCase):
         yield
         os.chdir(self.c_dir)
 
-    def test_given_test_module_not_built_when_run_uats_then_raise_an_exception(self):
+    def test_given_test_module_not_built_when_run_e2e_tests_then_raise_an_exception(self):
         self.setup_test_data_config("config_without_test.json")
         run_command = RunCommand({})
         with pytest.raises(Exception) as e:
@@ -40,7 +40,7 @@ class UATRunCommandTest(TestCase):
             + "command before running the tests."
         ) in e.value.args[0]
 
-    def test_given_test_module_and_nucleus_archive_built_when_run_uats_then_run_uats(self):
+    def test_given_test_module_and_nucleus_archive_built_when_run_e2e_tests_then_run_e2e_tests(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         run_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
@@ -58,7 +58,7 @@ class UATRunCommandTest(TestCase):
         assert not url_downloader.called
         assert run_jar.called
 
-    def test_given_module_built_and_nucleus_zip_not_exists_when_run_uats_then_download_nucleus_and_run_uats(self):
+    def test_given_module_built_and_nucleus_zip_not_exists_when_run_e2e_tests_then_download_nucleus_and_run_e2e_tests(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         run_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
@@ -88,7 +88,7 @@ class UATRunCommandTest(TestCase):
             run_command.run()
         assert "Unable to find testing jar in the build folder" in e.value.args[0]
 
-    def test_given_ggc_archive_config_and_nucleus_zip_not_exists_when_run_uats_then_raise_an_exception(self):
+    def test_given_ggc_archive_config_and_nucleus_zip_not_exists_when_run_e2e_tests_then_raise_an_exception(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         run_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
@@ -127,7 +127,7 @@ class UATRunCommandTest(TestCase):
             run_command.run()
         assert "Unable to find testing jar in the build folder" in e.value.args[0]
 
-    def test_given_multiple_jars_and_when_run_uats_then_identify_default_jar_and_run_uats(self):
+    def test_given_multiple_jars_and_when_run_e2e_tests_then_identify_default_jar_and_run_e2e_tests(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         self.update_pom()
@@ -182,7 +182,7 @@ class UATRunCommandTest(TestCase):
             ]
         )
 
-    def test_given_multiple_jars_and_when_run_uats_with_non_default_jar_and_exception_then_raise_an_exception(self):
+    def test_given_multiple_jars_and_when_run_e2e_tests_with_non_default_jar_and_exception_then_raise_an_exception(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         self.update_pom()

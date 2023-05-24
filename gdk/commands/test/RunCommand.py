@@ -48,8 +48,8 @@ class RunCommand(Command):
         """
         Return the test build directory
         """
-        uat_build_system = UATBuildSystem.get(self._test_build_system)
-        return self._test_directory.joinpath(*uat_build_system.build_folder).resolve()
+        e2e_test_build_system = UATBuildSystem.get(self._test_build_system)
+        return self._test_directory.joinpath(*e2e_test_build_system.build_folder).resolve()
 
     def _should_download_nucleus_archive(self, _nucleus_path: Path) -> bool:
         """

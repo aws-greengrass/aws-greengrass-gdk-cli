@@ -39,7 +39,7 @@ class BuildCommandUnitTest(TestCase):
         mock_rglob = self.mocker.patch("pathlib.Path.rglob", return_value=[Path("abc.feature")])
 
         with mock.patch("builtins.open", mock.mock_open(read_data="nothing_to_update")) as mock_file:
-            build_cmd.update_feature_files("recipe.yaml", "uat_recipe.yaml")
+            build_cmd.update_feature_files("recipe.yaml", "e2e_test_recipe.yaml")
             assert mock_file.call_args_list == [call(Path(".").joinpath("abc.feature"), "r", encoding="utf-8")]
 
         assert mock_rglob.call_args_list == [call("*.feature")]
@@ -50,7 +50,7 @@ class BuildCommandUnitTest(TestCase):
         build_cmd = BuildCommand({})
 
         with mock.patch("builtins.open", mock.mock_open(read_data="This is GDK_COMPONENT_NAME")) as mock_file:
-            build_cmd.update_feature_files("recipe.yaml", "uat_recipe.yaml")
+            build_cmd.update_feature_files("recipe.yaml", "e2e_test_recipe.yaml")
             assert mock_file.call_args_list == [
                 call(Path(".").joinpath("abc.feature"), "r", encoding="utf-8"),
                 call(Path(".").joinpath("abc.feature"), "w", encoding="utf-8"),
@@ -69,7 +69,7 @@ class BuildCommandUnitTest(TestCase):
         with mock.patch(
             "builtins.open", mock.mock_open(read_data="This is GDK_COMPONENT_NAME and GDK_COMPONENT_RECIPE_FILE")
         ) as mock_file:
-            build_cmd.update_feature_files(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+            build_cmd.update_feature_files(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
             assert mock_file.call_args_list == [
                 call(Path(".").joinpath("abc.feature"), "r", encoding="utf-8"),
                 call(Path(".").joinpath("abc.feature"), "w", encoding="utf-8"),
@@ -88,17 +88,17 @@ class BuildCommandUnitTest(TestCase):
             "builtins.open", mock.mock_open(read_data="This is GDK_COMPONENT_NAME and GDK_COMPONENT_RECIPE_FILE")
         ) as mock_file:
             with pytest.raises(Exception) as e:
-                build_cmd.update_feature_files(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+                build_cmd.update_feature_files(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
                 assert mock_file.call_args_list == [call(Path(".").joinpath("abc.feature"), "r", encoding="utf-8")]
             assert "Component is not built" in e.value.args[0]
 
         assert mock_rglob.call_args_list == [call("*.feature")]
 
-    def test_create_uat_recipe_from_build_recipe_without_replacing_s3_uri(self):
+    def test_create_e2e_test_recipe_from_build_recipe_without_replacing_s3_uri(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
         self.mocker.patch("pathlib.Path.as_uri", return_value="file:///abc.feature")
         build_cmd = BuildCommand({})
-        build_cmd.should_create_uat_recipe = True
+        build_cmd.should_create_e2e_test_recipe = True
         test_recipe = {"manifests": [{"artifacts": [{"Uri": "docker://somefile.json"}]}]}
         mock_read = self.mocker.patch(
             "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
@@ -106,11 +106,11 @@ class BuildCommandUnitTest(TestCase):
         )
         spy_write = self.mocker.spy(CaseInsensitiveRecipeFile, "write")
 
-        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        build_cmd.create_e2e_test_recipe_file(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
         assert mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
-        assert spy_write.call_args_list == [call(ANY, Path("uat_recipe.yaml"), test_recipe)]
+        assert spy_write.call_args_list == [call(ANY, Path("e2e_test_recipe.yaml"), test_recipe)]
 
-    def test_create_uat_recipe_from_build_recipe_with_replacing_s3_uri(self):
+    def test_create_e2e_test_recipe_from_build_recipe_with_replacing_s3_uri(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
 
         def get_as_uris(self):
@@ -118,7 +118,7 @@ class BuildCommandUnitTest(TestCase):
 
         self.mocker.patch.object(Path, "as_uri", get_as_uris)
         build_cmd = BuildCommand({})
-        build_cmd.should_create_uat_recipe = True
+        build_cmd.should_create_e2e_test_recipe = True
         test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
         updated_recipe = {
             "manifests": [
@@ -141,11 +141,11 @@ class BuildCommandUnitTest(TestCase):
         )
 
         spy_write = self.mocker.spy(CaseInsensitiveRecipeFile, "write")
-        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        build_cmd.create_e2e_test_recipe_file(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
         assert mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
-        assert spy_write.call_args_list == [call(ANY, Path("uat_recipe.yaml"), updated_recipe)]
+        assert spy_write.call_args_list == [call(ANY, Path("e2e_test_recipe.yaml"), updated_recipe)]
 
-    def test_create_uat_recipe_from_should_not_create_uat_recipe(self):
+    def test_create_e2e_test_recipe_from_should_not_create_e2e_test_recipe(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
 
         def get_as_uris(self):
@@ -153,16 +153,16 @@ class BuildCommandUnitTest(TestCase):
 
         self.mocker.patch.object(Path, "as_uri", get_as_uris)
         build_cmd = BuildCommand({})
-        build_cmd.should_create_uat_recipe = False
+        build_cmd.should_create_e2e_test_recipe = False
         test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
         mock_read = self.mocker.patch(
             "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
             return_value=CaseInsensitiveDict(test_recipe),
         )
-        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        build_cmd.create_e2e_test_recipe_file(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
         assert not mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
 
-    def test_create_uat_recipe_when_artifact_does_not_exist_then_no_update_in_recipe(self):
+    def test_create_e2e_test_recipe_when_artifact_does_not_exist_then_no_update_in_recipe(self):
         self.mocker.patch("pathlib.Path.exists", return_value=False)
 
         def get_as_uris(self):
@@ -170,25 +170,25 @@ class BuildCommandUnitTest(TestCase):
 
         self.mocker.patch.object(Path, "as_uri", get_as_uris)
         build_cmd = BuildCommand({})
-        build_cmd.should_create_uat_recipe = True
+        build_cmd.should_create_e2e_test_recipe = True
         test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
         mock_read = self.mocker.patch(
             "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
             return_value=CaseInsensitiveDict(test_recipe),
         )
         spy_write = self.mocker.spy(CaseInsensitiveRecipeFile, "write")
-        build_cmd.create_uat_recipe_file(Path("recipe.yaml"), Path("uat_recipe.yaml"))
+        build_cmd.create_e2e_test_recipe_file(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
         assert mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
-        assert spy_write.call_args_list == [call(ANY, Path("uat_recipe.yaml"), test_recipe)]
+        assert spy_write.call_args_list == [call(ANY, Path("e2e_test_recipe.yaml"), test_recipe)]
 
-    def test_build_uat_module(self):
-        uat_build_cmd = self.mocker.patch("subprocess.run", return_value=None)
+    def test_build_e2e_test_module(self):
+        e2e_test_build_cmd = self.mocker.patch("subprocess.run", return_value=None)
         self.mocker.patch("pathlib.Path.exists", return_value=True)
         build_cmd = BuildCommand({})
-        build_cmd.build_uat_module()
+        build_cmd.build_e2e_test_module()
 
         if platform.system() == "Windows":
-            assert uat_build_cmd.call_args_list == [
+            assert e2e_test_build_cmd.call_args_list == [
                 call(
                     ["mvn.cmd", "package"],
                     check=True,
@@ -196,7 +196,7 @@ class BuildCommandUnitTest(TestCase):
                 )
             ]
         else:
-            assert uat_build_cmd.call_args_list == [
+            assert e2e_test_build_cmd.call_args_list == [
                 call(
                     ["mvn", "package"],
                     check=True,

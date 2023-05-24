@@ -28,7 +28,8 @@ class InitCommand(Command):
     def run(self):
         if self.test_directory.exists():
             logging.warning(
-                "Not downloading the uat template as '%s' already exists in the current directory.", consts.E2E_TESTS_DIR_NAME
+                "Not downloading the e2e_test template as '%s' already exists in the current directory.",
+                consts.E2E_TESTS_DIR_NAME,
             )
             return
         URLDownloader(self.template_url).download_and_extract(self.test_directory)

@@ -33,11 +33,11 @@ class UATInitCommandTest(TestCase):
         self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
         InitCommand({}).run()
         assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
-        uat_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
-        assert uat_folder.exists()
-        assert uat_folder.joinpath("pom.xml") in list(uat_folder.iterdir())
+        e2e_test_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
+        assert e2e_test_folder.exists()
+        assert e2e_test_folder.joinpath("pom.xml") in list(e2e_test_folder.iterdir())
         # Downloaded template has GDK_TESTING_VERSION variable in pom.xml
-        with open(uat_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
+        with open(e2e_test_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
             content = f.read()
             assert "GDK_TESTING_VERSION" in content
 
@@ -59,10 +59,10 @@ class UATInitCommandTest(TestCase):
         assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
 
         # existing consts.E2E_TESTS_DIR_NAME folder is not overridden
-        uat_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
-        assert uat_folder.exists()
+        e2e_test_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
+        assert e2e_test_folder.exists()
         # OTF version is updated in pom.xml
-        with open(uat_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
+        with open(e2e_test_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
             content = f.read()
             assert "GDK_TESTING_VERSION" not in content
             # OTF version set in config file

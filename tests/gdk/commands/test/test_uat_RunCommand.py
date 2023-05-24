@@ -35,7 +35,7 @@ class RunCommandUnitTest(TestCase):
         yield
         os.chdir(self.c_dir)
 
-    def test_given_test_module_not_built_when_run_uats_then_raise_exception(self):
+    def test_given_test_module_not_built_when_run_e2e_tests_then_raise_exception(self):
         def file_exists(self):
             return str(self) != str(Path().resolve().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target"))
 
@@ -46,7 +46,7 @@ class RunCommandUnitTest(TestCase):
             run_cmd.run()
         assert "UAT module is not built." in e.value.args[0]
 
-    def test_given_nucleus_archive_at_default_path_when_run_uats_then_do_not_download_nucleus(self):
+    def test_given_nucleus_archive_at_default_path_when_run_e2e_tests_then_do_not_download_nucleus(self):
         mock_downloader = self.mocker.patch.object(URLDownloader, "download")
         self.mock_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
         self.mocker.patch("pathlib.Path.exists", return_value=True)
@@ -55,7 +55,7 @@ class RunCommandUnitTest(TestCase):
 
         assert not mock_downloader.called
 
-    def test_given_nucleus_does_not_exists_at_default_path_when_run_uats_then_download_nucleus(self):
+    def test_given_nucleus_does_not_exists_at_default_path_when_run_e2e_tests_then_download_nucleus(self):
         default_path = Path().resolve().joinpath("greengrass-build/greengrass-nucleus-latest.zip")
         self.mock_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
 
