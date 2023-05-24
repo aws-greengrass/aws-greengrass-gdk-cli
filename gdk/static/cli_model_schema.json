@@ -14,14 +14,14 @@
                 "sub-commands": {
                     "required": [
                         "component",
-                        "test"
+                        "test-e2e"
                     ],
                     "properties": {
                         "component": {
                             "$ref": "#/$defs/component"
                         },
-                        "test": {
-                            "$ref": "#/$defs/test"
+                        "test-e2e": {
+                            "$ref": "#/$defs/test-e2e"
                         }
                     },
                     "additionalProperties": false
@@ -245,7 +245,7 @@
             },
             "additionalProperties": false
         },
-        "test": {
+        "test-e2e": {
             "type": "object",
             "description": "A command of gdk cli tool. This is one of the sub parsers under the top-level parser ('gdk') of the cli.",
             "properties": {
@@ -256,10 +256,10 @@
                     ],
                     "properties": {
                         "init": {
-                            "$ref": "#/$defs/test-init"
+                            "$ref": "#/$defs/test-e2e-init"
                         },
                         "run": {
-                            "$ref": "#/$defs/test-run"
+                            "$ref": "#/$defs/test-e2e-run"
                         }
                     }
                 },
@@ -269,7 +269,7 @@
             },
             "additionalProperties": false
         },
-        "test-init": {
+        "test-e2e-init": {
             "type": "object",
             "description": "Sub command under 'test' command. This is one of the sub-parsers under 'test' parser.",
             "required": [
@@ -282,7 +282,7 @@
             },
             "additionalProperties": false
         },
-        "test-run": {
+        "test-e2e-run": {
             "type": "object",
             "description": "Sub command under 'test' command. This is one of the sub-parsers under 'test' parser.",
             "required": [

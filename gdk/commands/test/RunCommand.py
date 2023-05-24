@@ -6,13 +6,14 @@ from pathlib import Path
 from gdk.common.URLDownloader import URLDownloader
 import logging
 import subprocess as sp
+import gdk.common.consts as consts
 
 
 class RunCommand(Command):
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "run")
         self._gdk_project = GDKProject()
-        self._test_directory = self._gdk_project.gg_build_dir.joinpath("uat-features").resolve()
+        self._test_directory = self._gdk_project.gg_build_dir.joinpath(consts.E2E_TESTS_DIR_NAME).resolve()
         self._test_build_system = self._gdk_project.test_config.test_build_system
         self._config = RunConfiguration(self._gdk_project, command_args)
         self._nucleus_archive_link = "https://d2s8p88vqu9w66.cloudfront.net/releases/greengrass-latest.zip"
@@ -77,12 +78,12 @@ class RunCommand(Command):
         """
         Identify testing jar from the build folder.
 
-        If uat-features-1.0.0.jar is in the build folder and is a testing jar, then return it.
+        If gg-e2e-tests-1.0.0.jar is in the build folder and is a testing jar, then return it.
         Otherwise, find all the *.jar files in the build folder and return the first one that is a testing jar.
         If nothing is found, an exception in thrown.
         """
         _test_build_dir = self._test_build_directory()
-        default_jar_path = _test_build_dir.joinpath("uat-features-1.0.0.jar").resolve()
+        default_jar_path = _test_build_dir.joinpath(f"{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar").resolve()
 
         if default_jar_path.exists() and self._is_testing_jar(default_jar_path):
             return default_jar_path

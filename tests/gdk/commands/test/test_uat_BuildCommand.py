@@ -7,6 +7,7 @@ from unittest import mock
 import platform
 from gdk.common.CaseInsensitive import CaseInsensitiveDict, CaseInsensitiveRecipeFile
 import os
+import gdk.common.consts as consts
 
 
 class BuildCommandUnitTest(TestCase):
@@ -191,10 +192,14 @@ class BuildCommandUnitTest(TestCase):
                 call(
                     ["mvn.cmd", "package"],
                     check=True,
-                    cwd=Path().absolute().joinpath("greengrass-build/uat-features").resolve(),
+                    cwd=Path().absolute().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}").resolve(),
                 )
             ]
         else:
             assert uat_build_cmd.call_args_list == [
-                call(["mvn", "package"], check=True, cwd=Path().absolute().joinpath("greengrass-build/uat-features").resolve())
+                call(
+                    ["mvn", "package"],
+                    check=True,
+                    cwd=Path().absolute().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}").resolve(),
+                )
             ]

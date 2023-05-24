@@ -6,6 +6,7 @@ import gdk.common.utils as utils
 import shutil
 import logging
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
+import gdk.common.consts as consts
 
 
 class BuildCommand(Command):
@@ -13,9 +14,9 @@ class BuildCommand(Command):
         super().__init__(command_args, "build")
         self._gdk_project = GDKProject()
         self._test_config = self._gdk_project.test_config
-        self.test_directory = utils.get_current_directory().joinpath("uat-features")
+        self.test_directory = utils.get_current_directory().joinpath(consts.E2E_TESTS_DIR_NAME)
         self.recipe_file_name = self._gdk_project.recipe_file.name
-        self._gg_build_uat_dir = self._gdk_project.gg_build_dir.joinpath("uat-features")
+        self._gg_build_uat_dir = self._gdk_project.gg_build_dir.joinpath(consts.E2E_TESTS_DIR_NAME)
         self.should_create_uat_recipe = False
 
     def run(self):

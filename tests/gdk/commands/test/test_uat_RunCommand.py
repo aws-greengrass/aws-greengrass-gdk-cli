@@ -5,7 +5,7 @@ from gdk.commands.test.RunCommand import RunCommand
 from pathlib import Path
 import os
 from gdk.common.URLDownloader import URLDownloader
-
+import gdk.common.consts as consts
 import subprocess as sp
 
 
@@ -37,7 +37,7 @@ class RunCommandUnitTest(TestCase):
 
     def test_given_test_module_not_built_when_run_uats_then_raise_exception(self):
         def file_exists(self):
-            return str(self) != str(Path().resolve().joinpath("greengrass-build/uat-features/target"))
+            return str(self) != str(Path().resolve().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target"))
 
         self.mock_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
         self.mocker.patch.object(Path, "exists", file_exists)
@@ -74,14 +74,20 @@ class RunCommandUnitTest(TestCase):
         _jar_identifier_args = [
             "java",
             "-jar",
-            Path().absolute().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").__str__(),
+            Path()
+            .absolute()
+            .joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar")
+            .__str__(),
             "--help",
         ]
 
         _jar_testing_args = [
             "java",
             "-jar",
-            Path().absolute().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").__str__(),
+            Path()
+            .absolute()
+            .joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar")
+            .__str__(),
             "--tags=Sample",
             "--ggc-archive=" + Path().absolute().joinpath("greengrass-build/greengrass-nucleus-latest.zip").__str__(),
         ]
@@ -106,7 +112,11 @@ class RunCommandUnitTest(TestCase):
         # self.mocker.patch("pathlib.Path.exists", return_value=True)
 
         def file_exists(self):
-            return str(self) != str(Path().resolve().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar"))
+            return str(self) != str(
+                Path()
+                .resolve()
+                .joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar")
+            )
 
         def glob(self, _name):
             return [Path().absolute().joinpath("a.jar")]
@@ -148,7 +158,11 @@ class RunCommandUnitTest(TestCase):
 
     def test_given_multiple_jars_when_no_testing_jar_identified_then_raise_Exception(self):
         def file_exists(self):
-            return str(self) != str(Path().resolve().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar"))
+            return str(self) != str(
+                Path()
+                .resolve()
+                .joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar")
+            )
 
         def glob(self, _name):
             return ["a.jar", "b.jar"]

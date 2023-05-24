@@ -35,21 +35,21 @@ def test_main_parse_args_list(mocker):
 
 def test_main_parse_args_test_init(mocker):
     mock_test_init = mocker.patch("gdk.commands.test.test.init", return_value=None)
-    args = CLIParser.cli_parser.parse_args(["test", "init"])
+    args = CLIParser.cli_parser.parse_args(["test-e2e", "init"])
     parse_args_actions.run_command(args)
     assert mock_test_init.called
 
 
 def test_main_parse_args_test_run(mocker):
     mock_test_run = mocker.patch("gdk.commands.test.test.run", return_value=None)
-    args = CLIParser.cli_parser.parse_args(["test", "run"])
+    args = CLIParser.cli_parser.parse_args(["test-e2e", "run"])
     parse_args_actions.run_command(args)
     assert mock_test_run.called
 
 
 def test_main_parse_args_test_build(mocker):
     mock_test_build = mocker.patch("gdk.commands.test.test.build", return_value=None)
-    args = CLIParser.cli_parser.parse_args(["test", "build"])
+    args = CLIParser.cli_parser.parse_args(["test-e2e", "build"])
     parse_args_actions.run_command(args)
     assert mock_test_build.called
 
@@ -60,4 +60,6 @@ def test_main_parse_args_gdk(capsys):
     command_output = capsys.readouterr().out
     CLIParser.cli_parser.print_help()
     help_output = capsys.readouterr().out
+    print(command_output)
+    print(help_output)
     assert command_output == help_output

@@ -40,6 +40,7 @@ def call_action_by_name(method_name, d_args):
     -------
       None
     """
+    method_name = method_name.replace("-", "_hyphen_")
     method_to_call = getattr(command_methods, method_name, None)
     if method_to_call:
         logging.debug("Calling '{}'.".format(method_name))

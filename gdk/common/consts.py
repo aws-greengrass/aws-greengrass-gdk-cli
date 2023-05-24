@@ -20,6 +20,7 @@ cli_project_config_file = "gdk-config.json"
 greengrass_build_dir = "greengrass-build"
 project_build_system_file = "project_build_system.json"
 project_build_schema_file = "project_build_schema.json"
+E2E_TESTS_DIR_NAME = "gg-e2e-tests"
 
 # URLS
 templates_list_url = (

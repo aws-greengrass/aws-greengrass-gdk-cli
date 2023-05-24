@@ -6,6 +6,7 @@ import os
 from gdk.commands.test.BuildCommand import BuildCommand
 from gdk.build_system.Maven import Maven
 import shutil
+import gdk.common.consts as consts
 
 
 class UATBuildCommandTest(TestCase):
@@ -36,7 +37,7 @@ class UATBuildCommandTest(TestCase):
         build_command.run()
 
         uat_recipe_file = Path(self.tmpdir).joinpath("greengrass-build/recipes").joinpath("uat_recipe.yaml")
-        uat_features = Path(self.tmpdir).joinpath("greengrass-build/uat-features")
+        uat_features = Path(self.tmpdir).joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}")
 
         assert uat_recipe_file.exists()
         assert uat_features.exists()
@@ -48,7 +49,10 @@ class UATBuildCommandTest(TestCase):
             assert uat_recipe_file.as_uri() in content
 
         with open(
-            Path(self.tmpdir).joinpath("uat-features/src/main/resources/greengrass/features/component.feature"), mode="r"
+            Path(self.tmpdir).joinpath(
+                f"{consts.E2E_TESTS_DIR_NAME}/src/main/resources/greengrass/features/component.feature"
+            ),
+            mode="r",
         ) as f:
             content = f.read()
             assert uat_recipe_file.as_uri() not in content
@@ -60,7 +64,7 @@ class UATBuildCommandTest(TestCase):
             Path(self.tmpdir).joinpath("greengrass-build/recipes").joinpath("recipe.yaml").resolve(),
         )
 
-        uat_build_folder = Path(self.tmpdir).joinpath("greengrass-build/uat-features")
+        uat_build_folder = Path(self.tmpdir).joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}")
         uat_build_folder.parent.mkdir(parents=True, exist_ok=True)
 
         self.mocker.patch("shutil.copytree", return_value=None)
@@ -77,7 +81,7 @@ class UATBuildCommandTest(TestCase):
     def test_when_test_module_build_with_no_interpolation_then_do_not_create_uat_recipe_file(self):
         # Setup test data. Update the feature files ahead so the build command has nothing to update.
         self.setup_test_data_config("config.json")
-        uat_features = Path(self.tmpdir).joinpath("uat-features")
+        uat_features = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
         with open(uat_features.joinpath("src/main/resources/greengrass/features/component.feature"), mode="r") as f:
             content = f.read()
             content = content.replace("GDK_COMPONENT_NAME", "some-component-name").replace(
@@ -92,7 +96,7 @@ class UATBuildCommandTest(TestCase):
         build_command.run()
         uat_recipe_file = Path(self.tmpdir).joinpath("greengrass-build/recipes").joinpath("uat_recipe.yaml")
 
-        assert Path(self.tmpdir).joinpath("greengrass-build/uat-features").exists()
+        assert Path(self.tmpdir).joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}").exists()
         assert not uat_recipe_file.exists()
 
     def test_when_test_module_build_with_interpolation_and_component_not_built_then_raise_exception(self):
@@ -111,5 +115,5 @@ class UATBuildCommandTest(TestCase):
             Path(self.c_dir).joinpath("integration_tests/test_data/templates/TestTemplateForCLI.zip").resolve(),
             extract_dir=Path(self.tmpdir),
         )
-        shutil.move(Path(self.tmpdir).joinpath("TestTemplateForCLI"), Path(self.tmpdir).joinpath("uat-features"))
+        shutil.move(Path(self.tmpdir).joinpath("TestTemplateForCLI"), Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME))
         Path(self.tmpdir).joinpath("greengrass-build/recipes").mkdir(parents=True)
