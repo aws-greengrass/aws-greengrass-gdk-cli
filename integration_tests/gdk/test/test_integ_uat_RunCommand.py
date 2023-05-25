@@ -11,7 +11,7 @@ import json
 import gdk.common.consts as consts
 
 
-class UATRunCommandTest(TestCase):
+class E2ETestRunCommandTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker

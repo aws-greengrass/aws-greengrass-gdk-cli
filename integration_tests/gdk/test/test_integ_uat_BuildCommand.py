@@ -9,7 +9,7 @@ import shutil
 import gdk.common.consts as consts
 
 
-class UATBuildCommandTest(TestCase):
+class E2ETestBuildCommandTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker

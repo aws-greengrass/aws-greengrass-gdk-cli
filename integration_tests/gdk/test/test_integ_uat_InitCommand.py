@@ -9,7 +9,7 @@ from urllib3.exceptions import HTTPError
 import gdk.common.consts as consts
 
 
-class UATInitCommandTest(TestCase):
+class E2ETestInitCommandTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
