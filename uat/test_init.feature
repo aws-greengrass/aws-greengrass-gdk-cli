@@ -9,5 +9,5 @@ Feature: gdk test init works
         And we change directory to test-dir
         And change component name to com.example.PythonHelloWorld
         And we verify gdk project files
-        When we run gdk test init
+        When we run gdk test-e2e init
         Then we verify gdk test files

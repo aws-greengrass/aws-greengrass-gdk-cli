@@ -24,13 +24,13 @@ def _gdk_component_list(d_args):
     component.list(d_args)
 
 
-def _gdk_test_init(d_args):
+def _gdk_test_hyphen_e2e_init(d_args):
     test.init(d_args)
 
 
-def _gdk_test_run(d_args):
+def _gdk_test_hyphen_e2e_run(d_args):
     test.run(d_args)
 
 
-def _gdk_test_build(d_args):
+def _gdk_test_hyphen_e2e_build(d_args):
     test.build(d_args)

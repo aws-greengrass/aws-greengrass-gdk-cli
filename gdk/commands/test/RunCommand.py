@@ -1,18 +1,19 @@
 from gdk.commands.Command import Command
 from gdk.common.config.GDKProject import GDKProject
-from gdk.build_system.UATBuildSystem import UATBuildSystem
+from gdk.build_system.E2ETestBuildSystem import E2ETestBuildSystem
 from gdk.commands.test.config.RunConfiguration import RunConfiguration
 from pathlib import Path
 from gdk.common.URLDownloader import URLDownloader
 import logging
 import subprocess as sp
+import gdk.common.consts as consts
 
 
 class RunCommand(Command):
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "run")
         self._gdk_project = GDKProject()
-        self._test_directory = self._gdk_project.gg_build_dir.joinpath("uat-features").resolve()
+        self._test_directory = self._gdk_project.gg_build_dir.joinpath(consts.E2E_TESTS_DIR_NAME).resolve()
         self._test_build_system = self._gdk_project.test_config.test_build_system
         self._config = RunConfiguration(self._gdk_project, command_args)
         self._nucleus_archive_link = "https://d2s8p88vqu9w66.cloudfront.net/releases/greengrass-latest.zip"
@@ -27,7 +28,8 @@ class RunCommand(Command):
         """
         if not self._is_test_module_built():
             raise Exception(
-                "UAT module is not built. Please build the test module using `gdk test build`command before running the tests."
+                "E2E testing module is not built. Please build the test module using `gdk test build`command before running"
+                " the tests."
             )
 
         _nucleus_path = Path(self._config.options.get("ggc-archive"))
@@ -47,8 +49,8 @@ class RunCommand(Command):
         """
         Return the test build directory
         """
-        uat_build_system = UATBuildSystem.get(self._test_build_system)
-        return self._test_directory.joinpath(*uat_build_system.build_folder).resolve()
+        e2e_test_build_system = E2ETestBuildSystem.get(self._test_build_system)
+        return self._test_directory.joinpath(*e2e_test_build_system.build_folder).resolve()
 
     def _should_download_nucleus_archive(self, _nucleus_path: Path) -> bool:
         """
@@ -67,22 +69,18 @@ class RunCommand(Command):
         _commands.extend(self._get_options_as_list())
         logging.info("Running test jar with command %s", " ".join(_commands))
 
-        _test_run_proc = sp.run(_commands, check=True, stdout=sp.PIPE, stderr=sp.STDOUT)
-        _cmd_successful = _test_run_proc.returncode == 0
-
-        if not _cmd_successful:
-            raise Exception("Exception occurred while running the test jar.\n " + _test_run_proc.stderr.decode("utf-8"))
+        sp.run(_commands, check=True)
 
     def _identify_testing_jar(self) -> Path:
         """
         Identify testing jar from the build folder.
 
-        If uat-features-1.0.0.jar is in the build folder and is a testing jar, then return it.
+        If gg-e2e-tests-1.0.0.jar is in the build folder and is a testing jar, then return it.
         Otherwise, find all the *.jar files in the build folder and return the first one that is a testing jar.
         If nothing is found, an exception in thrown.
         """
         _test_build_dir = self._test_build_directory()
-        default_jar_path = _test_build_dir.joinpath("uat-features-1.0.0.jar").resolve()
+        default_jar_path = _test_build_dir.joinpath(f"{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar").resolve()
 
         if default_jar_path.exists() and self._is_testing_jar(default_jar_path):
             return default_jar_path

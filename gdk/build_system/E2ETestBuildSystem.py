@@ -4,7 +4,7 @@ from gdk.build_system.GradleWrapper import GradleWrapper
 from gdk.build_system.Maven import Maven
 
 
-class UATBuildSystem:
+class E2ETestBuildSystem:
     """
     Delegates build tasks to the appropriate build system
     """

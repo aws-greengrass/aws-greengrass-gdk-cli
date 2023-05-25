@@ -8,9 +8,10 @@ import shutil
 from gdk.common.URLDownloader import URLDownloader
 import subprocess as sp
 import json
+import gdk.common.consts as consts
 
 
-class UATRunCommandTest(TestCase):
+class E2ETestRunCommandTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
@@ -29,21 +30,21 @@ class UATRunCommandTest(TestCase):
         yield
         os.chdir(self.c_dir)
 
-    def test_given_test_module_not_built_when_run_uats_then_raise_an_exception(self):
+    def test_given_test_module_not_built_when_run_e2e_tests_then_raise_an_exception(self):
         self.setup_test_data_config("config_without_test.json")
         run_command = RunCommand({})
         with pytest.raises(Exception) as e:
             run_command.run()
         assert (
-            "UAT module is not built. Please build the test module using `gdk test build`"
+            "E2E testing module is not built. Please build the test module using `gdk test build`"
             + "command before running the tests."
         ) in e.value.args[0]
 
-    def test_given_test_module_and_nucleus_archive_built_when_run_uats_then_run_uats(self):
+    def test_given_test_module_and_nucleus_archive_built_when_run_e2e_tests_then_run_e2e_tests(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         run_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
-        target_path = self.tmpdir.joinpath("greengrass-build/uat-features/target")
+        target_path = self.tmpdir.joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target")
         _nucleus_path = self.tmpdir.joinpath("greengrass-build/greengrass-nucleus-latest.zip")
         url_downloader = self.mocker.patch.object(URLDownloader, "download", return_value=target_path)
         target_path.mkdir(parents=True)
@@ -57,11 +58,11 @@ class UATRunCommandTest(TestCase):
         assert not url_downloader.called
         assert run_jar.called
 
-    def test_given_module_built_and_nucleus_zip_not_exists_when_run_uats_then_download_nucleus_and_run_uats(self):
+    def test_given_module_built_and_nucleus_zip_not_exists_when_run_e2e_tests_then_download_nucleus_and_run_e2e_tests(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         run_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
-        target_path = self.tmpdir.joinpath("greengrass-build/uat-features/target")
+        target_path = self.tmpdir.joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target")
         _nucleus_path = self.tmpdir.joinpath("greengrass-build/greengrass-nucleus-latest.zip")
         target_path.mkdir(parents=True)
 
@@ -76,7 +77,7 @@ class UATRunCommandTest(TestCase):
     def test_given_built_module_and_nucleus_zip_when_no_testing_jar_found_then_raise_an_exception(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
-        target_path = self.tmpdir.joinpath("greengrass-build/uat-features/target")
+        target_path = self.tmpdir.joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target")
         _nucleus_path = self.tmpdir.joinpath("greengrass-build/greengrass-nucleus-latest.zip")
         target_path.mkdir(parents=True)
         _nucleus_path.touch()
@@ -87,7 +88,7 @@ class UATRunCommandTest(TestCase):
             run_command.run()
         assert "Unable to find testing jar in the build folder" in e.value.args[0]
 
-    def test_given_ggc_archive_config_and_nucleus_zip_not_exists_when_run_uats_then_raise_an_exception(self):
+    def test_given_ggc_archive_config_and_nucleus_zip_not_exists_when_run_e2e_tests_then_raise_an_exception(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         run_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
@@ -97,7 +98,7 @@ class UATRunCommandTest(TestCase):
         with open(Path().joinpath("gdk-config.json"), "w") as f:
             f.write(json.dumps(content))
 
-        target_path = self.tmpdir.joinpath("greengrass-build/uat-features/target")
+        target_path = self.tmpdir.joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target")
         target_path.mkdir(parents=True)
 
         # When and then
@@ -113,11 +114,11 @@ class UATRunCommandTest(TestCase):
     def test_given_multiple_jars_and_when_not_testing_jar_found_then_raise_an_exception(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
-        target_path = self.tmpdir.joinpath("greengrass-build/uat-features/target")
+        target_path = self.tmpdir.joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target")
         _nucleus_path = self.tmpdir.joinpath("greengrass-build/greengrass-nucleus-latest.zip")
         target_path.mkdir(parents=True)
         _nucleus_path.touch()
-        target_path.joinpath("uat-features-1.0.0.jar").touch()
+        target_path.joinpath(f"{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar").touch()
         target_path.joinpath("b.jar").touch()
 
         run_command = RunCommand({})
@@ -126,23 +127,32 @@ class UATRunCommandTest(TestCase):
             run_command.run()
         assert "Unable to find testing jar in the build folder" in e.value.args[0]
 
-    def test_given_multiple_jars_and_when_run_uats_then_identify_default_jar_and_run_uats(self):
+    def test_given_multiple_jars_and_when_run_e2e_tests_then_identify_default_jar_and_run_e2e_tests(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         self.update_pom()
 
         # Build test module
-        shutil.copytree(self.tmpdir.joinpath("uat-features"), self.tmpdir.joinpath("greengrass-build/uat-features/"))
+        shutil.copytree(
+            self.tmpdir.joinpath(consts.E2E_TESTS_DIR_NAME),
+            self.tmpdir.joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/"),
+        )
 
-        Path().joinpath("greengrass-build/uat-features/target/").mkdir(parents=True)
-        Path().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").resolve().touch()
-        Path().joinpath("greengrass-build/uat-features/target/b.jar").resolve().touch()
+        Path().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/").mkdir(parents=True)
+        Path().joinpath(
+            f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar"
+        ).resolve().touch()
+        Path().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/b.jar").resolve().touch()
 
         # nucleus archive exists
         _nucleus_path = self.tmpdir.joinpath("greengrass-build/greengrass-nucleus-latest.zip")
         _nucleus_path.touch()
 
-        jar = str(Path().joinpath("greengrass-build/uat-features/target/uat-features-1.0.0.jar").resolve())
+        jar = str(
+            Path()
+            .joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/{consts.E2E_TESTS_DIR_NAME}-1.0.0.jar")
+            .resolve()
+        )
 
         def _sp_run(self, *args, **kwargs):
             if set(self) == set(["java", "-jar", jar, "--help"]):
@@ -172,23 +182,27 @@ class UATRunCommandTest(TestCase):
             ]
         )
 
-    def test_given_multiple_jars_and_when_run_uats_with_non_default_jar_and_exception_then_raise_an_exception(self):
+    def test_given_multiple_jars_and_when_run_e2e_tests_with_non_default_jar_and_exception_then_raise_an_exception(self):
         # Given
         self.setup_test_data_config("config_without_test.json")
         self.update_pom()
 
-        Path().joinpath("greengrass-build/uat-features/target/").mkdir(parents=True)
-        Path().joinpath("greengrass-build/uat-features/target/a.jar").resolve().touch()
-        Path().joinpath("greengrass-build/uat-features/target/b.jar").resolve().touch()
+        Path().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/").mkdir(parents=True)
+        Path().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/a.jar").resolve().touch()
+        Path().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/b.jar").resolve().touch()
 
-        _non_default_jar = Path().joinpath("greengrass-build/uat-features/target/a.jar").resolve()
+        _non_default_jar = Path().joinpath(f"greengrass-build/{consts.E2E_TESTS_DIR_NAME}/target/a.jar").resolve()
         _nucleus_path = self.tmpdir.joinpath("greengrass-build/greengrass-nucleus-latest.zip")
         _nucleus_path.touch()
 
         def _sp_run(self, *args, **kwargs):
-            if set(self) == set(["java", "-jar", str(_non_default_jar), "--help"]):
-                return sp.CompletedProcess(self, returncode=0, stdout="gg-test".encode())
-            return sp.CompletedProcess(self, returncode=1, stderr=b"Error running jar")
+            if "--help" in set(self):
+                if set(self) == set(["java", "-jar", str(_non_default_jar), "--help"]):
+                    return sp.CompletedProcess(self, returncode=0, stdout="gg-test".encode())
+                else:
+                    return sp.CompletedProcess(self, returncode=1, stderr=b"Error running jar")
+            else:
+                raise Exception("Error running jar")
 
         sp_run = self.mocker.patch.object(sp, "run", side_effect=_sp_run)
         run_command = RunCommand({})
@@ -213,12 +227,12 @@ class UATRunCommandTest(TestCase):
             Path(self.c_dir).joinpath("integration_tests/test_data/templates/TestTemplateForCLI.zip").resolve(),
             extract_dir=Path(self.tmpdir),
         )
-        shutil.move(Path(self.tmpdir).joinpath("TestTemplateForCLI"), Path(self.tmpdir).joinpath("uat-features"))
+        shutil.move(Path(self.tmpdir).joinpath("TestTemplateForCLI"), Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME))
         Path(self.tmpdir).joinpath("greengrass-build/recipes").mkdir(parents=True)
 
     def update_pom(self):
-        with open(self.tmpdir.joinpath("uat-features/pom.xml"), "r") as f:
+        with open(self.tmpdir.joinpath(f"{consts.E2E_TESTS_DIR_NAME}/pom.xml"), "r") as f:
             content = f.read()
 
-        with open(self.tmpdir.joinpath("uat-features/pom.xml"), "w") as f:
+        with open(self.tmpdir.joinpath(f"{consts.E2E_TESTS_DIR_NAME}/pom.xml"), "w") as f:
             f.write(content.replace("GDK_TESTING_VERSION", "1.0.0-SNAPSHOT"))

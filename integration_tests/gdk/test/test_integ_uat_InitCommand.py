@@ -6,9 +6,10 @@ import os
 from gdk.commands.test.InitCommand import InitCommand
 import shutil
 from urllib3.exceptions import HTTPError
+import gdk.common.consts as consts
 
 
-class UATInitCommandTest(TestCase):
+class E2ETestInitCommandTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
@@ -32,36 +33,36 @@ class UATInitCommandTest(TestCase):
         self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
         InitCommand({}).run()
         assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
-        uat_folder = Path(self.tmpdir).joinpath("uat-features")
-        assert uat_folder.exists()
-        assert uat_folder.joinpath("pom.xml") in list(uat_folder.iterdir())
+        e2e_test_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
+        assert e2e_test_folder.exists()
+        assert e2e_test_folder.joinpath("pom.xml") in list(e2e_test_folder.iterdir())
         # Downloaded template has GDK_TESTING_VERSION variable in pom.xml
-        with open(uat_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
+        with open(e2e_test_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
             content = f.read()
             assert "GDK_TESTING_VERSION" in content
 
     def test_init_run_gdk_project_already_initiated(self):
         self.setup_test_data_config("config.json")
         self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
-        # uat-features already exists but is empty
-        Path(self.tmpdir).joinpath("uat-features").mkdir()
+        # consts.E2E_TESTS_DIR_NAME already exists but is empty
+        Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).mkdir()
 
         InitCommand({}).run()
         assert not self.mock_template_download.called
-        # existing uat-features folder is not overridden
-        assert Path(self.tmpdir).resolve("uat-features").exists()
-        assert list(Path(self.tmpdir).joinpath("uat-features").iterdir()) == []
+        # existing consts.E2E_TESTS_DIR_NAME folder is not overridden
+        assert Path(self.tmpdir).resolve(consts.E2E_TESTS_DIR_NAME).exists()
+        assert list(Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).iterdir()) == []
 
     def test_init_run_gdk_project_update_otf_version(self):
         self.setup_test_data_config("config.json")
         InitCommand({}).run()
         assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
 
-        # existing uat-features folder is not overridden
-        uat_folder = Path(self.tmpdir).joinpath("uat-features")
-        assert uat_folder.exists()
+        # existing consts.E2E_TESTS_DIR_NAME folder is not overridden
+        e2e_test_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
+        assert e2e_test_folder.exists()
         # OTF version is updated in pom.xml
-        with open(uat_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
+        with open(e2e_test_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
             content = f.read()
             assert "GDK_TESTING_VERSION" not in content
             # OTF version set in config file
@@ -78,7 +79,7 @@ class UATInitCommandTest(TestCase):
             InitCommand({}).run()
             assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
             assert "some error" in e.value.args[0]
-        assert not Path(self.tmpdir).joinpath("uat-features").exists()
+        assert not Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).exists()
 
     def setup_test_data_config(self, config_file):
         # Setup test data
