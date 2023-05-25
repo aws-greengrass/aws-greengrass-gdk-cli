@@ -36,7 +36,7 @@ class UATRunCommandTest(TestCase):
         with pytest.raises(Exception) as e:
             run_command.run()
         assert (
-            "UAT module is not built. Please build the test module using `gdk test build`"
+            "E2E testing module is not built. Please build the test module using `gdk test build`"
             + "command before running the tests."
         ) in e.value.args[0]
 
@@ -196,9 +196,13 @@ class UATRunCommandTest(TestCase):
         _nucleus_path.touch()
 
         def _sp_run(self, *args, **kwargs):
-            if set(self) == set(["java", "-jar", str(_non_default_jar), "--help"]):
-                return sp.CompletedProcess(self, returncode=0, stdout="gg-test".encode())
-            return sp.CompletedProcess(self, returncode=1, stderr=b"Error running jar")
+            if "--help" in set(self):
+                if set(self) == set(["java", "-jar", str(_non_default_jar), "--help"]):
+                    return sp.CompletedProcess(self, returncode=0, stdout="gg-test".encode())
+                else:
+                    return sp.CompletedProcess(self, returncode=1, stderr=b"Error running jar")
+            else:
+                raise Exception("Error running jar")
 
         sp_run = self.mocker.patch.object(sp, "run", side_effect=_sp_run)
         run_command = RunCommand({})

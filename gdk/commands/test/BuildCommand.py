@@ -1,6 +1,6 @@
 from gdk.commands.Command import Command
 from gdk.common.config.GDKProject import GDKProject
-from gdk.build_system.UATBuildSystem import UATBuildSystem
+from gdk.build_system.E2ETestBuildSystem import E2ETestBuildSystem
 from pathlib import Path
 import gdk.common.utils as utils
 import shutil
@@ -23,11 +23,11 @@ class BuildCommand(Command):
         """
         This method is called when customer runs the `gdk test build` command.
 
-        1. Remove the UAT module from greengrass-build if it exists.
-        2. Copy the UAT folder to the greengrass-build directory and perform the following steps:
-        3. Update the feature files with component name and UAT recipe file path.
-        4. Create the UAT recipe file in the greengrass-build folder.
-        5. Build the UAT module.
+        1. Remove the e2e module from greengrass-build if it exists.
+        2. Copy the e2e folder to the greengrass-build directory and perform the following steps:
+        3. Update the feature files with component name and e2e recipe file path.
+        4. Create the e2e recipe file in the greengrass-build folder.
+        5. Build the e2e test module.
         """
         build_recipe_file = self._gdk_project.gg_build_recipes_dir.joinpath(self.recipe_file_name)
         e2e_test_recipe_file = self._gdk_project.gg_build_recipes_dir.joinpath("e2e_test_" + self.recipe_file_name)
@@ -39,16 +39,16 @@ class BuildCommand(Command):
 
     def _clean_e2e_test_build_dir(self):
         if self._gg_build_e2e_test_dir.exists():
-            logging.debug("Removing the UAT module from greengrass-build directory")
+            logging.debug("Removing the E2E testing module from greengrass-build directory")
             shutil.rmtree(self._gg_build_e2e_test_dir)
 
     def build_e2e_test_module(self):
-        logging.info("Building the UAT module")
-        build_system = UATBuildSystem.get(self._test_config.test_build_system)
+        logging.info("Building the E2E testing module")
+        build_system = E2ETestBuildSystem.get(self._test_config.test_build_system)
         build_system.build(self._gg_build_e2e_test_dir)
 
     def _copy_e2e_test_dir_to_build(self):
-        logging.debug("Copying the UAT module to greengrass-build directory")
+        logging.debug("Copying the E2E testing module to greengrass-build directory")
         shutil.copytree(self.test_directory, self._gg_build_e2e_test_dir)
 
     def update_feature_files(self, build_recipe_file: Path, e2e_test_recipe_file: Path):
@@ -87,9 +87,9 @@ class BuildCommand(Command):
 
     def create_e2e_test_recipe_file(self, build_recipe_file: Path, e2e_test_recipe_file: Path) -> None:
         """
-        When the component is built using `gdk component build` command gdk creates a build recipe file. This method uses that
-        build recipe file and creates a e2e_test_recipe file in the greengrass-build/recipes folder by replacing the s3 artifact
-        URIs with their absolute file paths.
+        When the component is built using `gdk component build` command gdk creates a build recipe file. This method uses
+        that build recipe file and creates a E2E test recipe file in the greengrass-build/recipes folder by replacing the
+        s3 artifact URIs with their absolute file paths.
         """
         if not self.should_create_e2e_test_recipe:
             return
@@ -105,5 +105,5 @@ class BuildCommand(Command):
                     logging.debug("Artifact %s does not exist in the build directory", artifact_uri)
                     continue
                 artifact.update_value("Uri", artifact_path.as_uri())
-        logging.info("Creating the UAT recipe file: %s", e2e_test_recipe_file.resolve())
+        logging.info("Creating the E2E testing recipe file: %s", e2e_test_recipe_file.resolve())
         CaseInsensitiveRecipeFile().write(e2e_test_recipe_file, _recipe)

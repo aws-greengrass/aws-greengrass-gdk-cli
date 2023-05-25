@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from gdk.build_system.UATBuildSystem import UATBuildSystem
+from gdk.build_system.E2ETestBuildSystem import E2ETestBuildSystem
 from pathlib import Path
 import os
 import shutil
@@ -24,7 +24,7 @@ class GDKBuildSystemTest(TestCase):
         shutil.copytree(source, dest)
         os.chdir(dest)
 
-        build_system = UATBuildSystem.get("maven")
+        build_system = E2ETestBuildSystem.get("maven")
         build_system.build()
 
         target_folder = dest.joinpath("target").joinpath("HelloWorld-1.0.0.jar").resolve()

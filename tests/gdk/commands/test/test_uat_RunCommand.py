@@ -44,7 +44,7 @@ class RunCommandUnitTest(TestCase):
         run_cmd = RunCommand({})
         with pytest.raises(Exception) as e:
             run_cmd.run()
-        assert "UAT module is not built." in e.value.args[0]
+        assert "E2E testing module is not built." in e.value.args[0]
 
     def test_given_nucleus_archive_at_default_path_when_run_e2e_tests_then_do_not_download_nucleus(self):
         mock_downloader = self.mocker.patch.object(URLDownloader, "download")

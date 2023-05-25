@@ -1,6 +1,6 @@
 from gdk.commands.Command import Command
 from gdk.common.config.GDKProject import GDKProject
-from gdk.build_system.UATBuildSystem import UATBuildSystem
+from gdk.build_system.E2ETestBuildSystem import E2ETestBuildSystem
 from gdk.commands.test.config.RunConfiguration import RunConfiguration
 from pathlib import Path
 from gdk.common.URLDownloader import URLDownloader
@@ -28,7 +28,8 @@ class RunCommand(Command):
         """
         if not self._is_test_module_built():
             raise Exception(
-                "UAT module is not built. Please build the test module using `gdk test build`command before running the tests."
+                "E2E testing module is not built. Please build the test module using `gdk test build`command before running"
+                " the tests."
             )
 
         _nucleus_path = Path(self._config.options.get("ggc-archive"))
@@ -48,7 +49,7 @@ class RunCommand(Command):
         """
         Return the test build directory
         """
-        e2e_test_build_system = UATBuildSystem.get(self._test_build_system)
+        e2e_test_build_system = E2ETestBuildSystem.get(self._test_build_system)
         return self._test_directory.joinpath(*e2e_test_build_system.build_folder).resolve()
 
     def _should_download_nucleus_archive(self, _nucleus_path: Path) -> bool:
