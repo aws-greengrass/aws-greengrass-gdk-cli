@@ -68,11 +68,7 @@ class RunCommand(Command):
         _commands.extend(self._get_options_as_list())
         logging.info("Running test jar with command %s", " ".join(_commands))
 
-        _test_run_proc = sp.run(_commands, check=True, stdout=sp.PIPE, stderr=sp.STDOUT)
-        _cmd_successful = _test_run_proc.returncode == 0
-
-        if not _cmd_successful:
-            raise Exception("Exception occurred while running the test jar.\n " + _test_run_proc.stderr.decode("utf-8"))
+        sp.run(_commands, check=True)
 
     def _identify_testing_jar(self) -> Path:
         """
