@@ -10,6 +10,8 @@ import gdk.common.consts as consts
 
 
 class BuildCommand(Command):
+    _test_component_default_v = "1.0.0"
+
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "build")
         self._gdk_project = GDKProject()
@@ -89,12 +91,20 @@ class BuildCommand(Command):
         """
         When the component is built using `gdk component build` command gdk creates a build recipe file. This method uses
         that build recipe file and creates a E2E test recipe file in the greengrass-build/recipes folder by replacing the
-        s3 artifact URIs with their absolute file paths.
+        s3 artifact URIs with their absolute file paths. It also updates the component version to 1.0.0 if it is set to
+        NEXT_PATCH.
         """
         if not self.should_create_e2e_test_recipe:
             return
 
         _recipe = CaseInsensitiveRecipeFile().read(build_recipe_file)
+
+        # Update component version
+        _version = _recipe.get("ComponentVersion", "NEXT_PATCH")
+        if _version == "NEXT_PATCH":
+            _recipe.update_value("ComponentVersion", self._test_component_default_v)
+
+        # Update artifact URIs
         for manifest in _recipe.get("manifests", []):
             for artifact in manifest.get("artifacts", []):
                 artifact_uri = artifact.get("uri", "")
@@ -102,7 +112,11 @@ class BuildCommand(Command):
                     continue
                 artifact_path = self._gdk_project.gg_build_component_artifacts_dir.joinpath(Path(artifact_uri).name).resolve()
                 if not artifact_path.exists():
-                    logging.debug("Artifact %s does not exist in the build directory", artifact_uri)
+                    # TODO: Currently, OTF supports artifacts at local file or class path only.
+                    # Raise an exception if the artifact is not found.
+                    logging.warning(
+                        "Could not update the artifact URI %s as it does not exist in the build directory", artifact_uri
+                    )
                     continue
                 artifact.update_value("Uri", artifact_path.as_uri())
         logging.info("Creating the E2E testing recipe file: %s", e2e_test_recipe_file.resolve())

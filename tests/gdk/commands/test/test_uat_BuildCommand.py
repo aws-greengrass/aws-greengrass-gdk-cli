@@ -94,23 +94,24 @@ class BuildCommandUnitTest(TestCase):
 
         assert mock_rglob.call_args_list == [call("*.feature")]
 
-    def test_create_e2e_test_recipe_from_build_recipe_without_replacing_s3_uri(self):
+    def test_GIVEN_build_recipe_witj_NEXT_PATCH_and_no_s3_uris_WHEN_create_test_reicpe_THEN_update_version_only(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
         self.mocker.patch("pathlib.Path.as_uri", return_value="file:///abc.feature")
         build_cmd = BuildCommand({})
         build_cmd.should_create_e2e_test_recipe = True
-        test_recipe = {"manifests": [{"artifacts": [{"Uri": "docker://somefile.json"}]}]}
+        test_recipe = {"componentVersion": "NEXT_PATCH", "manifests": [{"artifacts": [{"Uri": "docker://somefile.json"}]}]}
         mock_read = self.mocker.patch(
             "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
             return_value=CaseInsensitiveDict(test_recipe),
         )
         spy_write = self.mocker.spy(CaseInsensitiveRecipeFile, "write")
+        updated_recipe = {"componentVersion": "1.0.0", "manifests": [{"artifacts": [{"Uri": "docker://somefile.json"}]}]}
 
         build_cmd.create_e2e_test_recipe_file(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
         assert mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
-        assert spy_write.call_args_list == [call(ANY, Path("e2e_test_recipe.yaml"), test_recipe)]
+        assert spy_write.call_args_list == [call(ANY, Path("e2e_test_recipe.yaml"), updated_recipe)]
 
-    def test_create_e2e_test_recipe_from_build_recipe_with_replacing_s3_uri(self):
+    def test_create_e2e_test_recipe_from_build_recipe_with_replacing_version_and_uris(self):
         self.mocker.patch("pathlib.Path.exists", return_value=True)
 
         def get_as_uris(self):
@@ -119,8 +120,9 @@ class BuildCommandUnitTest(TestCase):
         self.mocker.patch.object(Path, "as_uri", get_as_uris)
         build_cmd = BuildCommand({})
         build_cmd.should_create_e2e_test_recipe = True
-        test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
+        test_recipe = {"componentVersion": "2.2.2", "manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
         updated_recipe = {
+            "componentVersion": "2.2.2",
             "manifests": [
                 {
                     "artifacts": [
@@ -133,7 +135,7 @@ class BuildCommandUnitTest(TestCase):
                         }
                     ]
                 }
-            ]
+            ],
         }
         mock_read = self.mocker.patch(
             "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
@@ -162,7 +164,7 @@ class BuildCommandUnitTest(TestCase):
         build_cmd.create_e2e_test_recipe_file(Path("recipe.yaml"), Path("e2e_test_recipe.yaml"))
         assert not mock_read.call_args_list == [call(Path(".").joinpath("recipe.yaml"))]
 
-    def test_create_e2e_test_recipe_when_artifact_does_not_exist_then_no_update_in_recipe(self):
+    def test_GIVEN_build_recipe_with_s3_URIs_and_version_WHEN_create_test_recipe_THEN_no_update_in_recipe(self):
         self.mocker.patch("pathlib.Path.exists", return_value=False)
 
         def get_as_uris(self):
@@ -171,7 +173,7 @@ class BuildCommandUnitTest(TestCase):
         self.mocker.patch.object(Path, "as_uri", get_as_uris)
         build_cmd = BuildCommand({})
         build_cmd.should_create_e2e_test_recipe = True
-        test_recipe = {"manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
+        test_recipe = {"componentVersion": "1.0.0", "manifests": [{"artifacts": [{"Uri": "s3://somefile.json"}]}]}
         mock_read = self.mocker.patch(
             "gdk.common.CaseInsensitive.CaseInsensitiveRecipeFile.read",
             return_value=CaseInsensitiveDict(test_recipe),
