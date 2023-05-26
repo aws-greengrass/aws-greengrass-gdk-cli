@@ -135,6 +135,15 @@
                         "help": "Build user acceptance testing module."
                     },
                     "run": {
+                        "arguments": {
+                            "otf_options": {
+                                "name": [
+                                    "-t",
+                                    "--otf-options"
+                                ],
+                                "help": "OTF configuration options used when running the E2E tests. This argument needs to be a valid json string or file path to a JSON file containing the config options. This argument overrides the options provided in the gdk configuration."
+                            }
+                        },
                         "help": "Run user acceptance tests on GreengrassV2 components."
                     }
                 },

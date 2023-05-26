@@ -3,7 +3,7 @@ from unittest import TestCase
 from pathlib import Path
 import os
 from gdk.commands.test.config.RunConfiguration import RunConfiguration
-from gdk.common.config.GDKProject import GDKProject
+from unittest import mock
 
 
 class RunConfigurationUnitTest(TestCase):
@@ -20,8 +20,7 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config()
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
-        gdk_project = GDKProject()
-        run_config = RunConfiguration(gdk_project, {})
+        run_config = RunConfiguration({})
 
         assert run_config.options.get("tags") == "Sample"
         assert run_config.options.get("ggc-archive") == str(
@@ -29,6 +28,86 @@ class RunConfigurationUnitTest(TestCase):
         )
 
         assert len(run_config.options) == 2
+
+    def test_GIVEN_gdk_config_with_tags_WHEN_run_with_tag_args_THEN_use_tags_from_args(self):
+        config = self._get_config(
+            {
+                "test": {
+                    "otf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
+                }
+            }
+        )
+
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+
+        run_config = RunConfiguration({"otf_options": '{"tags": "some-other-tags"}'})
+
+        assert run_config.options.get("tags") == "some-other-tags"
+        assert (
+            run_config.options.get("ggc-archive")
+            == Path().absolute().joinpath("greengrass-build/greengrass-nucleus-latest.zip").resolve().__str__()
+        )
+
+        assert len(run_config.options) == 3
+
+    def test_GIVEN_gdk_config_with_three_options_WHEN_run_with_two_overriding_args_THEN_merge_args(self):
+        config = self._get_config(
+            {
+                "test": {
+                    "otf_options": {
+                        "tags": "some-tags",
+                        "ggc-install-root": "some-install-root",
+                        "gg-runtime": "some-runtime",
+                    },
+                }
+            }
+        )
+
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+
+        run_config = RunConfiguration(
+            {"otf_options": '{"tags": "tags-from-args", "ggc-install-root": "install-root-from-args"}'}
+        )
+
+        assert run_config.options.get("tags") == "tags-from-args"
+        assert run_config.options.get("gg-runtime") == "some-runtime"
+        assert run_config.options.get("ggc-install-root") == "install-root-from-args"
+        assert (
+            run_config.options.get("ggc-archive")
+            == Path().absolute().joinpath("greengrass-build/greengrass-nucleus-latest.zip").resolve().__str__()
+        )
+        assert len(run_config.options) == 4
+
+    def test_GIVEN_gdk_config_with_three_options_WHEN_run_with_two_overriding_args_from_file_THEN_merge_args(self):
+        config = self._get_config(
+            {
+                "test": {
+                    "otf_options": {
+                        "tags": "some-tags",
+                        "ggc-install-root": "some-install-root",
+                        "gg-runtime": "some-runtime",
+                    },
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        self.mocker.patch("pathlib.Path.exists", return_value=True)
+
+        with mock.patch(
+            "builtins.open",
+            mock.mock_open(read_data='{"tags": "tags-from-args", "ggc-install-root": "install-root-from-args"}'),
+        ) as mock_file:
+            run_config = RunConfiguration({"otf_options": "/path/to/otf_options.json"})
+            assert mock_file.return_value.read.call_count == 1
+
+        assert run_config.options.get("tags") == "tags-from-args"
+        assert run_config.options.get("gg-runtime") == "some-runtime"
+        assert run_config.options.get("ggc-install-root") == "install-root-from-args"
+        assert (
+            run_config.options.get("ggc-archive")
+            == Path().absolute().joinpath("greengrass-build/greengrass-nucleus-latest.zip").resolve().__str__()
+        )
+        assert len(run_config.options) == 4
 
     def test_given_gdk_config_with_tags_when_get_test_run_configuration_tags_then_return_given_tags(self):
         config = self._get_config(
@@ -40,8 +119,8 @@ class RunConfigurationUnitTest(TestCase):
         )
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
-        gdk_project = GDKProject()
-        run_config = RunConfiguration(gdk_project, {})
+
+        run_config = RunConfiguration({})
 
         assert run_config.options.get("tags") == "some-tags"
         assert (
@@ -61,9 +140,9 @@ class RunConfigurationUnitTest(TestCase):
         )
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
-        gdk_project = GDKProject()
+
         with pytest.raises(Exception) as e:
-            RunConfiguration(gdk_project, {})
+            RunConfiguration({})
 
         assert "Test tags provided in the config are invalid. Please check 'tags' in the test config" in str(e.value)
 
@@ -81,8 +160,7 @@ class RunConfigurationUnitTest(TestCase):
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         self.mocker.patch("pathlib.Path.exists", return_value=True)
 
-        gdk_project = GDKProject()
-        run_config = RunConfiguration(gdk_project, {})
+        run_config = RunConfiguration({})
 
         assert run_config.options.get("tags") == "Sample"
         assert run_config.options.get("ggc-archive") == Path().joinpath("some-path.zip").resolve().__str__()
@@ -100,10 +178,8 @@ class RunConfigurationUnitTest(TestCase):
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
 
-        gdk_project = GDKProject()
-
         with pytest.raises(Exception) as e:
-            RunConfiguration(gdk_project, {})
+            RunConfiguration({})
 
         assert (
             "Cannot find nucleus archive at path some-path.zip. Please check 'ggc-archive' in the test config"
