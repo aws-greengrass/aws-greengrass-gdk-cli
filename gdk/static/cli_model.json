@@ -129,7 +129,16 @@
             "test-e2e": {
                 "sub-commands": {
                     "init": {
-                        "help": "Initialize GDK project with user acceptance testing module"
+                        "help": "Initialize GDK project with user acceptance testing module",
+                        "arguments": {
+                            "otf_version": {
+                                "name": [
+                                    "-ov",
+                                    "--otf-version"
+                                ],
+                                "help": "Version of the testing jar."
+                            }
+                        }
                     },
                     "build": {
                         "help": "Build user acceptance testing module."
