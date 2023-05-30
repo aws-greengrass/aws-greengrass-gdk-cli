@@ -1,5 +1,4 @@
 from gdk.commands.Command import Command
-from gdk.common.config.GDKProject import GDKProject
 from gdk.build_system.E2ETestBuildSystem import E2ETestBuildSystem
 from gdk.commands.test.config.RunConfiguration import RunConfiguration
 from pathlib import Path
@@ -12,10 +11,9 @@ import gdk.common.consts as consts
 class RunCommand(Command):
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "run")
-        self._gdk_project = GDKProject()
-        self._test_directory = self._gdk_project.gg_build_dir.joinpath(consts.E2E_TESTS_DIR_NAME).resolve()
-        self._test_build_system = self._gdk_project.test_config.test_build_system
-        self._config = RunConfiguration(self._gdk_project, command_args)
+        self._run_config = RunConfiguration(command_args)
+        self._test_directory = self._run_config.gg_build_dir.joinpath(consts.E2E_TESTS_DIR_NAME).resolve()
+        self._test_build_system = self._run_config.test_config.test_build_system
         self._nucleus_archive_link = "https://d2s8p88vqu9w66.cloudfront.net/releases/greengrass-latest.zip"
 
     def run(self):
@@ -32,7 +30,7 @@ class RunCommand(Command):
                 " the tests."
             )
 
-        _nucleus_path = Path(self._config.options.get("ggc-archive"))
+        _nucleus_path = Path(self._run_config.options.get("ggc-archive"))
         if self._should_download_nucleus_archive(_nucleus_path):
             logging.info("Downloading latest nucleus archive from url %s", self._nucleus_archive_link)
             URLDownloader(self._nucleus_archive_link).download(_nucleus_path)
@@ -57,7 +55,7 @@ class RunCommand(Command):
         If ggc-archive path is set to default path and if it doesn't already exist at this path, then download the latest
         nucleus archive from url.
         """
-        return _nucleus_path == Path(self._config.default_nucleus_archive_path).resolve() and not _nucleus_path.exists()
+        return _nucleus_path == Path(self._run_config.default_nucleus_archive_path).resolve() and not _nucleus_path.exists()
 
     def run_testing_jar(self) -> None:
         """
@@ -108,4 +106,4 @@ class RunCommand(Command):
         """
         Return options as list of arguments to the jar
         """
-        return [f"--{opt}={val}" for opt, val in self._config.options.items()]
+        return [f"--{opt}={val}" for opt, val in self._run_config.options.items()]
