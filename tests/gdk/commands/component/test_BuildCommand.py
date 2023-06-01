@@ -262,7 +262,7 @@ class BuildCommandTest(TestCase):
 
         mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, ignore=ANY)
         assert mock_make_archive.called
-        zip_build_file = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
+        zip_build_file = Path(zip_build_path).joinpath("component_name").resolve()
         mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
         assert mock_get_supported_component_builds.call_count == 1
 
@@ -301,7 +301,7 @@ class BuildCommandTest(TestCase):
 
         mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, ignore=ANY)
         assert mock_make_archive.called
-        zip_build_file = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
+        zip_build_file = Path(zip_build_path).joinpath("component_name").resolve()
         mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
 
         assert mock_get_supported_component_builds.call_count == 1
