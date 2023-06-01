@@ -40,15 +40,19 @@ class Zip:
 
             # Get build file name without extension. This will be used as name of the archive.
             archive_file = utils.current_directory.name
+            zip_name_setting = self._get_build_options().get("zip_name", None)
+            if zip_name_setting is not None:
+                if len(zip_name_setting):
+                    archive_file = zip_name_setting
+                else:
+                    archive_file = self.project_config["component_name"]
             logging.debug(
                 "Creating an archive named '{}.zip' in '{}' folder with the files in '{}' folder.".format(
                     archive_file, zip_build.name, artifacts_zip_build.name
                 )
             )
-            archive_file_name = Path(zip_build).joinpath(
-                archive_file).resolve()
-            shutil.make_archive(archive_file_name, "zip",
-                                root_dir=artifacts_zip_build)
+            archive_file_name = Path(zip_build).joinpath(archive_file).resolve()
+            shutil.make_archive(archive_file_name, "zip", root_dir=artifacts_zip_build)
             logging.debug("Archive complete.")
 
         except Exception:

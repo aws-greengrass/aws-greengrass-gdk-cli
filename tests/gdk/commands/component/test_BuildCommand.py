@@ -252,6 +252,7 @@ class BuildCommandTest(TestCase):
         )
         build = BuildCommand({})
         build.project_config["component_build_config"]["build_system"] = "zip"
+        build.project_config["component_build_config"]["options"] = {"zip_name": ""}
         build._build_system_zip()
 
         assert not mock_subprocess_run.called
@@ -262,7 +263,7 @@ class BuildCommandTest(TestCase):
 
         mock_copytree.assert_called_with(curr_dir, zip_artifacts_path, ignore=ANY)
         assert mock_make_archive.called
-        zip_build_file = Path(zip_build_path).joinpath(utils.current_directory.name).resolve()
+        zip_build_file = Path(zip_build_path).joinpath("component_name").resolve()
         mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
         assert mock_get_supported_component_builds.call_count == 1
 

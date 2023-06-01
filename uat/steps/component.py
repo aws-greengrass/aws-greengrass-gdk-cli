@@ -36,9 +36,20 @@ def verify_component_build_files(context):
     assert Path(cwd).joinpath(GG_BUILD_DIR).resolve().exists()
 
 
+def context_replace(context, string: str):
+    if string.startswith("${context."):
+        string = string[len("${context."):]
+        idx = string.find("}")
+        key = string[0:idx]
+        string = getattr(context, key) + string[idx+1:]
+
+    return string
+
+
 @step('we verify build artifact named {artifact_name}')
 def verify_component_build_artifact(context, artifact_name):
     cwd = context.cwd if "cwd" in context else os.getcwd()
+    artifact_name = context_replace(context, artifact_name)
     component_name = context.last_component
     artifact_path = (
         Path(cwd)
@@ -89,13 +100,14 @@ def update_artifact_uri(context, platform_type, search, replace):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     recipe_file = Path(cwd).joinpath(GG_RECIPE_YAML).resolve()
     assert recipe_file.exists(), f"{GG_RECIPE_YAML} does not exist"
-    t_utils.replace_uri_in_recipe(recipe_file, platform_type, search, replace)
+    t_utils.replace_uri_in_recipe(recipe_file, platform_type, search, context_replace(context, replace))
 
 
 @step("we verify the following files in {artifact_name}")
 def verify_files_in_build_zip_artifact(context, artifact_name):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     component_name = context.last_component
+    artifact_name = context_replace(context, artifact_name)
     artifact_path = (
         Path(cwd)
         .joinpath(GG_BUILD_DIR)
