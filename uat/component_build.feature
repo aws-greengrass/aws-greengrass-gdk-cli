@@ -9,7 +9,22 @@ Feature: gdk component build works
     And command was successful
     And we verify gdk project files
     And change component name to com.example.PythonHelloWorld
+    When we run gdk component build
+    Then command was successful
+    And we verify component zip build files
+    And we verify build artifact named HelloWorld.zip
+
+  @version(min='1.0.0')
+  @change_cwd
+  Scenario: build template zip using component name as zip name
+    Given we have cli installed
+    And we make directory HelloWorld
+    And we run gdk component init -t HelloWorld -l python
+    And command was successful
+    And we verify gdk project files
+    And change component name to com.example.PythonHelloWorld
     And change artifact uri for all platform from HelloWorld to ${context.last_component}
+    And change build options to {"zip_name": ""}
     When we run gdk component build
     Then command was successful
     And we verify component zip build files
@@ -127,12 +142,11 @@ Feature: gdk component build works
     And command was successful
     And we verify gdk project files
     And change component name to com.example.PythonHelloWorld
-    And change artifact uri for all platform from HelloWorld to ${context.last_component}
     And change build options to {"excludes":["main.py"]}
     When we run gdk component build
     Then command was successful
     And we verify component zip build files
-    And we verify build artifact named ${context.last_component}.zip
-    And we verify the following files in ${context.last_component}.zip
+    And we verify build artifact named HelloWorld.zip
+    And we verify the following files in HelloWorld.zip
       | excluded    | included  |
       | ["main.py"] | ["tests"] |

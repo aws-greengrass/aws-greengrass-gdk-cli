@@ -84,6 +84,9 @@
                                                         "type": "array",
                                                         "description": "regex patterns of files to exclude",
                                                         "minItems": 1
+                                                    },
+                                                    "zip_name": {
+                                                        "type": "string"
                                                     }
                                                 },
                                                 "additionalProperties": false
