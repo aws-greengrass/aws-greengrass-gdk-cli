@@ -30,16 +30,17 @@ class Zip:
         try:
             # Only one zip-build folder in the set
             zip_build = next(iter(self.build_folders))
-            artifacts_zip_build = Path(zip_build).joinpath(
-                utils.current_directory.name).resolve()
+            artifacts_zip_build = Path(zip_build).joinpath(utils.get_current_directory().name).resolve()
             utils.clean_dir(zip_build)
-            logging.debug("Copying over component files to the '{}' folder.".format(
-                artifacts_zip_build.name))
-            shutil.copytree(utils.current_directory, artifacts_zip_build,
-                            ignore=shutil.ignore_patterns(*self.get_ignored_file_patterns()))
+            logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
+            shutil.copytree(
+                utils.get_current_directory(),
+                artifacts_zip_build,
+                ignore=shutil.ignore_patterns(*self.get_ignored_file_patterns()),
+            )
 
             # Get build file name without extension. This will be used as name of the archive.
-            archive_file = utils.current_directory.name
+            archive_file = utils.get_current_directory().name
             zip_name_setting = self._get_build_options().get("zip_name", None)
             if zip_name_setting is not None:
                 if len(zip_name_setting):
