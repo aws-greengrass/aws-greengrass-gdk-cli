@@ -81,7 +81,7 @@ def get_project_config_values():
     options = component_config["publish"].get("options", dict())
 
     # Build directories
-    gg_build_directory = Path(utils.current_directory).joinpath(consts.greengrass_build_dir).resolve()
+    gg_build_directory = Path(utils.get_current_directory()).joinpath(consts.greengrass_build_dir).resolve()
     gg_build_artifacts_dir = Path(gg_build_directory).joinpath("artifacts").resolve()
     gg_build_recipes_dir = Path(gg_build_directory).joinpath("recipes").resolve()
     gg_build_component_artifacts_dir = Path(gg_build_artifacts_dir).joinpath(component_name, component_version).resolve()

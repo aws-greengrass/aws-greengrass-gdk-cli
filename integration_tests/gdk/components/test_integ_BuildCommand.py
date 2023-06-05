@@ -1,340 +1,191 @@
-import json
-from pathlib import Path
-from shutil import Error
-from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
-
+from unittest import TestCase
 import pytest
-
-import gdk.CLIParser as CLIParser
-import gdk.common.consts as consts
-import gdk.common.exceptions.error_messages as error_messages
-import gdk.common.parse_args_actions as parse_args_actions
-import gdk.common.utils as utils
+from pathlib import Path
+import os
+import shutil
 from gdk.commands.component.BuildCommand import BuildCommand
-
-gradle_build_command = ["gradle", "clean", "build"]
-
-
-@pytest.fixture()
-def supported_build_system(mocker):
-    builds_file = utils.get_static_file_path(consts.project_build_system_file)
-    with open(builds_file, "r") as f:
-        data = json.loads(f.read())
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds", return_value=data
-    )
-    return mock_get_supported_component_builds
+import json
+import platform
+from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
+import boto3
+from botocore.stub import Stubber
 
 
-@pytest.fixture()
-def rglob_build_file(mocker):
-    def search(*args, **kwargs):
-        if "build.gradle" in args[0] or "pom.xml" in args[0]:
-            return [Path(utils.current_directory).joinpath("build_file")]
-        return []
+class ComponentBuildCommandIntegTest(TestCase):
+    @pytest.fixture(autouse=True)
+    def __inject_fixtures(self, mocker, tmpdir):
+        self.mocker = mocker
+        self.tmpdir = Path(tmpdir).resolve()
+        self.c_dir = Path(".").resolve()
+        os.chdir(self.tmpdir)
+        yield
+        os.chdir(self.c_dir)
 
-    mock_rglob = mocker.patch("pathlib.Path.rglob", side_effect=search)
-    return mock_rglob
+    def test_GIVEN_zip_build_system_WHEN_build_THEN_build_zip_artifacts(self):
+        self.zip_test_data()
+        bc = BuildCommand({})
+        bc.run()
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/" + self.tmpdir.name + ".zip").exists()
+        assert build_recipe_file.exists()
 
+        with open(build_recipe_file, "r") as f:
+            assert f"s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/{self.tmpdir.name}.zip" in f.read()
 
-def test_build_command_instantiation(mocker):
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-    )
-    mock_check_if_arguments_conflict = mocker.patch.object(BuildCommand, "check_if_arguments_conflict", return_value=None)
-    mock_run = mocker.patch.object(BuildCommand, "run", return_value=None)
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value={},
-    )
-    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
+    def test_GIVEN_zip_build_system_WHEN_build_and_artifacts_not_on_s3_THEN_build_raises_exception(self):
+        self.zip_test_data()
+        content = CaseInsensitiveRecipeFile().read(self.tmpdir.joinpath("recipe.yaml"))
+        artifacts = content["Manifests"][0]["Artifacts"]
+        artifacts.append({"URI": "s3://some/s3/bucket/abc.txt"})
+        CaseInsensitiveRecipeFile().write(self.tmpdir.joinpath("recipe.yaml"), content)
 
-    assert mock_get_proj_config.call_count == 1
-    assert mock_get_supported_component_builds.call_count == 1
-    assert mock_check_if_arguments_conflict.call_count == 1
-    assert mock_run.call_count == 1
+        bc = BuildCommand({})
 
+        with pytest.raises(Exception) as e:
+            bc.run()
 
-def test_build_command_instantiation_failed_fetching_config(mocker):
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        side_effect=Exception("exception fetching proj values"),
-    )
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-    )
-    mock_check_if_arguments_conflict = mocker.patch.object(BuildCommand, "check_if_arguments_conflict", return_value=None)
-    mock_run = mocker.patch.object(BuildCommand, "run", return_value=None)
-    with pytest.raises(Exception) as e:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert "exception fetching proj values" in e.value.args[0]
-    assert mock_get_proj_config.call_count == 1
-    assert mock_get_supported_component_builds.call_count == 0
-    assert mock_check_if_arguments_conflict.call_count == 1
-    assert mock_run.call_count == 0
+        assert "Could not find artifact with URI 's3://some/s3/bucket/abc.txt' on s3 or inside the build folders." in str(
+            e.value.args[0]
+        )
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/" + self.tmpdir.name + ".zip").exists()
+        assert not build_recipe_file.exists()
 
+    def test_GIVEN_maven_build_system_WHEN_build_with_artifacts_on_s3_THEN_build_succeeds(self):
+        # Prepare test data
+        self.maven_test_data()
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/maven/pom.xml"),
+            self.tmpdir.joinpath("pom.xml"),
+        )
+        content = CaseInsensitiveRecipeFile().read(self.tmpdir.joinpath("recipe.yaml"))
+        artifacts = content["Manifests"][0]["Artifacts"]
+        artifacts.append({"URI": "s3://some/s3/bucket/abc.txt"})
+        CaseInsensitiveRecipeFile().write(self.tmpdir.joinpath("recipe.yaml"), content)
 
-def test_build_command_instantiation_failed_fetching_build_config(mocker):
+        # Prepare s3 stub
+        client = boto3.client("s3", region_name="us-east-1")
+        self.mocker.patch("boto3.client", return_value=client)
+        s3_client_stub = Stubber(client)
+        s3_client_stub.add_response(
+            "head_object",
+            {"ResponseMetadata": {"HTTPStatusCode": 200}, "ContentLength": 100},
+            {"Bucket": "some", "Key": "s3/bucket/abc.txt"},
+        )
+        s3_client_stub.activate()
 
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds",
-        side_effect=Exception("exception fetching build"),
-    )
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value={},
-    )
-    mock_check_if_arguments_conflict = mocker.patch.object(BuildCommand, "check_if_arguments_conflict", return_value=None)
-    mock_run = mocker.patch.object(BuildCommand, "run", return_value=None)
-    with pytest.raises(Exception) as e:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert "exception fetching build" in e.value.args[0]
-    assert mock_get_proj_config.call_count == 1
-    assert mock_get_supported_component_builds.call_count == 1
-    assert mock_check_if_arguments_conflict.call_count == 1
-    assert mock_run.call_count == 0
+        # WHEN
+        bc = BuildCommand({})
+        bc.run()
 
+        # THEN
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/HelloWorld-1.0.0.jar").exists()
+        assert build_recipe_file.exists()
 
-def test_build_command_instantiation_failed_conflicting_args(mocker):
+        with open(build_recipe_file, "r") as f:
+            content = f.read()
+            assert "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld-1.0.0.jar" in content
+            assert "s3://some/s3/bucket/abc.txt" in content
 
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-    )
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        side_effect=Exception("exception fetching proj values"),
-    )
-    mock_check_if_arguments_conflict = mocker.patch.object(
-        BuildCommand,
-        "check_if_arguments_conflict",
-        side_effect=Exception("exception due to conflictins args"),
-    )
-    mock_run = mocker.patch.object(BuildCommand, "run", return_value=None)
-    with pytest.raises(Exception) as e:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert "exception due to conflictins args" in e.value.args[0]
-    assert mock_get_proj_config.call_count == 0
-    assert mock_get_supported_component_builds.call_count == 0
-    assert mock_check_if_arguments_conflict.call_count == 1
-    assert mock_run.call_count == 0
+    def test_GIVEN_maven_build_system_WHEN_build_THEN_build_jar_artifacts(self):
+        self.maven_test_data()
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/maven/pom.xml"),
+            self.tmpdir.joinpath("pom.xml"),
+        )
+        bc = BuildCommand({})
+        bc.run()
 
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/HelloWorld-1.0.0.jar").exists()
+        assert build_recipe_file.exists()
 
-def test_build_run():
-    with pytest.raises(Exception) as e:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert (
-        error_messages.CONFIG_FILE_NOT_EXISTS
-        in e.value.args[0]
-    )
+        with open(build_recipe_file, "r") as f:
+            content = f.read()
+            assert "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld-1.0.0.jar" in content
 
+    def test_GIVEN_maven_build_system_WHEN_exception_in_build_THEN_raise_exception(self):
+        self.maven_test_data()
 
-def test_build_run_default_zip_json(mocker, supported_build_system, rglob_build_file):
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    mock_archive_dir = mocker.patch("shutil.make_archive", return_value=None)
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=project_config(),
-    )
+        bc = BuildCommand({})
+        with pytest.raises(Exception) as e:
+            bc.run()
+        if platform.system() == "Windows":
+            assert "['mvn.cmd', 'clean', 'package']" in str(e)
+        else:
+            assert "['mvn', 'clean', 'package']" in str(e)
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert not self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/HelloWorld-1.0.0.jar").exists()
+        assert not build_recipe_file.exists()
 
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=project_config(),
-    )
+    def test_GIVEN_custom_build_system_WHEN__build_THEN_run_custom_build_command(self):
+        self.custom_test_data()
 
-    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
-    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert mock_get_proj_config.assert_called_once
-    assert mock_copy_dir.call_count == 1  # copy files to zip-build to create a zip
-    assert mock_archive_dir.call_count == 1  # archiving directory
-    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
-    assert mock_clean_dir.call_count == 2  # clean zip-build, clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
+        bc = BuildCommand({})
+        bc.run()
 
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/").exists()
+        assert not build_recipe_file.exists()
 
-def test_build_run_default_maven_yaml(mocker, supported_build_system, rglob_build_file):
+    def zip_test_data(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
+        )
 
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    mock_archive_dir = mocker.patch("shutil.make_archive", return_value=None)
-    pc = project_config()
-    pc["component_build_config"] = {"build_system": "maven"}
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=pc,
-    )
-    mock_platform = mocker.patch("platform.system", return_value="not-windows")
-    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
+        with open(self.tmpdir.joinpath("recipe.yaml"), "r") as f:
+            recipe = f.read()
+            recipe = recipe.replace("$GG_ARTIFACT", self.tmpdir.name + ".zip")
 
-    mock_subprocess_run = mocker.patch("subprocess.run")
+        with open(self.tmpdir.joinpath("recipe.yaml"), "w") as f:
+            f.write(recipe)
 
-    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["mvn", "clean", "package"], check=True)  # called maven build command
-    assert mock_copy_dir.call_count == 0  # No copying directories
-    assert supported_build_system.call_count == 1
-    assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
-    assert mock_clean_dir.call_count == 1  # clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
-    assert mock_platform.call_count == 1
+        self.tmpdir.joinpath("hello_world.py").touch()
 
+    def maven_test_data(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
+        )
+        gdk_config = self.tmpdir.joinpath("gdk-config.json")
+        with open(gdk_config, "r") as f:
+            config = f.read()
+            config = config.replace("zip", "maven")
 
-def test_build_run_default_maven_yaml_windows(mocker, supported_build_system, rglob_build_file):
+        with open(gdk_config, "w") as f:
+            f.write(config)
 
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    mock_archive_dir = mocker.patch("shutil.make_archive", return_value=None)
-    mock_platform = mocker.patch("platform.system", return_value="Windows")
-    pc = project_config()
-    pc["component_build_config"] = {"build_system": "maven"}
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=pc,
-    )
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
 
-    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
+        with open(self.tmpdir.joinpath("recipe.yaml"), "r") as f:
+            recipe = f.read()
+            recipe = recipe.replace("$GG_ARTIFACT", "HelloWorld-1.0.0.jar")
 
-    mock_subprocess_run = mocker.patch("subprocess.run", side_effect="error with maven build cmd")
+        with open(self.tmpdir.joinpath("recipe.yaml"), "w") as f:
+            f.write(recipe)
 
-    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["mvn.cmd", "clean", "package"], check=True)  # called maven build command
-    assert mock_copy_dir.call_count == 0  # No copying directories
-    assert supported_build_system.call_count == 1
-    assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_transform.call_count == 1  # only one artifact in project_config. Available in build
-    assert mock_clean_dir.call_count == 1  # clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
-    assert mock_platform.call_count == 1
+    def custom_test_data(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
+        )
 
+        gdk_config = self.tmpdir.joinpath("gdk-config.json")
+        with open(gdk_config, "r") as f:
+            config = json.loads(f.read())
+            config_comp = config["component"]["abc"]
+            config_comp.update({"build": {"build_system": "custom", "custom_build_command": "whoami"}})
 
-def test_build_run_default_maven_yaml_error(mocker, supported_build_system, rglob_build_file):
+        with open(gdk_config, "w") as f:
+            f.write(json.dumps(config))
 
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    mock_archive_dir = mocker.patch("shutil.make_archive", return_value=None)
-    mock_platform = mocker.patch("platform.system", return_value="Windows")
-    pc = project_config()
-    pc["component_build_config"] = {"build_system": "maven"}
-    pc["component_recipe_file"] = Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.yaml")
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=pc,
-    )
-
-    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
-
-    mock_subprocess_run = mocker.patch("subprocess.run", side_effect=Exception("error with maven build cmd"))
-    pc = mock_get_proj_config.return_value
-
-    with pytest.raises(Exception) as e:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build", "-d"]))
-    assert "error with maven build cmd" in e.value.args[0]
-    assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["mvn.cmd", "clean", "package"], check=True)  # called maven build command
-    assert mock_copy_dir.call_count == 0  # No copying directories
-    assert supported_build_system.call_count == 1
-    assert mock_archive_dir.call_count == 0  # Archvie never called in maven
-    assert mock_transform.call_count == 0  # only one artifact in project_config. Available in build
-    assert mock_clean_dir.call_count == 1  # clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
-    assert mock_platform.called
-
-
-def test_build_run_default_exception(mocker, rglob_build_file):
-    mock_create_gg_build_directories = mocker.patch.object(BuildCommand, "create_gg_build_directories")
-    mock_default_build_component = mocker.patch.object(
-        BuildCommand, "default_build_component", side_effect=Exception("error in default_build_component")
-    )
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=project_config(),
-    )
-
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-    )
-    mock_subprocess_run = mocker.patch("subprocess.run")
-    with pytest.raises(Exception) as e:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert "error in default_build_component" in e.value.args[0]
-    assert mock_get_proj_config.called
-    assert mock_get_supported_component_builds.called
-    assert mock_create_gg_build_directories.assert_called_once
-    assert mock_default_build_component.assert_called_once
-    assert not mock_subprocess_run.called
-
-
-def test_default_build_component_error_run_build_command(mocker, rglob_build_file):
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_run_build_command = mocker.patch.object(
-        BuildCommand, "run_build_command", side_effect=Error("err in run_build_command")
-    )
-    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
-
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=project_config(),
-    )
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds", return_value={}
-    )
-    with pytest.raises(Exception) as e:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-    assert "err in run_build_command" in e.value.args[0]
-    assert mock_run_build_command.assert_called_once
-    assert not mock_transform.called
-
-    assert mock_get_supported_component_builds.called
-    assert mock_clean_dir.call_count == 1
-    assert mock_create_dir.call_count == 2
-    assert mock_get_proj_config.call_count == 1
-
-
-def test_build_run_custom(mocker, supported_build_system, rglob_build_file):
-    mock_clean_dir = mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-    mock_create_dir = mocker.patch("pathlib.Path.mkdir", return_value=None)
-    mock_copy_dir = mocker.patch("shutil.copytree", return_value=None)
-    pc = project_config()
-    pc["component_build_config"] = {"build_system": "custom", "custom_build_command": ["some-command"]}
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=pc,
-    )
-
-    mock_transform = mocker.patch.object(BuildRecipeTransformer, "transform")
-    mock_boto3_client = mocker.patch("boto3.client")
-    mock_subprocess_run = mocker.patch("subprocess.run")
-
-    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "build"]))
-
-    assert mock_get_proj_config.assert_called_once
-    mock_subprocess_run.assert_called_with(["some-command"], check=True)  # called maven build command
-    assert mock_copy_dir.call_count == 0  # No copying directories
-    assert supported_build_system.call_count == 1
-    assert not mock_transform.called
-    assert mock_boto3_client.call_count == 0
-    assert mock_clean_dir.call_count == 1  # clean greengrass-build
-    assert mock_create_dir.call_count == 2  # create gg directories
-
-
-def project_config():
-    return {
-        "component_name": "component_name",
-        "component_build_config": {"build_system": "zip"},
-        "component_version": "1.0.0",
-        "component_author": "abc",
-        "bucket": "default",
-        "region": "us-east-1",
-        "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
-        "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
-        "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
-        "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
-        "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/valid_component_recipe.json"),
-    }
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )

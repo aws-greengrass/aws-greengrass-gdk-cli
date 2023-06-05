@@ -187,7 +187,7 @@ class BuildCommand(Command):
             )
         elif build_system == "maven":
             return self.get_build_folders(build_folder, "pom.xml")
-        return {Path(utils.current_directory).joinpath(*build_folder).resolve()}
+        return {Path(utils.get_current_directory()).joinpath(*build_folder).resolve()}
 
     def get_build_folders(self, build_folder, build_file):
         """
@@ -208,7 +208,7 @@ class BuildCommand(Command):
             paths(set): Set of build folder paths in a multi-module project.
         """
         # Filter module directories which contain pom.xml, build.gradle, build.gradle.kts build files.
-        set_dirs_with_build_file = set(f.parent for f in Path(utils.current_directory).rglob(build_file))
+        set_dirs_with_build_file = set(f.parent for f in Path(utils.get_current_directory()).rglob(build_file))
         set_of_module_dirs = set()
         for module_dir in set_dirs_with_build_file:
             module_build_folder = Path(module_dir).joinpath(*build_folder).resolve()
