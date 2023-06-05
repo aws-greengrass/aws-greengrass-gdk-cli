@@ -179,7 +179,6 @@ class ComponentBuildCommandIntegTest(TestCase):
         gdk_config = self.tmpdir.joinpath("gdk-config.json")
         with open(gdk_config, "r") as f:
             config = json.loads(f.read())
-            print(config)
             config_comp = config["component"]["abc"]
             config_comp.update({"build": {"build_system": "custom", "custom_build_command": "whoami"}})
 

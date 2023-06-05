@@ -1,458 +1,273 @@
 from pathlib import Path
-from unittest.mock import ANY, mock_open, patch
 
 import boto3
-from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 import pytest
-
-import gdk.CLIParser as CLIParser
-import gdk.common.parse_args_actions as parse_args_actions
-from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.component.PublishCommand import PublishCommand
+import datetime
+
+from unittest import TestCase
+import pytest
+from pathlib import Path
+import os
+import shutil
+from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
+import boto3
+from botocore.stub import Stubber, ANY
 
 
-@pytest.fixture()
-def mock_project_config(mocker):
-    mock_get_proj_config = mocker.patch(
-        "gdk.commands.component.project_utils.get_project_config_values",
-        return_value=project_config(),
-    )
-    return mock_get_proj_config
+class ComponentPublishCommandIntegTest(TestCase):
+    @pytest.fixture(autouse=True)
+    def __inject_fixtures(self, mocker, tmpdir):
+        self.mocker = mocker
+        self.tmpdir = Path(tmpdir).resolve()
+        self.c_dir = Path(".").resolve()
+        self.stub_aws_clients()
+        os.chdir(self.tmpdir)
+        yield
+        os.chdir(self.c_dir)
 
+    def stub_aws_clients(self):
+        self.sts_client = boto3.client("sts", region_name="us-east-1")
+        self.gg_client = boto3.client("greengrassv2", region_name="us-east-1")
+        self.s3_client = boto3.client("s3", region_name="us-east-1")
 
-@pytest.fixture()
-def get_service_clients(mocker):
-    region = project_config()["region"]
-    service_clients = {}
-    service_clients["sts_client"] = boto3.client("sts", region_name=region)
-    service_clients["s3_client"] = boto3.client("s3", region_name=region)
-    service_clients["greengrass_client"] = boto3.client("greengrassv2", region_name=region)
-    mocker.patch("gdk.commands.component.project_utils.get_service_clients", return_value=service_clients)
-    mocker.patch.object(service_clients["sts_client"], "get_caller_identity", return_value={"Account": 1234})
-    mocker.patch.object(service_clients["s3_client"], "create_bucket", return_value=None)
-    mocker.patch.object(service_clients["s3_client"], "upload_file", return_value=None)
-    mocker.patch.object(service_clients["greengrass_client"], "create_component_version", return_value=None)
-    mocker.patch.object(
-        service_clients["greengrass_client"],
-        "list_component_versions",
-        return_value={"componentVersions": [{"componentVersion": "1.0.4"}, {"componentVersion": "1.0.1"}]},
-    )
-    return service_clients
+        def _clients(*args, **kwargs):
+            if args[0] == "greengrassv2":
+                return self.gg_client
+            elif args[0] == "sts":
+                return self.sts_client
+            elif args[0] == "s3":
+                return self.s3_client
 
+        self.mocker.patch("boto3.client", _clients)
 
-def test_publish_command_instantiation(mocker, mock_project_config):
-    mock_check_if_arguments_conflict = mocker.patch.object(PublishCommand, "check_if_arguments_conflict", return_value=None)
-    mock_run = mocker.patch.object(PublishCommand, "run", return_value=None)
-    mock_get_service_clients = mocker.patch(
-        "gdk.commands.component.project_utils.get_service_clients",
-        return_value={"s3_client": None, "greengrass_client": None},
-    )
-    parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
+        self.gg_client_stub = Stubber(self.gg_client)
+        self.sts_client_stub = Stubber(self.sts_client)
 
-    assert mock_project_config.call_count == 1
-    assert mock_check_if_arguments_conflict.call_count == 1
-    assert mock_run.call_count == 1
-    assert mock_get_service_clients.call_count == 1
+        self.gg_client_stub.activate()
+        self.sts_client_stub.activate()
 
-
-def test_publish_run_already_built(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    file_name = (
-        Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
-    )
-    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
-    spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
-        mock_file.assert_any_call(file_name)
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
-
-    # Assert cloud calls
-    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
-    assert spy_upload_file.call_count == 1  # Only one file to upload
-    assert spy_create_component.call_count == 1  # Create gg private component
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-
-
-def test_publish_run_with_bucket_argument(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-
-    file_name = (
-        Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
-    )
-    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
-    spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish", "-b", "new-bucket-arg"]))
-        mock_file.assert_any_call(file_name)
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
-
-    # Assert cloud calls
-    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with("new-bucket-arg", "us-east-1")  # Use exact bucket arg
-    assert spy_upload_file.call_count == 1  # Only one file to upload
-    assert spy_create_component.call_count == 1  # Create gg private component
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-
-
-def test_publish_run_with_all_arguments(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
-    file_name = (
-        Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
-    )
-
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
-    spy_upload_file = mocker.spy(get_service_clients["s3_client"], "upload_file")
-    spy_create_component = mocker.spy(get_service_clients["greengrass_client"], "create_component_version")
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(
-            CLIParser.cli_parser.parse_args(
-                ["component", "publish", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", '{"file_upload_args":{"ACL":"ABC"}}']
-            )
-        )
-        mock_file.assert_any_call(file_name)
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
-
-    # Assert cloud calls
-    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with("new-bucket-arg", "us-west-2")  # Use exact bucket arg
-    spy_upload_file.assert_called_with(
-        ANY,
-        "new-bucket-arg",
-        "component_name/1.0.0/hello_world.py",
-        ExtraArgs={"ACL": "ABC"},
-    )
-    assert spy_upload_file.call_count == 1  # Only one file to upload
-    assert spy_create_component.call_count == 1  # Create gg private component
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-
-
-@pytest.mark.parametrize(
-    "options_arg",
-    ["file/path/not_exists.json"],
-)
-def test_publish_with_invalid_options_file_not_exists(mocker, options_arg, get_service_clients, mock_project_config):
-    mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    if options_arg == "file_exists.json":
-        mocker.patch(
-            "gdk.common.utils.file_exists",
-            return_value=True,
+    def test_GIVEN_no_artifacts_and_NEXT_PATCH_WHEN_publish_THEN_create_a_component_with_recipe(self):
+        self.zip_test_data()
+        account_num = "123456789012"
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": account_num}, {})
+        self.gg_client_stub.add_response(
+            "list_component_versions",
+            {
+                "componentVersions": [
+                    {
+                        "componentName": "abc",
+                        "componentVersion": "1.1.1",
+                        "arn": f"arn:aws:greengrass:us-east-1:{account_num}:components:abc",
+                    },
+                ],
+                "nextToken": "string",
+            },
+            {"arn": f"arn:aws:greengrass:us-east-1:{account_num}:components:abc"},
         )
 
-    with pytest.raises(Exception) as e:
-        with patch("builtins.open", mock_open()):
-            parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(
-                    ["component", "publish", "-d", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", options_arg]
-                )
-            )
-    assert "The json file path provided in the command does not exist" in e.value.args[0]
-
-
-@pytest.mark.parametrize(
-    "options_arg",
-    ['{"missing":quotes"}'],
-)
-def test_publish_with_invalid_options(mocker, options_arg, get_service_clients, mock_project_config):
-    mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    if options_arg == "file_exists.json":
-        mocker.patch(
-            "gdk.common.utils.file_exists",
-            return_value=True,
+        self.gg_client_stub.add_response(
+            "create_component_version",
+            {
+                "componentName": "abc",
+                "componentVersion": "1.1.2",
+                "creationTimestamp": datetime.datetime.now(),
+                "status": {},
+            },
+            {"inlineRecipe": ANY},
         )
 
-    with pytest.raises(Exception) as e:
-        with patch("builtins.open", mock_open()):
-            parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(
-                    ["component", "publish", "-d", "-b", "new-bucket-arg", "-r", "us-west-2", "-o", options_arg]
-                )
-            )
-    assert "JSON string is incorrectly formatted." in e.value.args[0]
+        pc = PublishCommand({})
+        pc.run()
+        self.gg_client_stub.assert_no_pending_responses()
+        self.sts_client_stub.assert_no_pending_responses()
+        assert self.tmpdir.joinpath("greengrass-build/recipes/abc-1.1.2.yaml").exists()
 
-
-@pytest.mark.parametrize(
-    "options_arg_file_contents",
-    ['{"missing""colon"}', '{"invalid_json_string":{"missing":quotes"}}'],
-)
-def test_publish_with_invalid_options_file(mocker, options_arg_file_contents, get_service_clients, mock_project_config):
-    mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    mocker.patch(
-        "gdk.common.utils.file_exists",
-        return_value=True,
-    )
-    with pytest.raises(Exception) as e:
-        with patch("builtins.open", mock_open(read_data=options_arg_file_contents)):
-            parse_args_actions.run_command(
-                CLIParser.cli_parser.parse_args(
-                    [
-                        "component",
-                        "publish",
-                        "-d",
-                        "-b",
-                        "new-bucket-arg",
-                        "-r",
-                        "us-west-2",
-                        "-o",
-                        "options_arg_file_contents.json",
-                    ]
-                )
-            )
-    assert "JSON string is incorrectly formatted." in e.value.args[0]
-
-
-def test_publish_run_next_patch(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    pc["component_version"] = "NEXT_PATCH"
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
-    # Next patch version based on test data
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.5")).resolve()
-
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
-    spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
-        mock_file.assert_any_call(file_name)
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
-
-    # Assert cloud calls
-    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
-    assert spy_upload_file.call_count == 1  # Only one file to upload
-    assert spy_create_component.call_count == 1  # Create gg private component
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-
-
-def test_publish_run_next_patch_doesnt_exist(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    pc["component_version"] = "NEXT_PATCH"
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
-    # Next patch version based on test data
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
-    mocker.patch.object(
-        get_service_clients["greengrass_client"],
-        "list_component_versions",
-        return_value={"componentVersions": []},
-    )
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
-    spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
-        mock_file.assert_any_call(file_name)
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
-
-    # Assert cloud calls
-    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
-    assert spy_upload_file.call_count == 1  # Only one file to upload
-    assert spy_create_component.call_count == 1  # Create gg private component
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-
-
-def test_publish_run_not_built(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=False,
-    )
-    mock_build = mocker.patch("gdk.commands.component.component.build", return_value=None)
-
-    pc = mock_project_config.return_value
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
-    file_name = (
-        Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], pc["component_version"])).resolve()
-    )
-
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
-    spy_upload_file = mocker.patch.object(get_service_clients["s3_client"], "upload_file")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
-        mock_file.assert_any_call(file_name)
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_build.call_count == 1  # build the component first
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_transform.call_count == 1  # Checks if artifact in the recipe exist in the build directory
-
-    # Assert cloud calls
-    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    assert spy_upload_file.call_count == 1  # Only one file to upload
-    assert spy_create_component.call_count == 1  # Create gg private component
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-
-
-def test_publish_run_error_during_upload(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[Path("hello_world.py")])
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
-
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-    spy_create_bucket = mocker.patch.object(S3Client, "create_bucket")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-
-    mocker.patch.object(get_service_clients["s3_client"], "upload_file", side_effect=Exception("Error in upload"))
-    with pytest.raises(Exception) as e:
-        with patch("builtins.open", mock_open()) as mock_file:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
-            mock_file.assert_any_call(file_name, "w")
-        assert "Error in upload" in e.args.value[0]
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_glob.call_count == 0  # Recipe is not updated
-
-    # Assert cloud calls
-    assert spy_create_bucket.call_count == 1  # Tries to create a bucket if at least one artifact needs to be uploaded
-    spy_create_bucket.assert_called_with("default-us-east-1-1234", "us-east-1")
-    assert spy_create_component.call_count == 0  # GG component is not created
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-
-
-def test_publish_run_bucket_exists_owned_by_someone(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-
-    mock_glob = mocker.patch("pathlib.Path.glob", return_value=[Path("hello_world.py")])
-    # Next patch version based on test data
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
-
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
-
-    def throw_err(*args, **kwargs):
-        ex = boto3.client("s3").exceptions.ClientError({"Error": {"Code": "403", "Message": "Forbidden"}}, "GetBucketLocation")
-        raise ex
-
-    mock_get_bucket_location = mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", side_effect=throw_err)
-    mock_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
-    mocker.patch.object(get_service_clients["s3_client"], "upload_file", return_value=None)
-    with pytest.raises(Exception) as e:
-        with patch("builtins.open", mock_open()) as mock_file:
-            parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish"]))
-            mock_file.assert_any_call(file_name, "w")
-        assert (
-            "An error occurred (BucketAlreadyExists) when calling the CreateBucket operation: fake message" in e.value.args[0]
+    def test_GIVEN_build_artifacts_WHEN_publish_with_args_THEN_upload_artifacts_and_create_a_component(self):
+        self.zip_test_data()
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/").mkdir(parents=True, exist_ok=True)
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/hello_world.py").touch()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value={
+                "component": {
+                    "abc": {
+                        "author": "author",
+                        "version": "2.0.0",
+                        "build": {"build_system": "zip"},
+                        "publish": {"bucket": "default", "region": "us-west-2"},
+                    }
+                }
+            },
         )
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_glob.call_count == 0  # Recipe is not updated
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/somefile").touch()
+        account_num = "123456789012"
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": account_num}, {})
+        self.mocker.patch.object(self.s3_client, "get_bucket_location", return_value={"LocationConstraint": "us-east-2"})
+        mock_upload_file = self.mocker.patch.object(self.s3_client, "upload_file", return_value=None)
 
-    # Assert cloud calls
-    assert not mock_create_bucket.called  # Tries to create a bucket if at least one artifact needs to be uploaded
-    mock_get_bucket_location.assert_called_with("default-us-east-1-1234", "us-east-1")
-    assert not spy_create_component.called  # GG component is not created
-    assert spy_get_caller_identity.call_count == 1  # Get account number
+        self.gg_client_stub.add_response(
+            "create_component_version",
+            {
+                "componentName": "abc",
+                "componentVersion": "2.0.0",
+                "creationTimestamp": datetime.datetime.now(),
+                "status": {},
+            },
+            {"inlineRecipe": ANY},
+        )
 
+        pc = PublishCommand({"region": "us-east-2", "bucket": "some-bucket", "options": '{"file_upload_args":{"ACL":"ABC"}}'})
+        pc.run()
+        self.gg_client_stub.assert_no_pending_responses()
+        self.sts_client_stub.assert_no_pending_responses()
+        assert self.tmpdir.joinpath("greengrass-build/recipes/abc-2.0.0.yaml").exists()
+        mock_upload_file.assert_called_with(
+            str(self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/hello_world.py").resolve()),
+            "some-bucket",
+            "abc/2.0.0/hello_world.py",
+            ExtraArgs={"ACL": "ABC"},
+        )
 
-def test_publish_run_bucket_already_owned_in_same_region(mocker, get_service_clients, mock_project_config):
-    mock_build_dir_exists = mocker.patch(
-        "gdk.common.utils.dir_exists",
-        return_value=True,
-    )
-    pc = mock_project_config.return_value
-    mock_iter_dir = mocker.patch("pathlib.Path.iterdir", return_value=[Path("hello_world.py")])
-    mock_transform = mocker.patch.object(PublishRecipeTransformer, "transform")
-    file_name = Path(pc["gg_build_recipes_dir"]).joinpath("{}-{}.json".format(pc["component_name"], "1.0.0")).resolve()
+    def test_GIVEN_component_does_not_exist_WHEN_publish_with_NEXT_PATCH_THEN_create_1_0_0_component(self):
+        self.zip_test_data()
+        account_num = "123456789012"
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value={
+                "component": {
+                    "abc": {
+                        "author": "author",
+                        "version": "NEXT_PATCH",
+                        "build": {"build_system": "zip"},
+                        "publish": {"bucket": "default", "region": "us-east-1"},
+                    }
+                }
+            },
+        )
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": account_num}, {})
+        self.gg_client_stub.add_response(
+            "list_component_versions",
+            {
+                "componentVersions": [],
+                "nextToken": "string",
+            },
+            {"arn": f"arn:aws:greengrass:us-east-1:{account_num}:components:abc"},
+        )
 
-    spy_get_caller_identity = mocker.spy(get_service_clients["sts_client"], "get_caller_identity")
+        self.gg_client_stub.add_response(
+            "create_component_version",
+            {
+                "componentName": "abc",
+                "componentVersion": "1.0.0",
+                "creationTimestamp": datetime.datetime.now(),
+                "status": {},
+            },
+            {"inlineRecipe": ANY},
+        )
 
-    mock_get_bucket_location = mocker.patch.object(S3Client, "valid_bucket_for_artifacts_exists", return_value=True)
-    mock_create_bucket = mocker.patch.object(get_service_clients["s3_client"], "create_bucket")
-    spy_create_component = mocker.patch.object(get_service_clients["greengrass_client"], "create_component_version")
+        pc = PublishCommand({})
+        pc.run()
+        self.gg_client_stub.assert_no_pending_responses()
+        self.sts_client_stub.assert_no_pending_responses()
+        assert self.tmpdir.joinpath("greengrass-build/recipes/abc-1.0.0.yaml").exists()
 
-    with patch("builtins.open", mock_open()) as mock_file:
-        parse_args_actions.run_command(CLIParser.cli_parser.parse_args(["component", "publish", "-d"]))
-        mock_file.assert_any_call(file_name)
-    assert mock_build_dir_exists.call_count == 1  # Checks if build directory exists
-    assert mock_iter_dir.call_count == 1  # Checks if there is at least one artifact to upload
-    assert mock_transform.call_count == 1  # Recipe is not updated
+    def test_GIVEN_artifacts_WHEN_exc_while_fetching_creds_during_publish_THEN_component_is_not_created(self):
+        self.zip_test_data()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value={
+                "component": {
+                    "abc": {
+                        "author": "author",
+                        "version": "NEXT_PATCH",
+                        "build": {"build_system": "zip"},
+                        "publish": {"bucket": "default", "region": "us-east-1"},
+                    }
+                }
+            },
+        )
+        self.sts_client_stub.add_client_error("get_caller_identity", service_error_code="InvalidClientTokenId")
 
-    # Assert cloud calls
-    assert not mock_create_bucket.called  # Tries to create a bucket if at least one artifact needs to be uploaded
-    assert spy_create_component.call_count == 1  # GG component is not created
-    assert spy_get_caller_identity.call_count == 1  # Get account number
-    mock_get_bucket_location.assert_called_with("default-us-east-1-1234", "us-east-1")
+        with pytest.raises(Exception) as e:
+            pc = PublishCommand({})
+            pc.run()
+        assert "InvalidClientTokenId" in str(e)
+        self.sts_client_stub.assert_no_pending_responses()
+        assert len(list(self.tmpdir.joinpath("greengrass-build/recipes/").iterdir())) == 1
 
+    def test_GIVEN_artifacts_WHEN_exc_while_getting_component_version_during_publish_THEN_component_is_not_created(self):
+        self.zip_test_data()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value={
+                "component": {
+                    "abc": {
+                        "author": "author",
+                        "version": "NEXT_PATCH",
+                        "build": {"build_system": "zip"},
+                        "publish": {"bucket": "default", "region": "us-east-1"},
+                    }
+                }
+            },
+        )
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": "1234"}, {})
+        self.gg_client_stub.add_client_error("list_component_versions", service_error_code="AccessDeniedException")
+        with pytest.raises(Exception) as e:
+            pc = PublishCommand({})
+            pc.run()
+        assert "AccessDeniedException" in str(e)
+        self.sts_client_stub.assert_no_pending_responses()
+        self.gg_client_stub.assert_no_pending_responses()
+        assert len(list(self.tmpdir.joinpath("greengrass-build/recipes/").iterdir())) == 1
 
-def project_config():
-    return {
-        "component_name": "component_name",
-        "component_build_config": {"build_system": "zip"},
-        "component_version": "1.0.0",
-        "component_author": "abc",
-        "bucket": "default",
-        "region": "us-east-1",
-        "options": {"what": "is"},
-        "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
-        "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
-        "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
-        "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
-        "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/valid_component_recipe.json"),
-    }
+    def test_GIVEN_built_artifacts_WHEN_publish_with_invalid_options_file_THEN_raise_exception(self):
+        self.zip_test_data()
+        with open(self.tmpdir.joinpath("options.json"), "w") as f:
+            f.write('{"file_upload_args:{"missing":"quote"}}')
+
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/").mkdir(parents=True, exist_ok=True)
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/hello_world.py").touch()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value={
+                "component": {
+                    "abc": {
+                        "author": "author",
+                        "version": "2.0.0",
+                        "build": {"build_system": "zip"},
+                        "publish": {"bucket": "default", "region": "us-west-2"},
+                    }
+                }
+            },
+        )
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/somefile").touch()
+        account_num = "123456789012"
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": account_num}, {})
+
+        pc = PublishCommand({"options": str(self.tmpdir.joinpath("options.json").resolve())})
+        with pytest.raises(Exception) as e:
+            pc.run()
+        assert "JSON string is incorrectly formatted." in str(e)
+        self.sts_client_stub.assert_no_pending_responses()
+
+    def zip_test_data(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
+        )
+
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/build_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
+
+        content = CaseInsensitiveRecipeFile().read(self.tmpdir.joinpath("recipe.yaml"))
+        content.update_value("componentName", "abc")
+        CaseInsensitiveRecipeFile().write(self.tmpdir.joinpath("recipe.yaml"), content)
+
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/").mkdir(parents=True, exist_ok=True)
+        self.tmpdir.joinpath("greengrass-build/recipes/").mkdir(parents=True, exist_ok=True)
+        shutil.copy(
+            self.tmpdir.joinpath("recipe.yaml"),
+            self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml"),
+        )
