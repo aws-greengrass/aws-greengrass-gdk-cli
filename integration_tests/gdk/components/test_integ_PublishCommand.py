@@ -6,12 +6,9 @@ from gdk.commands.component.PublishCommand import PublishCommand
 import datetime
 
 from unittest import TestCase
-import pytest
-from pathlib import Path
 import os
 import shutil
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
-import boto3
 from botocore.stub import Stubber, ANY
 
 

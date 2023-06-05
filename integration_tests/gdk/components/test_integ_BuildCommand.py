@@ -52,7 +52,7 @@ class ComponentBuildCommandIntegTest(TestCase):
         assert not build_recipe_file.exists()
 
     def test_GIVEN_maven_build_system_WHEN_build_with_artifacts_on_s3_THEN_build_succeeds(self):
-        ## Prepare test data
+        # Prepare test data
         self.maven_test_data()
         shutil.copy(
             self.c_dir.joinpath("integration_tests/test_data/maven/pom.xml"),
@@ -63,7 +63,7 @@ class ComponentBuildCommandIntegTest(TestCase):
         artifacts.append({"URI": "s3://some/s3/bucket/abc.txt"})
         CaseInsensitiveRecipeFile().write(self.tmpdir.joinpath("recipe.yaml"), content)
 
-        ## Prepare s3 stub
+        # Prepare s3 stub
         client = boto3.client("s3", region_name="us-east-1")
         self.mocker.patch("boto3.client", return_value=client)
         s3_client_stub = Stubber(client)
@@ -74,19 +74,19 @@ class ComponentBuildCommandIntegTest(TestCase):
         )
         s3_client_stub.activate()
 
-        ## WHEN
+        # WHEN
         bc = BuildCommand({})
         bc.run()
 
-        ## THEN
+        # THEN
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
         assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/HelloWorld-1.0.0.jar").exists()
         assert build_recipe_file.exists()
 
         with open(build_recipe_file, "r") as f:
             content = f.read()
-            assert f"s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld-1.0.0.jar" in content
-            assert f"s3://some/s3/bucket/abc.txt" in content
+            assert "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld-1.0.0.jar" in content
+            assert "s3://some/s3/bucket/abc.txt" in content
 
     def test_GIVEN_maven_build_system_WHEN_build_THEN_build_jar_artifacts(self):
         self.maven_test_data()
@@ -103,7 +103,7 @@ class ComponentBuildCommandIntegTest(TestCase):
 
         with open(build_recipe_file, "r") as f:
             content = f.read()
-            assert f"s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld-1.0.0.jar" in content
+            assert "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/HelloWorld-1.0.0.jar" in content
 
     def test_GIVEN_maven_build_system_WHEN_exception_in_build_THEN_raise_exception(self):
         self.maven_test_data()
