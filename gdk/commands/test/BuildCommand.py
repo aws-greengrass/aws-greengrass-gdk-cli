@@ -47,7 +47,7 @@ class BuildCommand(Command):
     def build_e2e_test_module(self):
         logging.info("Building the E2E testing module")
         build_system = E2ETestBuildSystem.get(self._test_config.test_build_system)
-        build_system.build(self._gg_build_e2e_test_dir)
+        build_system.build(path=self._gg_build_e2e_test_dir)
 
     def _copy_e2e_test_dir_to_build(self):
         logging.debug("Copying the E2E testing module to greengrass-build directory")
