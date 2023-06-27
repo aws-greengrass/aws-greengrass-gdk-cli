@@ -18,8 +18,8 @@ class PublishCommand(Command):
 
         self.project_config = project_utils.get_project_config_values()
         self.service_clients = project_utils.get_service_clients(self._get_region())
-        self.s3_client = S3Client(self.project_config, self.service_clients)
-        self.greengrass_client = Greengrassv2Client(self.project_config, self.service_clients)
+        self.s3_client = S3Client(self._get_region())
+        self.greengrass_client = Greengrassv2Client(self._get_region())
 
     def run(self):
         try:
@@ -136,7 +136,7 @@ class PublishCommand(Command):
         PublishRecipeTransformer(self.project_config).transform()
 
         logging.info(f"Creating a new greengrass component {component_name}-{component_version}")
-        self.greengrass_client.create_gg_component()
+        self.greengrass_client.create_gg_component(self.project_config["publish_recipe_file"])
 
     def upload_artifacts_s3(self) -> None:
         """
@@ -144,19 +144,35 @@ class PublishCommand(Command):
 
         Raises an exception when the request is not successful.
         """
-        bucket = self.project_config["bucket"]
-        region = self.project_config["region"]
-        logging.info(
-            f"Uploading component artifacts to S3 bucket: {bucket}. If this is your first time using this bucket, add the"
-            " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
-            f" artifacts. For more information, see {utils.doc_link_device_role}."
-        )
+        _bucket = self.project_config["bucket"]
 
         build_component_artifacts = list(self.project_config["gg_build_component_artifacts_dir"].iterdir())
 
-        if len(build_component_artifacts) != 0:
-            self.s3_client.create_bucket(bucket, region)
-            self.s3_client.upload_artifacts(build_component_artifacts)
+        if not build_component_artifacts:
+            logging.info("No artifacts found in the component build folder. Skipping the artifact upload step")
+            return
+
+        logging.info(
+            (
+                "Uploading component artifacts to S3 bucket: %s. If this is your first time using this bucket, add the"
+                " 's3:GetObject' permission to each core device's token exchange role to allow it to download the component"
+                " artifacts. For more information, see %s."
+            ),
+            _bucket,
+            utils.doc_link_device_role,
+        )
+
+        self.s3_client.create_bucket(_bucket)
+
+        component_name = self.project_config["component_name"]
+        component_version = self.project_config["component_version"]
+        options = self.project_config["options"]
+        s3_upload_file_args = options.get("file_upload_args", dict())
+
+        for artifact in build_component_artifacts:
+            s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
+            logging.debug("Uploading artifact '%s' to the bucket '%s'.", artifact.resolve(), _bucket)
+            self.s3_client.upload_artifact(artifact, _bucket, s3_file_path, s3_upload_file_args)
 
     def get_next_version(self):
         """
@@ -175,7 +191,11 @@ class PublishCommand(Command):
         logging.debug("Fetching private components from the account.")
         try:
             c_name = self.project_config["component_name"]
-            c_next_patch_version = self.greengrass_client.get_highest_component_version_()
+            region = self.project_config["region"]
+            account_num = self.project_config["account_number"]
+            component_arn = f"arn:aws:greengrass:{region}:{account_num}:components:{c_name}"
+
+            c_next_patch_version = self.greengrass_client.get_highest_component_version_(component_arn)
             if not c_next_patch_version:
                 logging.info(
                     "No private version of the component '{}' exist in the account. Using '{}' as the next version to create."
