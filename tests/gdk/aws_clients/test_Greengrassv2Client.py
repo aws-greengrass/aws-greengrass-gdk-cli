@@ -31,7 +31,7 @@ class Greengrassv2ClientTest(TestCase):
         c_arn = "arn:aws:greengrass:test-region:1234:components:c_name"
         self.mock_ggv2_client.add_response("list_component_versions", response, {"arn": c_arn})
 
-        highest_component_version = ggv2.get_highest_component_version_(c_arn)
+        highest_component_version = ggv2.get_highest_cloud_component_version(c_arn)
         assert highest_component_version == "1.0.4"
 
     def test_get_next_patch_component_version_no_components(self):
@@ -39,7 +39,7 @@ class Greengrassv2ClientTest(TestCase):
         c_arn = "arn:aws:greengrass:test-region:1234:components:c_name"
         self.mock_ggv2_client.add_response("list_component_versions", {"componentVersions": []}, {"arn": c_arn})
 
-        highest_component_version = ggv2.get_highest_component_version_(c_arn)
+        highest_component_version = ggv2.get_highest_cloud_component_version(c_arn)
         assert highest_component_version is None
 
     def test_get_next_patch_component_version_exception(self):
@@ -47,7 +47,7 @@ class Greengrassv2ClientTest(TestCase):
         c_arn = "arn:aws:greengrass:test-region:1234:components:c_name"
         self.mock_ggv2_client.add_client_error("list_component_versions", service_error_code="500")
         with pytest.raises(Exception) as e:
-            ggv2.get_highest_component_version_(c_arn)
+            ggv2.get_highest_cloud_component_version(c_arn)
         assert "An error occurred (500) when calling the ListComponentVersions operation" in e.value.args[0]
 
     def test_create_gg_component(self):

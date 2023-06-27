@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
-
+import boto3
 import gdk.commands.component.component as component
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.utils as utils
@@ -17,6 +17,7 @@ class PublishCommand(Command):
         super().__init__(command_args, "publish")
 
         self.project_config = project_utils.get_project_config_values()
+        self.boto3_session = boto3.Session()
         self.service_clients = project_utils.get_service_clients(self._get_region())
         self.s3_client = S3Client(self._get_region())
         self.greengrass_client = Greengrassv2Client(self._get_region())
@@ -193,9 +194,10 @@ class PublishCommand(Command):
             c_name = self.project_config["component_name"]
             region = self.project_config["region"]
             account_num = self.project_config["account_number"]
-            component_arn = f"arn:aws:greengrass:{region}:{account_num}:components:{c_name}"
+            partition = self.boto3_session.get_partition_for_region(region_name=region)
+            component_arn = f"arn:{partition}:greengrass:{region}:{account_num}:components:{c_name}"
 
-            c_next_patch_version = self.greengrass_client.get_highest_component_version_(component_arn)
+            c_next_patch_version = self.greengrass_client.get_highest_cloud_component_version(component_arn)
             if not c_next_patch_version:
                 logging.info(
                     "No private version of the component '{}' exist in the account. Using '{}' as the next version to create."

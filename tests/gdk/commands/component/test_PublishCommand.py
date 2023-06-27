@@ -57,7 +57,7 @@ class PublishCommandTest(TestCase):
 
     def test_get_next_version_component_not_exists(self):
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", return_value=None
+            Greengrassv2Client, "get_highest_cloud_component_version", return_value=None
         )
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
@@ -70,7 +70,7 @@ class PublishCommandTest(TestCase):
     def test_get_next_version_component_already_exists(self):
         publish = PublishCommand({})
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", return_value="1.0.6"
+            Greengrassv2Client, "get_highest_cloud_component_version", return_value="1.0.6"
         )
         publish.project_config["account_number"] = "12345"
         version = publish.get_next_version()
@@ -100,7 +100,7 @@ class PublishCommandTest(TestCase):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", return_value="1.0.6-x-y-z"
+            Greengrassv2Client, "get_highest_cloud_component_version", return_value="1.0.6-x-y-z"
         )
         version = publish.get_next_version()
         assert version == "1.0.7"
@@ -110,7 +110,7 @@ class PublishCommandTest(TestCase):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", side_effect=HTTPError("some error")
+            Greengrassv2Client, "get_highest_cloud_component_version", side_effect=HTTPError("some error")
         )
         with pytest.raises(Exception) as e:
             publish.get_next_version()

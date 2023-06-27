@@ -10,7 +10,7 @@ class Greengrassv2Client:
     def __init__(self, _region):
         self.client = boto3.client("greengrassv2", region_name=_region)
 
-    def get_highest_component_version_(self, component_arn) -> str:
+    def get_highest_cloud_component_version(self, component_arn) -> str:
         """
         Gets highest version of the component from the sorted order of its versions from an account in a region.
 
