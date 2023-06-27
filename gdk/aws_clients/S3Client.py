@@ -1,5 +1,5 @@
 import logging
-
+import boto3
 from botocore.exceptions import ClientError
 
 
@@ -8,11 +8,11 @@ class S3Client:
     S3 client wrapper
     """
 
-    def __init__(self, project_configuration, service_clients):
-        self.project_config = project_configuration
-        self.s3_client = service_clients["s3_client"]
+    def __init__(self, _region):
+        self.s3_client = boto3.client("s3", region_name=_region)
+        self._region = _region
 
-    def create_bucket(self, bucket, region):
+    def create_bucket(self, bucket):
         """
         Creates a new s3 bucket for artifacts if it doesn't exist already.
 
@@ -27,6 +27,7 @@ class S3Client:
         -------
             None
         """
+        region = self._region
         if self.valid_bucket_for_artifacts_exists(bucket, region):
             logging.info("Not creating an artifacts bucket as it already exists.")
             return
@@ -42,7 +43,7 @@ class S3Client:
             raise
         logging.info("Successfully created the artifacts bucket '%s' in region '%s'", bucket, region)
 
-    def upload_artifacts(self, artifacts_to_upload):
+    def upload_artifact(self, artifact_path, bucket, s3_key_path, extra_args):
         """
         Uploads all the artifacts from component artifacts build folder to s3 bucket.
 
@@ -53,23 +54,11 @@ class S3Client:
             component_name(string): Name of the component to use in the s3 file path.
             component_version(string): Version of the component to use in the s3 file path.
 
-        Returns
-        -------
-            None
         """
         try:
-            component_name = self.project_config["component_name"]
-            component_version = self.project_config["component_version"]
-            bucket = self.project_config["bucket"]
-            options = self.project_config["options"]
-            s3_upload_file_args = options.get("file_upload_args", dict())
-
-            for artifact in artifacts_to_upload:
-                s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
-                logging.debug("Uploading artifact '%s' to the bucket '%s'.", artifact.resolve(), bucket)
-                self.s3_client.upload_file(str(artifact.resolve()), bucket, s3_file_path, ExtraArgs=s3_upload_file_args)
+            self.s3_client.upload_file(str(artifact_path.resolve()), bucket, s3_key_path, ExtraArgs=extra_args)
         except Exception:
-            logging.error("Failed to upload artifacts to s3 during publish.")
+            logging.error("Failed to upload artifacts to s3 during")
             raise
 
     def valid_bucket_for_artifacts_exists(self, bucket, region) -> bool:
@@ -89,8 +78,10 @@ class S3Client:
                 raise
             elif error_code == "AccessDenied":
                 logging.error(
-                    "Bucket '%s' already exists and is not owned by you. Please provide a different name for the"
-                    " bucket in the configuration.",
+                    (
+                        "Bucket '%s' already exists and is not owned by you. Please provide a different name for the"
+                        " bucket in the configuration."
+                    ),
                     bucket,
                 )
                 raise

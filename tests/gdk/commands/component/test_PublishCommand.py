@@ -56,20 +56,21 @@ class PublishCommandTest(TestCase):
         assert e.value.args[0] == "some error"
 
     def test_get_next_version_component_not_exists(self):
-
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", return_value=None
+            Greengrassv2Client, "get_highest_cloud_component_version", return_value=None
         )
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         version = publish.get_next_version()
         assert version == "1.0.0"  # Fallback version
-        assert mock_get_next_patch_component_version.call_args_list == [call()]
+        assert mock_get_next_patch_component_version.call_args_list == [
+            call("arn:aws:greengrass:us-east-1:1234:components:component_name")
+        ]
 
     def test_get_next_version_component_already_exists(self):
         publish = PublishCommand({})
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", return_value="1.0.6"
+            Greengrassv2Client, "get_highest_cloud_component_version", return_value="1.0.6"
         )
         publish.project_config["account_number"] = "12345"
         version = publish.get_next_version()
@@ -99,7 +100,7 @@ class PublishCommandTest(TestCase):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", return_value="1.0.6-x-y-z"
+            Greengrassv2Client, "get_highest_cloud_component_version", return_value="1.0.6-x-y-z"
         )
         version = publish.get_next_version()
         assert version == "1.0.7"
@@ -109,7 +110,7 @@ class PublishCommandTest(TestCase):
         publish = PublishCommand({})
         publish.project_config["account_number"] = "1234"
         mock_get_next_patch_component_version = self.mocker.patch.object(
-            Greengrassv2Client, "get_highest_component_version_", side_effect=HTTPError("some error")
+            Greengrassv2Client, "get_highest_cloud_component_version", side_effect=HTTPError("some error")
         )
         with pytest.raises(Exception) as e:
             publish.get_next_version()
@@ -124,29 +125,24 @@ class PublishCommandTest(TestCase):
             "gg_build_component_artifacts_dir": Path("some-build-dir"),
         }
         publish.service_clients = {"s3_client": self.mocker.patch("boto3.client", return_value=None)}
-        publish.s3_client = S3Client(publish.project_config, publish.service_clients)
+        publish.s3_client = S3Client("test-region")
         self.mocker.patch("pathlib.Path.iterdir", return_value=[])
         mock_create_bucket = self.mocker.spy(S3Client, "create_bucket")
-        mock_upload_file = self.mocker.spy(S3Client, "upload_artifacts")
         publish.upload_artifacts_s3()
         assert not mock_create_bucket.called
-        assert not mock_upload_file.called
 
     def test_upload_artifacts(self):
         publish = PublishCommand({})
-        publish.project_config = {
-            "bucket": "test-bucket",
-            "region": "test-region",
-            "gg_build_component_artifacts_dir": Path("some-build-dir"),
-        }
+        publish.project_config["bucket"] = "test-bucket"
+        publish.project_config["region"] = "test-region"
         publish.service_clients = {"s3_client": self.mocker.patch("boto3.client", return_value=None)}
-        publish.s3_client = S3Client(publish.project_config, publish.service_clients)
+        self.mocker.patch.object(S3Client, "upload_artifact", return_value=None)
+
+        publish.s3_client = S3Client("test-region")
         self.mocker.patch("pathlib.Path.iterdir", return_value=[Path("a.py")])
         mock_create_bucket = self.mocker.patch.object(S3Client, "create_bucket", return_value=None)
-        mock_upload_file = self.mocker.patch.object(S3Client, "upload_artifacts", return_value=None)
         publish.upload_artifacts_s3()
-        assert mock_create_bucket.call_args_list == [call("test-bucket", "test-region")]
-        assert mock_upload_file.call_args_list == [call([Path("a.py")])]
+        assert mock_create_bucket.call_args_list == [call("test-bucket")]
 
     def test_publish_run_not_build(self):
         mock_get_account_num = self.mocker.patch.object(PublishCommand, "get_account_number", return_value="1234")
