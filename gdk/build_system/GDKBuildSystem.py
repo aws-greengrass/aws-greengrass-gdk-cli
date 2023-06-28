@@ -29,7 +29,7 @@ class GDKBuildSystem(ABC):
         """
 
     @abstractmethod
-    def build(self, path=None) -> None:
+    def build(self, **kwargs) -> None:
         """
         Build the project
         """

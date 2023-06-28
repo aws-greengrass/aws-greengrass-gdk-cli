@@ -112,9 +112,9 @@ class ComponentBuildCommandIntegTest(TestCase):
         with pytest.raises(Exception) as e:
             bc.run()
         if platform.system() == "Windows":
-            assert "['mvn.cmd', 'clean', 'package']" in str(e)
+            assert "['mvn.cmd', 'package']" in str(e)
         else:
-            assert "['mvn', 'clean', 'package']" in str(e)
+            assert "['mvn', 'package']" in str(e)
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
         assert not self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/HelloWorld-1.0.0.jar").exists()
         assert not build_recipe_file.exists()

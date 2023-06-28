@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from unittest.mock import mock_open, patch
 
 import gdk.commands.component.project_utils as project_utils
 import gdk.common.exceptions.error_messages as error_messages
@@ -201,20 +200,3 @@ def test_service_clients_with_sts_region(mocker):
     project_utils.create_sts_client("region")
     assert mock_boto3_client.call_count == 1
     mock_boto3_client.assert_called_once_with("sts", region_name="region")
-
-
-def test_get_supported_component_builds_not_exists(mocker):
-    mock_file_not_exists = mocker.patch("gdk.common.utils.get_static_file_path", return_value=None)
-    project_utils.get_supported_component_builds()
-    assert mock_file_not_exists.called
-
-
-def test_get_supported_component_builds_exists(mocker):
-    mock_file_path = Path(".").resolve()
-    mock_file_not_exists = mocker.patch("gdk.common.utils.get_static_file_path", return_value=mock_file_path)
-    mock_json_loads = mocker.patch("json.loads")
-    with patch("builtins.open", mock_open(read_data="{}")) as mock_file:
-        project_utils.get_supported_component_builds()
-        mock_file.assert_called_once_with(mock_file_path, "r")
-        assert mock_file_not_exists.called
-        assert mock_json_loads.called
