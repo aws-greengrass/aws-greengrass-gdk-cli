@@ -2,8 +2,6 @@ import logging
 import subprocess as sp
 from pathlib import Path
 
-
-import gdk.commands.component.project_utils as project_utils
 import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
@@ -11,12 +9,14 @@ import gdk.common.utils as utils
 from gdk.build_system.ComponentBuildSystem import ComponentBuildSystem
 from gdk.commands.Command import Command
 from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
+from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 
 
 class BuildCommand(Command):
     def __init__(self, command_args) -> None:
         super().__init__(command_args, "build")
-        self.project_config = project_utils.get_project_config_values()
+
+        self.project_config = ComponentBuildConfiguration(command_args)
         self.build_recipe_transformer = BuildRecipeTransformer(self.project_config)
 
     def run(self):
@@ -38,23 +38,21 @@ class BuildCommand(Command):
         -------
             None
         """
-        component_build_config = self.project_config["component_build_config"]
-        build_system = component_build_config["build_system"]
+        build_system = self.project_config.build_system
 
-        logging.info(
-            "Building the component '{}' with the given project configuration.".format(self.project_config["component_name"])
-        )
+        logging.info("Building the component '%s' with the given project configuration.", self.project_config.component_name)
+
         # Create build directories
         self.create_gg_build_directories()
 
         if build_system == "custom":
             # Run custom command as is.
-            custom_build_command = component_build_config["custom_build_command"]
+            custom_build_command = self.project_config.build_config.get("custom_build_command", [])
             logging.info("Using custom build configuration to build the component.")
-            logging.info("Running the following command\n{}".format(custom_build_command))
+            logging.info("Running the following command\n%s", custom_build_command)
             sp.run(custom_build_command, check=True)
         else:
-            logging.info(f"Using '{build_system}' build system to build the component.")
+            logging.info("Using '%s' build system to build the component.", build_system)
             self.default_build_component()
 
     def create_gg_build_directories(self):
@@ -72,12 +70,12 @@ class BuildCommand(Command):
             None
         """
         # Clean build directory if it exists already.
-        utils.clean_dir(self.project_config["gg_build_directory"])
+        utils.clean_dir(self.project_config.gg_build_dir)
 
-        logging.debug("Creating '{}' directory with artifacts and recipes.".format(consts.greengrass_build_dir))
+        logging.debug("Creating '%s' directory with artifacts and recipes.", consts.greengrass_build_dir)
         # Create build artifacts and recipe directories
-        Path.mkdir(self.project_config["gg_build_recipes_dir"], parents=True, exist_ok=True)
-        Path.mkdir(self.project_config["gg_build_component_artifacts_dir"], parents=True, exist_ok=True)
+        Path.mkdir(self.project_config.gg_build_recipes_dir, parents=True, exist_ok=True)
+        Path.mkdir(self.project_config.gg_build_component_artifacts_dir, parents=True, exist_ok=True)
 
     def default_build_component(self):
         """
@@ -122,7 +120,7 @@ class BuildCommand(Command):
             None
         """
         try:
-            build_system = self.project_config["component_build_config"]["build_system"]
+            build_system = self.project_config.build_system
             logging.warning(
                 f"This component is identified as using '{build_system}' build system. If this is incorrect, please exit and"
                 f" specify custom build command in the '{consts.cli_project_config_file}'."

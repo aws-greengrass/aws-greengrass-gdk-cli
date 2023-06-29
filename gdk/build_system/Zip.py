@@ -5,6 +5,7 @@ from pathlib import Path
 import gdk.common.utils as utils
 import gdk.common.consts as consts
 from gdk.build_system.GDKBuildSystem import GDKBuildSystem
+from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 
 
 class Zip(GDKBuildSystem):
@@ -29,12 +30,9 @@ class Zip(GDKBuildSystem):
     def build_folder(self):
         return ["zip-build"]
 
-    def _get_build_options(self, project_config) -> dict:
-        return project_config["component_build_config"].get("options", dict())
-
     def build(self, **kwargs):
         try:
-            project_config = kwargs.get("project_config")
+            project_config: ComponentBuildConfiguration = kwargs.get("project_config")
             # Only one zip-build folder in the set
             zip_build = utils.get_current_directory().joinpath(*self.build_folder).resolve()
             artifacts_zip_build = Path(zip_build).joinpath(utils.get_current_directory().name).resolve()
@@ -48,12 +46,12 @@ class Zip(GDKBuildSystem):
 
             # Get build file name without extension. This will be used as name of the archive.
             archive_file = utils.get_current_directory().name
-            zip_name_setting = self._get_build_options(project_config).get("zip_name", None)
+            zip_name_setting = project_config.build_options.get("zip_name", None)
             if zip_name_setting is not None:
                 if len(zip_name_setting):
                     archive_file = zip_name_setting
                 else:
-                    archive_file = project_config["component_name"]
+                    archive_file = project_config.component_name
             logging.debug(
                 "Creating an archive named '{}.zip' in '{}' folder with the files in '{}' folder.".format(
                     archive_file, zip_build.name, artifacts_zip_build.name
@@ -67,7 +65,7 @@ class Zip(GDKBuildSystem):
             logging.error("Failed to zip the component in default build mode.")
             raise
 
-    def get_ignored_file_patterns(self, project_config) -> list:
+    def get_ignored_file_patterns(self, project_config: ComponentBuildConfiguration) -> list:
         """
         Creates a list of files or directory patterns to ignore while copying a directory.
 
@@ -85,12 +83,12 @@ class Zip(GDKBuildSystem):
         3. recipe file
         4. Any pattern defined on the exclude pattern array
         """
-        options = self._get_build_options(project_config)
+        options = project_config.build_options
 
         ignore_list = [
             consts.cli_project_config_file,
             consts.greengrass_build_dir,
-            project_config.get("component_recipe_file").name,
+            project_config.recipe_file.name,
         ]
 
         if not options:
