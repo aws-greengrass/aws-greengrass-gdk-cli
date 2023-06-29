@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
+from unittest import TestCase
 
 import pytest
-import tempfile
 import gdk.common.utils as utils
 import boto3
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
@@ -24,19 +24,27 @@ def rglob_build_file(mocker):
     return mock_rglob
 
 
-def test_transform_build_recipe_artifact_in_build(mocker):
-    mocker.patch(
-        "gdk.common.configuration.get_configuration",
-        return_value=config(),
-    )
-    curr_dir = Path(".").resolve()
-    recipe = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+class ComponentBuildCommandIntegTest(TestCase):
+    @pytest.fixture(autouse=True)
+    def __inject_fixtures(self, mocker, tmpdir):
+        self.mocker = mocker
+        self.tmpdir = Path(tmpdir).resolve()
+        self.c_dir = Path(".").resolve()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=config(),
+        )
+        os.chdir(self.tmpdir)
 
-    with tempfile.TemporaryDirectory() as newDir:
-        os.chdir(newDir)
-        shutil.copy(recipe, Path(newDir).joinpath("recipe.json").resolve())
+        yield
+        os.chdir(self.c_dir)
+
+    def test_transform_build_recipe_artifact_in_build(self):
+        recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+        # with tempfile.TemporaryDirectory() as newDir:
+        shutil.copy(recipe, Path(self.tmpdir).joinpath("recipe.json").resolve())
         bconfig = ComponentBuildConfiguration({})
-        zip_build_directory = Path(newDir).joinpath("zip-build").resolve()
+        zip_build_directory = Path(self.tmpdir).joinpath("zip-build").resolve()
         artifact_file = Path(zip_build_directory).joinpath("hello_world.py").resolve()
         zip_build_directory.mkdir(parents=True)
         artifact_file.touch(exist_ok=True)
@@ -56,27 +64,20 @@ def test_transform_build_recipe_artifact_in_build(mocker):
                 recipe["Manifests"][0]["Artifacts"][0]["URI"]
                 == "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/hello_world.py"
             )
-    os.chdir(curr_dir)
 
-
-def test_transform_build_recipe_artifact_in_s3(mocker):
-    mocker.patch(
-        "gdk.common.configuration.get_configuration",
-        return_value=config(),
-    )
-    curr_dir = Path(".").resolve()
-    recipe = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
-    mocker.patch(
-        "gdk.commands.component.project_utils.create_s3_client",
-        return_value=mocker.patch("boto3.client", return_value=boto3.client("s3")),
-    )
-    mock_s3_head_object = mocker.patch("boto3.client.head_object", return_value={"ResponseMetadata": {"HTTPStatusCode": 200}})
-    with tempfile.TemporaryDirectory() as newDir:
-        os.chdir(newDir)
-        shutil.copy(recipe, Path(newDir).joinpath("recipe.json").resolve())
+    def test_transform_build_recipe_artifact_in_s3(self):
+        recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+        self.mocker.patch(
+            "gdk.commands.component.project_utils.create_s3_client",
+            return_value=self.mocker.patch("boto3.client", return_value=boto3.client("s3")),
+        )
+        mock_s3_head_object = self.mocker.patch(
+            "boto3.client.head_object", return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        )
+        shutil.copy(recipe, Path(self.tmpdir).joinpath("recipe.json").resolve())
         bconfig = ComponentBuildConfiguration({})
 
-        zip_build_directory = Path(newDir).joinpath("zip-build").resolve()
+        zip_build_directory = Path(self.tmpdir).joinpath("zip-build").resolve()
         zip_build_directory.mkdir(parents=True)
         bconfig.gg_build_component_artifacts_dir.mkdir(parents=True)
         bconfig.gg_build_recipes_dir.mkdir(parents=True)
@@ -94,22 +95,13 @@ def test_transform_build_recipe_artifact_in_s3(mocker):
                 recipe["Manifests"][0]["Artifacts"][0]["URI"]
                 == "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"
             )
-    os.chdir(curr_dir)
 
+    def test_transform_build_recipe_artifact_not_found(self):
+        recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
 
-def test_transform_build_recipe_artifact_not_found(mocker):
-    mocker.patch(
-        "gdk.common.configuration.get_configuration",
-        return_value=config(),
-    )
-    curr_dir = Path(".").resolve()
-    recipe = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
-
-    with tempfile.TemporaryDirectory() as newDir:
-        os.chdir(newDir)
-        shutil.copy(recipe, Path(newDir).joinpath("recipe.json").resolve())
+        shutil.copy(recipe, Path(self.tmpdir).joinpath("recipe.json").resolve())
         bconfig = ComponentBuildConfiguration({})
-        zip_build_directory = Path(newDir).joinpath("zip-build").resolve()
+        zip_build_directory = Path(self.tmpdir).joinpath("zip-build").resolve()
         zip_build_directory.mkdir(parents=True)
         bconfig.gg_build_component_artifacts_dir.mkdir(parents=True)
         bconfig.gg_build_recipes_dir.mkdir(parents=True)
@@ -119,11 +111,11 @@ def test_transform_build_recipe_artifact_not_found(mocker):
             brg.transform([zip_build_directory])
 
         assert (
-            "Could not find artifact with URI 's3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py'"
-            " on s3 or inside the build folders."
+            "Could not find artifact with URI"
+            " 's3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py' on s3 or inside the build"
+            " folders."
             in e.value.args[0]
         )
-    os.chdir(curr_dir)
 
 
 def config():
