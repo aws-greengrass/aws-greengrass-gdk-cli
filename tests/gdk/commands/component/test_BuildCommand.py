@@ -16,8 +16,8 @@ class BuildCommandTest(TestCase):
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
         self.mock_get_proj_config = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_project_config_values",
-            return_value=project_config(),
+            "gdk.common.configuration.get_configuration",
+            return_value=config(),
         )
 
     def test_build_run_default(self):
@@ -36,10 +36,16 @@ class BuildCommandTest(TestCase):
         mock_create_gg_build_directories = self.mocker.patch.object(BuildCommand, "create_gg_build_directories")
         mock_default_build_component = self.mocker.patch.object(BuildCommand, "default_build_component")
         mock_subprocess_run = self.mocker.patch("subprocess.run")
-
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {
+            "build_system": "custom",
+            "custom_build_command": ["a"],
+        }
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
         build = BuildCommand({})
-        build.project_config["component_build_config"]["build_system"] = "custom"
-        build.project_config["component_build_config"]["custom_build_command"] = ["a"]
 
         build.run()
         assert mock_create_gg_build_directories.assert_called_once
@@ -80,16 +86,24 @@ class BuildCommandTest(TestCase):
 
         assert mock_mkdir.call_count == 2
         assert mock_clean.call_count == 1
-        pc = self.mock_get_proj_config.return_value
-        mock_mkdir.assert_any_call(pc["gg_build_recipes_dir"], parents=True, exist_ok=True)
-        mock_mkdir.assert_any_call(pc["gg_build_component_artifacts_dir"], parents=True, exist_ok=True)
-        mock_clean.assert_called_once_with(pc["gg_build_directory"])
+        mock_mkdir.assert_any_call(build.project_config.gg_build_recipes_dir, parents=True, exist_ok=True)
+        mock_mkdir.assert_any_call(build.project_config.gg_build_component_artifacts_dir, parents=True, exist_ok=True)
+        mock_clean.assert_called_once_with(build.project_config.gg_build_dir)
 
     def test_run_build_command_with_error_not_zip(self):
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None, side_effect=Error("some error"))
 
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {"build_system": "maven"}
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
+        self.mock_component_recipe = self.mocker.patch(
+            "gdk.commands.component.project_utils.get_recipe_file",
+            return_value=Path("some-recipe.json"),
+        )
         build = BuildCommand({})
-        build.project_config["component_build_config"]["build_system"] = "maven"
         with pytest.raises(Exception) as e:
             build.run_build_command()
         assert mock_subprocess_run.called
@@ -99,9 +113,13 @@ class BuildCommandTest(TestCase):
         mock_build_system_zip = self.mocker.patch.object(
             BuildCommand, "run_build_command", return_value=None, side_effect=Error("some error")
         )
-
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {"build_system": "zip"}
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
         build = BuildCommand({})
-        build.project_config["component_build_config"]["build_system"] = "zip"
         with pytest.raises(Exception) as e:
             build.run_build_command()
         assert "some error" in e.value.args[0]
@@ -109,30 +127,48 @@ class BuildCommandTest(TestCase):
 
     def test_run_build_command_not_zip_build(self):
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
-
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {"build_system": "maven"}
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
+        self.mock_component_recipe = self.mocker.patch(
+            "gdk.commands.component.project_utils.get_recipe_file",
+            return_value=Path("some-recipe.json"),
+        )
         build = BuildCommand({})
-
-        build.project_config["component_build_config"]["build_system"] = "maven"
         build.run_build_command()
         assert mock_subprocess_run.called
 
     def test_run_build_command_windows(self):
         mock_platform_system = self.mocker.patch("platform.system", return_value="Windows")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
-
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {"build_system": "maven"}
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
         build = BuildCommand({})
-
-        build.project_config["component_build_config"]["build_system"] = "maven"
         build.run_build_command()
         assert mock_subprocess_run.called
         assert mock_platform_system.called
 
     def test_run_build_command_zip_build(self):
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {"build_system": "zip"}
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
+        self.mock_component_recipe = self.mocker.patch(
+            "gdk.commands.component.project_utils.get_recipe_file",
+            return_value=Path("some-recipe.json"),
+        )
 
         build = BuildCommand({})
-
-        build.project_config["component_build_config"]["build_system"] = "zip"
         build.run_build_command()
         assert not mock_subprocess_run.called
 
@@ -144,10 +180,20 @@ class BuildCommandTest(TestCase):
         mock_copytree = self.mocker.patch("shutil.copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
         mock_make_archive = self.mocker.patch("shutil.make_archive")
-
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {
+            "build_system": "zip",
+            "options": {"zip_name": ""},
+        }
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
+        self.mock_component_recipe = self.mocker.patch(
+            "gdk.commands.component.project_utils.get_recipe_file",
+            return_value=Path("some-recipe.json"),
+        )
         build = BuildCommand({})
-        build.project_config["component_build_config"]["build_system"] = "zip"
-        build.project_config["component_build_config"]["options"] = {"zip_name": ""}
         build.run_build_command()
 
         assert not mock_subprocess_run.called
@@ -155,7 +201,7 @@ class BuildCommandTest(TestCase):
 
         mock_copytree.assert_called_with(utils.get_current_directory(), zip_artifacts_path, ignore=ANY)
         assert mock_make_archive.called
-        zip_build_file = Path(zip_build_path).joinpath("component_name").resolve()
+        zip_build_file = Path(zip_build_path).joinpath("com.example.PythonLocalPubSub").resolve()
         mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
 
     def test_get_build_folder_by_build_system_maven(self):
@@ -189,10 +235,15 @@ class BuildCommandTest(TestCase):
         def mock_exists(self):
             return str(self) == str(Path("/").joinpath(*["path1", "target"]).resolve())
 
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {"build_system": "maven"}
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
         build = BuildCommand({})
         with patch.object(Path, "exists", mock_exists):
             mock_rglob = self.mocker.patch("pathlib.Path.rglob", side_effect=get_files)
-            build.project_config["component_build_config"] = {"build_system": "maven"}
             maven_b_paths = build.get_build_folders(["target"], "pom.xml")
             mock_rglob.assert_any_call("pom.xml")
             assert maven_b_paths == {Path("/").joinpath(*["path1", "target"]).resolve()}
@@ -209,10 +260,15 @@ class BuildCommandTest(TestCase):
                 Path("/").joinpath(*["path1", "build", "libs"]).resolve()
             )
 
+        build_config = config()
+        build_config["component"]["com.example.PythonLocalPubSub"]["build"] = {"build_system": "gradle"}
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=build_config,
+        )
         build = BuildCommand({})
         with patch.object(Path, "exists", mock_exists):
             mock_rglob = self.mocker.patch("pathlib.Path.rglob", side_effect=get_files)
-            build.project_config["component_build_config"] = {"build_system": "gradle"}
             gradle_b_paths = build.get_build_folders(["build", "libs"], "build.gradle")
             mock_rglob.assert_any_call("build.gradle")
             assert gradle_b_paths == {
@@ -221,17 +277,15 @@ class BuildCommandTest(TestCase):
             }
 
 
-def project_config():
+def config():
     return {
-        "component_name": "component_name",
-        "component_build_config": {"build_system": "zip"},
-        "component_version": "1.0.0",
-        "component_author": "abc",
-        "bucket": "default",
-        "region": "us-east-1",
-        "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
-        "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
-        "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
-        "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
-        "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/valid_component_recipe.json"),
+        "component": {
+            "com.example.PythonLocalPubSub": {
+                "author": "<PLACEHOLDER_AUTHOR>",
+                "version": "NEXT_PATCH",
+                "build": {"build_system": "zip"},
+                "publish": {"bucket": "<PLACEHOLDER_BUCKET>", "region": "region"},
+            }
+        },
+        "gdk_version": "1.0.0",
     }
