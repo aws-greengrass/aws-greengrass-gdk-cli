@@ -3,22 +3,18 @@ from pathlib import Path
 from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import pytest
-import tempfile
-import gdk.common.consts as consts
-import gdk.common.utils as utils
-import shutil
 import yaml
+import os
 
+from unittest import TestCase
+from gdk.commands.component.config.ComponentPublishConfiguration import ComponentPublishConfiguration
 
-@pytest.fixture()
-def supported_build_system(mocker):
-    builds_file = utils.get_static_file_path(consts.project_build_system_file)
-    with open(builds_file, "r") as f:
-        data = json.loads(f.read())
-    mock_get_supported_component_builds = mocker.patch(
-        "gdk.commands.component.project_utils.get_supported_component_builds", return_value=data
-    )
-    return mock_get_supported_component_builds
+import gdk.common.utils as utils
+import boto3
+import shutil
+from botocore.stub import Stubber
+
+gradle_build_command = ["gradle", "clean", "build"]
 
 
 @pytest.fixture()
@@ -32,84 +28,104 @@ def rglob_build_file(mocker):
     return mock_rglob
 
 
-def test_transform_publish_recipe_artifact_in_build_json():
-    pc = project_config()
-    with tempfile.TemporaryDirectory() as newDir:
-        pc["component_recipe_file"] = (
-            Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+class ComponentPublishRecipeTransformerIntegTest(TestCase):
+    @pytest.fixture(autouse=True)
+    def __inject_fixtures(self, mocker, tmpdir):
+        self.mocker = mocker
+        self.tmpdir = Path(tmpdir).resolve()
+        self.c_dir = Path(".").resolve()
+        self.stub_aws_clients()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=config(),
         )
-        pc["gg_build_directory"] = Path(newDir).joinpath("greengrass-build").resolve()
-        pc["gg_build_component_artifacts_dir"] = (
-            pc["gg_build_directory"]
-            .joinpath("artifacts")
-            .joinpath(pc["component_name"])
-            .joinpath(pc["component_version"])
-            .resolve()
-        )
-        pc["gg_build_recipes_dir"] = pc["gg_build_directory"].joinpath("recipes").resolve()
-        pc["gg_build_component_artifacts_dir"].mkdir(parents=True)
-        pc["gg_build_recipes_dir"].mkdir(parents=True)
-        pc["publish_recipe_file"] = pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.json")
+        os.chdir(self.tmpdir)
 
-        shutil.copy(pc["component_recipe_file"], pc["gg_build_recipes_dir"])
-        artifact_file = Path(pc["gg_build_component_artifacts_dir"]).joinpath("hello_world.py").resolve()
+        yield
+        os.chdir(self.c_dir)
+
+    def stub_aws_clients(self):
+        self.sts_client = boto3.client("sts", region_name="us-east-1")
+        self.gg_client = boto3.client("greengrassv2", region_name="us-east-1")
+        self.s3_client = boto3.client("s3", region_name="us-east-1")
+
+        def _clients(*args, **kwargs):
+            if args[0] == "greengrassv2":
+                return self.gg_client
+            elif args[0] == "sts":
+                return self.sts_client
+            elif args[0] == "s3":
+                return self.s3_client
+
+        self.mocker.patch("boto3.client", _clients)
+
+        self.gg_client_stub = Stubber(self.gg_client)
+        self.sts_client_stub = Stubber(self.sts_client)
+
+        self.gg_client_stub.activate()
+        self.sts_client_stub.activate()
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": "123456789012"})
+
+    def test_transform_publish_recipe_artifact_in_build_json(self):
+        recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+        shutil.copy(recipe, Path(self.tmpdir).joinpath("recipe.json").resolve())
+        pconfig = ComponentPublishConfiguration({})
+        pconfig.gg_build_component_artifacts_dir.mkdir(parents=True)
+        pconfig.gg_build_recipes_dir.mkdir(parents=True)
+
+        shutil.copy(recipe, pconfig.gg_build_recipes_dir.joinpath("recipe.json").resolve())
+        artifact_file = pconfig.gg_build_component_artifacts_dir.joinpath("hello_world.py").resolve()
         artifact_file.touch(exist_ok=True)
 
-        prg = PublishRecipeTransformer(pc)
-        prg.transform()
+        prt = PublishRecipeTransformer(pconfig)
+        prt.transform()
 
-        assert pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.json").is_file()
-
-        with open(pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.json"), "r") as f:
+        assert pconfig.gg_build_component_artifacts_dir.joinpath("hello_world.py").is_file()
+        assert pconfig.gg_build_recipes_dir.joinpath("recipe.json").is_file()
+        assert pconfig.gg_build_recipes_dir.joinpath("com.example.HelloWorld-1.0.0.json").is_file()
+        with open(pconfig.gg_build_recipes_dir.joinpath("com.example.HelloWorld-1.0.0.json"), "r") as f:
             recipe = json.loads(f.read())
-            assert recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://default/com.example.HelloWorld/1.0.0/hello_world.py"
+            # Artifact URI is updated
+            assert (
+                recipe["Manifests"][0]["Artifacts"][0]["URI"]
+                == "s3://default-us-east-1-123456789012/com.example.HelloWorld/1.0.0/hello_world.py"
+            )
 
+    def test_transform_publish_recipe_artifact_in_build_yaml(self):
+        recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
+        shutil.copy(recipe, Path(self.tmpdir).joinpath("recipe.yaml").resolve())
+        pconfig = ComponentPublishConfiguration({})
+        pconfig.gg_build_component_artifacts_dir.mkdir(parents=True)
+        pconfig.gg_build_recipes_dir.mkdir(parents=True)
 
-def test_transform_publish_recipe_artifact_in_build_yaml():
-    pc = project_config()
-    with tempfile.TemporaryDirectory() as newDir:
-        pc["component_recipe_file"] = (
-            Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
-        )
-
-        pc["gg_build_directory"] = Path(newDir).joinpath("greengrass-build").resolve()
-        pc["gg_build_component_artifacts_dir"] = (
-            pc["gg_build_directory"]
-            .joinpath("artifacts")
-            .joinpath(pc["component_name"])
-            .joinpath(pc["component_version"])
-            .resolve()
-        )
-        pc["gg_build_recipes_dir"] = pc["gg_build_directory"].joinpath("recipes").resolve()
-        pc["publish_recipe_file"] = pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.yaml")
-        pc["gg_build_component_artifacts_dir"].mkdir(parents=True)
-        pc["gg_build_recipes_dir"].mkdir(parents=True)
-
-        shutil.copy(pc["component_recipe_file"], pc["gg_build_recipes_dir"])
-        artifact_file = Path(pc["gg_build_component_artifacts_dir"]).joinpath("hello_world.py").resolve()
+        shutil.copy(recipe, pconfig.gg_build_recipes_dir.joinpath("recipe.yaml").resolve())
+        artifact_file = pconfig.gg_build_component_artifacts_dir.joinpath("hello_world.py").resolve()
         artifact_file.touch(exist_ok=True)
 
-        prg = PublishRecipeTransformer(pc)
-        prg.transform()
+        prt = PublishRecipeTransformer(pconfig)
+        prt.transform()
 
-        assert pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.yaml").is_file()
-
-        with open(pc["gg_build_recipes_dir"].joinpath("com.example.HelloWorld-1.0.0.yaml"), "r") as f:
+        assert pconfig.gg_build_component_artifacts_dir.joinpath("hello_world.py").is_file()
+        assert pconfig.gg_build_recipes_dir.joinpath("recipe.yaml").is_file()
+        assert pconfig.gg_build_recipes_dir.joinpath("com.example.HelloWorld-1.0.0.yaml").is_file()
+        with open(pconfig.gg_build_recipes_dir.joinpath("com.example.HelloWorld-1.0.0.yaml"), "r") as f:
             recipe = yaml.safe_load(f.read())
-            assert recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://default/com.example.HelloWorld/1.0.0/hello_world.py"
+            # Artifact URI is updated
+            assert (
+                recipe["Manifests"][0]["Artifacts"][0]["URI"]
+                == "s3://default-us-east-1-123456789012/com.example.HelloWorld/1.0.0/hello_world.py"
+            )
 
 
-def project_config():
+def config():
     return {
-        "component_name": "com.example.HelloWorld",
-        "component_build_config": {"build_system": "zip"},
-        "component_version": "1.0.0",
-        "component_author": "abc",
-        "bucket": "default",
-        "region": "us-east-1",
-        "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
-        "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
-        "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
-        "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
-        "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/valid_component_recipe.json"),
+        "component": {
+            "com.example.HelloWorld": {
+                "author": "abc",
+                "version": "1.0.0",
+                "build": {"build_system": "zip"},
+                "publish": {"bucket": "default", "region": "us-east-1"},
+            }
+        },
+        "gdk_version": "1.0.0",
     }
