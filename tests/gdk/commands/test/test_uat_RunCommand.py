@@ -7,6 +7,7 @@ import os
 from gdk.common.URLDownloader import URLDownloader
 import gdk.common.consts as consts
 import subprocess as sp
+from gdk.common.config.GDKProject import GDKProject
 
 
 class RunCommandUnitTest(TestCase):
@@ -28,7 +29,7 @@ class RunCommandUnitTest(TestCase):
         }
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
-        self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value=Path("."))
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
         self.mock_sp = self.mocker.patch("subprocess.run", return_value=None)
 
         os.chdir(tmpdir)

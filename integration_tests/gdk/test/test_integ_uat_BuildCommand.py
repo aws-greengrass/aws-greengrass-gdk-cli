@@ -15,7 +15,6 @@ class E2ETestBuildCommandTest(TestCase):
         self.mocker = mocker
         self.tmpdir = tmpdir
         self.c_dir = Path(".").resolve()
-        self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value=Path("recipe.yaml"))
         self.mocker.patch.object(Maven, "build", return_value=None)
         os.chdir(tmpdir)
         yield
@@ -117,3 +116,7 @@ class E2ETestBuildCommandTest(TestCase):
         )
         shutil.move(Path(self.tmpdir).joinpath("TestTemplateForCLI"), Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME))
         Path(self.tmpdir).joinpath("greengrass-build/recipes").mkdir(parents=True)
+        shutil.copy(
+            Path(self.c_dir).joinpath("integration_tests/test_data/recipes/").joinpath("build_recipe.yaml").resolve(),
+            Path(self.tmpdir).joinpath("recipe.yaml"),
+        )

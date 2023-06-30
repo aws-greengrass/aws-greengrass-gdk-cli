@@ -3,10 +3,10 @@ import shutil
 from pathlib import Path
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
 
-import gdk.commands.component.project_utils as project_utils
 import gdk.common.consts as consts
 import gdk.common.utils as utils
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
+from gdk.aws_clients.S3Client import S3Client
 
 
 class BuildRecipeTransformer:
@@ -38,11 +38,11 @@ class BuildRecipeTransformer:
         """
         logging.info("Copying over the build artifacts to the greengrass component artifacts build folder.")
         logging.info("Updating artifact URIs in the recipe.")
+        s3_client = S3Client(self.project_config.region)
         if "Manifests" not in parsed_component_recipe:
             logging.debug("No 'Manifests' key in the recipe.")
             return
         manifests = parsed_component_recipe["Manifests"]
-        s3_client = None
         for manifest in manifests:
             if "Artifacts" not in manifest:
                 logging.debug("No 'Artifacts' key in the recipe manifest.")
@@ -56,9 +56,7 @@ class BuildRecipeTransformer:
                 if not artifact["URI"].startswith(utils.s3_prefix):
                     continue
                 if not self.is_artifact_in_build(artifact, build_folders):
-                    if not s3_client:
-                        s3_client = project_utils.create_s3_client(self.project_config.region)
-                    if not self.is_artifact_in_s3(s3_client, artifact["URI"]):
+                    if not s3_client.s3_artifact_exists(artifact["URI"]):
                         raise Exception(
                             "Could not find artifact with URI '{}' on s3 or inside the build folders.".format(artifact["URI"])
                         )
@@ -100,23 +98,6 @@ class BuildRecipeTransformer:
                 )
         logging.warning("Could not find the artifact file '%s' in the build folder '%s'.", artifact_file_name, build_folders)
         return False
-
-    def is_artifact_in_s3(self, s3_client, artifact_uri) -> bool:
-        """
-        Uses exact artifact uri to find the artifact on s3. Returns if the artifact is found in S3 else False.
-
-        Parameters
-        ----------
-            s3_client(boto3.client): S3 client created specific to the region in the gdk config.
-            artifact_uri(string): S3 URI to look up for
-        """
-        bucket_name, object_key = artifact_uri.replace(utils.s3_prefix, "").split("/", 1)
-        try:
-            response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
-            return response["ResponseMetadata"]["HTTPStatusCode"] == 200
-        except Exception as e:
-            logging.error("Could not find the artifact on S3.\n{}".format(e))
-            return False
 
     def create_build_recipe_file(self, parsed_component_recipe) -> None:
         """

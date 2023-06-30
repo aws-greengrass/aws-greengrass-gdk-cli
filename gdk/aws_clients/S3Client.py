@@ -1,6 +1,7 @@
 import logging
 import boto3
 from botocore.exceptions import ClientError
+import gdk.common.utils as utils
 
 
 class S3Client:
@@ -89,3 +90,20 @@ class S3Client:
         except Exception:
             logging.error("Could not verify if the bucket '%s' exists in the region '%s'.", bucket, region)
             raise
+
+    def s3_artifact_exists(self, artifact_uri) -> bool:
+        """
+        Uses exact artifact uri to find the artifact on s3. Returns if the artifact is found in S3 else False.
+
+        Parameters
+        ----------
+            s3_client(boto3.client): S3 client created specific to the region in the gdk config.
+            artifact_uri(string): S3 URI to look up for
+        """
+        bucket_name, object_key = artifact_uri.replace(utils.s3_prefix, "").split("/", 1)
+        try:
+            response = self.s3_client.head_object(Bucket=bucket_name, Key=object_key)
+            return response["ResponseMetadata"]["HTTPStatusCode"] == 200
+        except Exception as e:
+            logging.error("Could not find the artifact on S3.\n{}".format(e))
+            return False

@@ -7,6 +7,7 @@ from gdk.commands.test.InitCommand import InitCommand
 import shutil
 from urllib3.exceptions import HTTPError
 import gdk.common.consts as consts
+from gdk.common.config.GDKProject import GDKProject
 
 
 class E2ETestInitCommandTest(TestCase):
@@ -24,6 +25,8 @@ class E2ETestInitCommandTest(TestCase):
             "https://github.com/aws-greengrass/aws-greengrass-component-templates/releases/download/v1.0/"
             + "TestTemplateForCLI.zip"
         )
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
+
         os.chdir(tmpdir)
         yield
         os.chdir(self.c_dir)

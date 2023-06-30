@@ -4,7 +4,6 @@ from pathlib import Path
 from gdk.common.exceptions.CommandError import InvalidArgumentsError
 import logging
 import gdk.common.utils as utils
-import gdk.commands.component.project_utils as proj_utils
 from gdk.aws_clients.Greengrassv2Client import Greengrassv2Client
 import boto3
 
@@ -14,7 +13,7 @@ class ComponentPublishConfiguration(GDKProject):
         super().__init__()
         self._args = _args
         self._publish_config = self.component_config.get("publish", {})
-        self.boto3_session = boto3.Session()
+
         self.region = self._get_region()
         self.options = self._get_options()
         self.account_num = self.get_account_number()
@@ -125,7 +124,8 @@ class ComponentPublishConfiguration(GDKProject):
         return f"arn:{partition}:greengrass:{_region}:{self.account_num}:components:{self.component_name}"
 
     def _get_aws_partition(self, _region):
-        return self.boto3_session.get_partition_for_region(region_name=_region)
+        boto3_session = boto3.Session()
+        return boto3_session.get_partition_for_region(region_name=_region)
 
     def get_account_number(self) -> str:
         """
@@ -133,7 +133,7 @@ class ComponentPublishConfiguration(GDKProject):
         Raises an exception when the request is unsuccessful.
         """
         try:
-            _sts_client = proj_utils.create_sts_client()
+            _sts_client = boto3.client("sts", region_name=self.region)
             account_num = _sts_client.get_caller_identity().get("Account")
             logging.debug("Identified account number as '%s'.", account_num)
             return account_num

@@ -128,3 +128,29 @@ class S3ClientTest(TestCase):
         with pytest.raises(Exception) as e:
             s3_client_utils.valid_bucket_for_artifacts_exists(bucket, region)
         assert "An error occurred (400) when calling the GetBucketLocation operation: {'Bucket': 'bucket'}" in e.value.args[0]
+
+    def test_GIVEN_s3_artifact_exists_WHEN_check_for_existence_THEN_return_true(self):
+        bucket = "bucket"
+        region = "region"
+        s3_uri = "s3://bucket/object-key.zip"
+        self.s3_client_stub.add_response(
+            "head_object",
+            {"Metadata": {}, "ResponseMetadata": {"HTTPStatusCode": 200}},
+            {"Bucket": bucket, "Key": "object-key.zip"},
+        )
+        s3_client_utils = S3Client(region)
+
+        assert s3_client_utils.s3_artifact_exists(s3_uri)
+
+    def test_GIVEN_s3_artifact_not_exists_WHEN_check_for_existence_THEN_return_False(self):
+        bucket = "test-bucket"
+        region = "region"
+        s3_uri = "s3://bucket/object-key.zip"
+        self.s3_client_stub.add_response(
+            "head_object",
+            {"Metadata": {}, "ResponseMetadata": {"HTTPStatusCode": 400}},
+            {"Bucket": bucket, "Key": "object-key.zip"},
+        )
+        s3_client_utils = S3Client(region)
+
+        assert not s3_client_utils.s3_artifact_exists(s3_uri)

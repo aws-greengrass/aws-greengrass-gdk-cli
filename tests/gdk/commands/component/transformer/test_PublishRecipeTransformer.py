@@ -10,6 +10,7 @@ from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiv
 from gdk.commands.component.config.ComponentPublishConfiguration import ComponentPublishConfiguration
 import boto3
 from botocore.stub import Stubber
+from gdk.common.config.GDKProject import GDKProject
 
 
 class PublishRecipeTransformerTest(TestCase):
@@ -20,10 +21,7 @@ class PublishRecipeTransformerTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=config(),
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
-        )
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
 
         self.case_insensitive_recipe = CaseInsensitiveDict(fake_recipe())
         self.mock_component_recipe = self.mocker.patch.object(

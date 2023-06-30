@@ -9,6 +9,7 @@ import gdk.common.utils as utils
 from gdk.build_system.ComponentBuildSystem import ComponentBuildSystem
 from gdk.commands.component.BuildCommand import BuildCommand
 from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
+from gdk.common.config.GDKProject import GDKProject
 
 
 class BuildCommandTest(TestCase):
@@ -19,6 +20,7 @@ class BuildCommandTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=config(),
         )
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
 
     def test_build_run_default(self):
         mock_create_gg_build_directories = self.mocker.patch.object(BuildCommand, "create_gg_build_directories")
@@ -99,10 +101,7 @@ class BuildCommandTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=build_config,
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
-        )
+
         build = BuildCommand({})
         with pytest.raises(Exception) as e:
             build.run_build_command()
@@ -133,10 +132,6 @@ class BuildCommandTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=build_config,
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
-        )
         build = BuildCommand({})
         build.run_build_command()
         assert mock_subprocess_run.called
@@ -163,10 +158,6 @@ class BuildCommandTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=build_config,
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
-        )
 
         build = BuildCommand({})
         build.run_build_command()
@@ -188,10 +179,6 @@ class BuildCommandTest(TestCase):
         self.mock_get_proj_config = self.mocker.patch(
             "gdk.common.configuration.get_configuration",
             return_value=build_config,
-        )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
         )
         build = BuildCommand({})
         build.run_build_command()
