@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 from gdk.commands.test.config.RunConfiguration import RunConfiguration
 from unittest import mock
+from gdk.common.config.GDKProject import GDKProject
 
 
 class RunConfigurationUnitTest(TestCase):
@@ -12,6 +13,7 @@ class RunConfigurationUnitTest(TestCase):
         self.mocker = mocker
         self.tmpdir = tmpdir
         self.c_dir = Path(".").resolve()
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
         os.chdir(tmpdir)
         yield
         os.chdir(self.c_dir)

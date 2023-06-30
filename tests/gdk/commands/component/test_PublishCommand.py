@@ -10,6 +10,7 @@ from gdk.aws_clients.S3Client import S3Client
 from gdk.commands.component.PublishCommand import PublishCommand
 from botocore.stub import Stubber
 import boto3
+from gdk.common.config.GDKProject import GDKProject
 
 
 class PublishCommandTest(TestCase):
@@ -20,10 +21,8 @@ class PublishCommandTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=config(),
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
-        )
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
+
         self.gg_client = boto3.client("greengrassv2", region_name="region")
         self.sts_client = boto3.client("sts", region_name="region")
 

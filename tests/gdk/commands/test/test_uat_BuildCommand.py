@@ -8,6 +8,7 @@ import platform
 from gdk.common.CaseInsensitive import CaseInsensitiveDict, CaseInsensitiveRecipeFile
 import os
 import gdk.common.consts as consts
+from gdk.common.config.GDKProject import GDKProject
 
 
 class BuildCommandUnitTest(TestCase):
@@ -29,7 +30,7 @@ class BuildCommandUnitTest(TestCase):
         }
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
-        self.mocker.patch("gdk.commands.component.project_utils.get_recipe_file", return_value=Path("."))
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
         os.chdir(tmpdir)
         yield
         os.chdir(self.c_dir)

@@ -3,11 +3,12 @@ from unittest import TestCase
 from unittest.mock import call
 
 import pytest
-import boto3
 
 from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
+from gdk.common.config.GDKProject import GDKProject
+from gdk.aws_clients.S3Client import S3Client
 
 
 class BuildRecipeTransformerTest(TestCase):
@@ -18,10 +19,8 @@ class BuildRecipeTransformerTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=config(),
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
-        )
+
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
 
         self.case_insensitive_recipe = CaseInsensitiveDict(fake_recipe())
         self.mock_component_recipe = self.mocker.patch.object(
@@ -48,7 +47,7 @@ class BuildRecipeTransformerTest(TestCase):
     def test_update_component_recipe_file_in_build(self):
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
         build_folders = [Path("zip-build").resolve()]
-        mock_is_artifact_in_s3 = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_s3", return_value=False)
+        mock_is_artifact_in_s3 = self.mocker.patch.object(S3Client, "s3_artifact_exists", return_value=False)
         mock_is_artifact_in_build = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_build", return_value=True)
         brg.update_component_recipe_file(self.case_insensitive_recipe, build_folders)
         artifact_uri = {"URI": "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"}
@@ -58,7 +57,7 @@ class BuildRecipeTransformerTest(TestCase):
     def test_update_component_recipe_file_in_s3(self):
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
         build_folders = [Path("zip-build").resolve()]
-        mock_is_artifact_in_s3 = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_s3", return_value=True)
+        mock_is_artifact_in_s3 = self.mocker.patch.object(S3Client, "s3_artifact_exists", return_value=True)
         mock_is_artifact_in_build = self.mocker.patch.object(
             BuildRecipeTransformer, "is_artifact_in_build", return_value=False
         )
@@ -70,7 +69,7 @@ class BuildRecipeTransformerTest(TestCase):
     def test_update_component_recipe_file_not_in_s3_not_in_build(self):
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
         build_folders = [Path("zip-build").resolve()]
-        mock_is_artifact_in_s3 = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_s3", return_value=False)
+        mock_is_artifact_in_s3 = self.mocker.patch.object(S3Client, "s3_artifact_exists", return_value=False)
         mock_is_artifact_in_build = self.mocker.patch.object(
             BuildRecipeTransformer, "is_artifact_in_build", return_value=False
         )
@@ -88,7 +87,7 @@ class BuildRecipeTransformerTest(TestCase):
 
     def test_update_component_recipe_file_no_manifest_in_recipe(self):
         mock_is_artifact_in_build = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_build", return_value=True)
-        mock_is_artifact_in_s3 = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_s3", return_value=False)
+        mock_is_artifact_in_s3 = self.mocker.patch.object(S3Client, "s3_artifact_exists", return_value=False)
 
         build_folders = [Path("zip-build").resolve()]
         no_manifest_recipe = {
@@ -106,7 +105,7 @@ class BuildRecipeTransformerTest(TestCase):
 
     def test_update_component_recipe_file_no_artifacts_in_recipe(self):
         mock_is_artifact_in_build = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_build", return_value=True)
-        mock_is_artifact_in_s3 = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_s3", return_value=False)
+        mock_is_artifact_in_s3 = self.mocker.patch.object(S3Client, "s3_artifact_exists", return_value=False)
 
         build_folders = [Path("zip-build").resolve()]
 
@@ -131,7 +130,7 @@ class BuildRecipeTransformerTest(TestCase):
 
     def test_find_artifacts_and_update_uri_no_artifact_uri_in_recipe(self):
         mock_is_artifact_in_build = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_build", return_value=True)
-        mock_is_artifact_in_s3 = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_s3", return_value=False)
+        mock_is_artifact_in_s3 = self.mocker.patch.object(S3Client, "s3_artifact_exists", return_value=False)
 
         build_folders = [Path("zip-build").resolve()]
 
@@ -188,35 +187,6 @@ class BuildRecipeTransformerTest(TestCase):
         assert mock_is_file.assert_called_once
         assert artifact_uri == {"uri": "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"}
 
-    def test_is_artifact_in_s3_found(self):
-        test_s3_uri = "s3://bucket/object-key.zip"
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        mock_s3_head_object = self.mocker.patch(
-            "boto3.client.head_object", return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
-        )
-        brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
-        assert brg.is_artifact_in_s3(mock_client, test_s3_uri)
-        assert mock_s3_head_object.called
-        mock_s3_head_object.assert_called_with(Bucket="bucket", Key="object-key.zip")
-
-    def test_is_artifact_in_s3_not_found(self):
-        test_s3_uri = "s3://bucket/object-key.zip"
-
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-
-        def throw_err(*args, **kwargs):
-            ex = boto3.client("s3").exceptions.ClientError({"Error": {"Code": "404", "Message": "Not Found"}}, "HeadObject")
-            raise ex
-
-        mock_s3_head_object = self.mocker.patch(
-            "boto3.client.head_object",
-            side_effect=throw_err,
-        )
-
-        brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
-        assert not brg.is_artifact_in_s3(mock_client, test_s3_uri)
-        mock_s3_head_object.assert_called_with(Bucket="bucket", Key="object-key.zip")
-
     def test_find_artifacts_and_update_uri_mix_uri_in_recipe_call_counts(self):
         build_folders = [Path("zip-build").resolve()]
         recipe_mixed_uris = {
@@ -249,8 +219,7 @@ class BuildRecipeTransformerTest(TestCase):
         mock_is_artifact_in_build = self.mocker.patch.object(
             BuildRecipeTransformer, "is_artifact_in_build", side_effect=artifact_found
         )
-        mock_client = self.mocker.patch("boto3.client", return_value=None)
-        mock_is_artifact_in_s3 = self.mocker.patch.object(BuildRecipeTransformer, "is_artifact_in_s3")
+        mock_is_artifact_in_s3 = self.mocker.patch.object(S3Client, "s3_artifact_exists")
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
         brg.update_component_recipe_file(CaseInsensitiveDict(recipe_mixed_uris), build_folders)
         assert mock_is_artifact_in_build.call_args_list == [
@@ -259,14 +228,14 @@ class BuildRecipeTransformerTest(TestCase):
             call({"URI": "s3://found-2-on-s3.py"}, build_folders),
         ]
         assert mock_is_artifact_in_s3.call_args_list == [
-            call(mock_client.return_value, "s3://found-1-on-s3.py"),
-            call(mock_client.return_value, "s3://found-2-on-s3.py"),
+            call("s3://found-1-on-s3.py"),
+            call("s3://found-2-on-s3.py"),
         ]
 
     def test_create_recipe_file_json(self):
         pc = ComponentBuildConfiguration({})
         brg = BuildRecipeTransformer(pc)
-        file_name = pc.gg_build_recipes_dir.joinpath("some-recipe.json").resolve()
+        file_name = pc.gg_build_recipes_dir.joinpath("recipe.json").resolve()
 
         recipe = CaseInsensitiveDict(fake_recipe())
         mocker_recipe_write = self.mocker.patch.object(CaseInsensitiveRecipeFile, "write")
@@ -274,13 +243,10 @@ class BuildRecipeTransformerTest(TestCase):
         assert mocker_recipe_write.call_args_list == [call(file_name, recipe)]
 
     def test_create_recipe_file_yaml(self):
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.yaml").resolve())
         pc = ComponentBuildConfiguration({})
         brg = BuildRecipeTransformer(pc)
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.yaml"),
-        )
-        file_name = pc.gg_build_recipes_dir.joinpath("some-recipe.yaml").resolve()
+        file_name = pc.gg_build_recipes_dir.joinpath("recipe.yaml").resolve()
 
         recipe = CaseInsensitiveDict(fake_recipe())
         mocker_recipe_write = self.mocker.patch.object(CaseInsensitiveRecipeFile, "write")

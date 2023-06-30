@@ -7,6 +7,7 @@ import pytest
 from gdk.commands.component.config.ComponentPublishConfiguration import ComponentPublishConfiguration
 import boto3
 from botocore.stub import Stubber
+from gdk.common.config.GDKProject import GDKProject
 
 
 class ComponentPublishConfigurationTest(TestCase):
@@ -17,10 +18,7 @@ class ComponentPublishConfigurationTest(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=config(),
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("some-recipe.json"),
-        )
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
 
         self.gg_client = boto3.client("greengrassv2", region_name="region")
         self.sts_client = boto3.client("sts", region_name="region")
@@ -45,7 +43,7 @@ class ComponentPublishConfigurationTest(TestCase):
         pconfig = ComponentPublishConfiguration({})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
-        assert pconfig.bucket == "default-region-123456789012"
+        assert pconfig.bucket == "default-us-east-1-123456789012"
 
     def test_GIVEN_NEXT_PATCH_for_version_with_no_previous_versions_WHEN_get_next_version_THEN_get_fallback_version(self):
         conf = config()
@@ -59,7 +57,7 @@ class ComponentPublishConfigurationTest(TestCase):
         pconfig = ComponentPublishConfiguration({})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
-        assert pconfig.bucket == "default-region-123456789012"
+        assert pconfig.bucket == "default-us-east-1-123456789012"
 
     def test_GIVEN_NEXT_PATCH_for_version_with_previous_versions_WHEN_get_version_THEN_calculate_next_version(self):
         conf = config()
@@ -73,7 +71,7 @@ class ComponentPublishConfigurationTest(TestCase):
         pconfig = ComponentPublishConfiguration({})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.5"
-        assert pconfig.bucket == "default-region-123456789012"
+        assert pconfig.bucket == "default-us-east-1-123456789012"
 
     def test_GIVEN_config_with_bucket_args_WHEN_get_bucket_THEN_get_bucket_from_args(self):
         pconfig = ComponentPublishConfiguration({"bucket": "my-bucket"})
@@ -92,7 +90,7 @@ class ComponentPublishConfigurationTest(TestCase):
         pconfig = ComponentPublishConfiguration({"options": opts})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
-        assert pconfig.bucket == "default-region-123456789012"
+        assert pconfig.bucket == "default-us-east-1-123456789012"
         assert pconfig.options == {"metadata": "test"}
 
     def test_GIVEN_config_with_invalid_options_args_WHEN_get_options_THEN_raise_exception(self):
@@ -101,7 +99,7 @@ class ComponentPublishConfigurationTest(TestCase):
             pconfig = ComponentPublishConfiguration({"options": opts})
             assert pconfig.publisher == "author"
             assert pconfig.component_version == "1.0.0"
-            assert pconfig.bucket == "default-region-123456789012"
+            assert pconfig.bucket == "default-us-east-1-123456789012"
             assert pconfig.options == {"metadata": "test"}
         assert "JSON string is incorrectly formatted." in e.value.args[0]
 
@@ -111,7 +109,7 @@ class ComponentPublishConfigurationTest(TestCase):
             pconfig = ComponentPublishConfiguration({"options": opts})
             assert pconfig.publisher == "author"
             assert pconfig.component_version == "1.0.0"
-            assert pconfig.bucket == "default-region-123456789012"
+            assert pconfig.bucket == "default-us-east-1-123456789012"
         assert "JSON file path provided in the command does not exist. Please provide a valid JSON file." in e.value.args[0]
 
     def test_GIVEN_config_with_file_options_args_WHEN_get_options_THEN_read_opts_from_file(self):
@@ -122,7 +120,7 @@ class ComponentPublishConfigurationTest(TestCase):
             pconfig = ComponentPublishConfiguration({"options": opts})
             assert pconfig.publisher == "author"
             assert pconfig.component_version == "1.0.0"
-            assert pconfig.bucket == "default-region-123456789012"
+            assert pconfig.bucket == "default-us-east-1-123456789012"
             assert pconfig.options == {"metadata": "test"}
 
     def test_GIVEN_config_with_invalid_file_options_args_WHEN_get_options_THEN_raise_exception(self):
@@ -142,7 +140,7 @@ def config():
                 "author": "author",
                 "version": "1.0.0",
                 "build": {"build_system": "zip"},
-                "publish": {"bucket": "default", "region": "region"},
+                "publish": {"bucket": "default", "region": "us-east-1"},
             }
         },
         "gdk_version": "1.0.0",

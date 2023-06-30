@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from gdk.build_system.Zip import Zip
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
+from gdk.common.config.GDKProject import GDKProject
 
 
 class ZipTests(TestCase):
@@ -14,10 +15,7 @@ class ZipTests(TestCase):
             "gdk.common.configuration.get_configuration",
             return_value=config(),
         )
-        self.mock_component_recipe = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_recipe_file",
-            return_value=Path("recipe.json"),
-        )
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
 
     def test_zip_ignore_list_with_exclude_option(self):
         # Given

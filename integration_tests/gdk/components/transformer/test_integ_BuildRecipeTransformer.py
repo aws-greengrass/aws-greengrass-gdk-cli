@@ -5,10 +5,10 @@ from unittest import TestCase
 
 import pytest
 import gdk.common.utils as utils
-import boto3
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 import os
 import shutil
+from gdk.aws_clients.S3Client import S3Client
 
 gradle_build_command = ["gradle", "clean", "build"]
 
@@ -67,12 +67,10 @@ class ComponentBuildCommandIntegTest(TestCase):
 
     def test_transform_build_recipe_artifact_in_s3(self):
         recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
-        self.mocker.patch(
-            "gdk.commands.component.project_utils.create_s3_client",
-            return_value=self.mocker.patch("boto3.client", return_value=boto3.client("s3")),
-        )
-        mock_s3_head_object = self.mocker.patch(
-            "boto3.client.head_object", return_value={"ResponseMetadata": {"HTTPStatusCode": 200}}
+        self.mocker.patch.object(
+            S3Client,
+            "s3_artifact_exists",
+            return_value=True,
         )
         shutil.copy(recipe, Path(self.tmpdir).joinpath("recipe.json").resolve())
         bconfig = ComponentBuildConfiguration({})
@@ -87,7 +85,6 @@ class ComponentBuildCommandIntegTest(TestCase):
 
         assert not bconfig.gg_build_component_artifacts_dir.joinpath("hello_world.py").is_file()
         assert bconfig.gg_build_recipes_dir.joinpath("recipe.json").is_file()
-        assert mock_s3_head_object.assert_called_once
         with open(bconfig.gg_build_recipes_dir.joinpath("recipe.json"), "r") as f:
             recipe = json.loads(f.read())
             # Artifact URI is not updated

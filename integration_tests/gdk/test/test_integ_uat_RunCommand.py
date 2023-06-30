@@ -9,6 +9,7 @@ from gdk.common.URLDownloader import URLDownloader
 import subprocess as sp
 import json
 import gdk.common.consts as consts
+from gdk.common.config.GDKProject import GDKProject
 
 
 class E2ETestRunCommandTest(TestCase):
@@ -26,6 +27,8 @@ class E2ETestRunCommandTest(TestCase):
             "https://github.com/aws-greengrass/aws-greengrass-component-templates/releases/download/v1.0/"
             + "TestTemplateForCLI.zip"
         )
+        self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
+
         os.chdir(tmpdir)
         yield
         os.chdir(self.c_dir)
