@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from gdk.commands.component.config.ComponentPublishConfiguration import ComponentPublishConfiguration
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
 
 import gdk.common.consts as consts
@@ -7,13 +8,11 @@ import gdk.common.utils as utils
 
 
 class PublishRecipeTransformer:
-    def __init__(self, project_config) -> None:
-        self.project_config = project_config
+    def __init__(self, _project_config: ComponentPublishConfiguration) -> None:
+        self.project_config = _project_config
 
     def transform(self):
-        recipe_path = Path(self.project_config["gg_build_recipes_dir"]).joinpath(
-            self.project_config["component_recipe_file"].name
-        )
+        recipe_path = Path(self.project_config.gg_build_recipes_dir).joinpath(self.project_config.recipe_file.name)
         component_recipe = CaseInsensitiveRecipeFile().read(recipe_path)
         self.update_component_recipe_file(component_recipe)
         self.create_publish_recipe_file(component_recipe)
@@ -24,7 +23,7 @@ class PublishRecipeTransformer:
                 consts.cli_project_config_file
             )
         )
-        parsed_component_recipe.update_value("ComponentVersion", self.project_config["component_version"])
+        parsed_component_recipe.update_value("ComponentVersion", self.project_config.component_version)
         self._update_artifact_uris(parsed_component_recipe)
 
     def _update_artifact_uris(self, parsed_component_recipe: CaseInsensitiveDict) -> None:
@@ -34,8 +33,8 @@ class PublishRecipeTransformer:
 
         """
         logging.debug("Updating artifact URIs in the recipe...")
-        component_name = self.project_config["component_name"]
-        component_version = self.project_config["component_version"]
+        component_name = self.project_config.component_name
+        component_version = self.project_config.component_version
 
         if parsed_component_recipe.get("ComponentName") != component_name:
             logging.error("Component '{}' is not built.".format(parsed_component_recipe["ComponentName"]))
@@ -43,9 +42,8 @@ class PublishRecipeTransformer:
                 "Failed to publish the component '{}' as it is not build.\nBuild the component `gdk component"
                 " build` before publishing it.".format(parsed_component_recipe["ComponentName"])
             )
-        gg_build_component_artifacts = self.project_config["gg_build_component_artifacts_dir"]
-        bucket = self.project_config["bucket"]
-        artifact_uri = f"{utils.s3_prefix}{bucket}/{component_name}/{component_version}"
+        gg_build_component_artifacts = self.project_config.gg_build_component_artifacts_dir
+        artifact_uri = f"{utils.s3_prefix}{self.project_config.bucket}/{component_name}/{component_version}"
 
         if "Manifests" not in parsed_component_recipe:
             logging.debug("No 'Manifests' key in the recipe.")
@@ -84,6 +82,5 @@ class PublishRecipeTransformer:
             None
 
         """
-        publish_recipe_file = Path(self.project_config["publish_recipe_file"]).resolve()
-        logging.debug("Creating component recipe at '%s'.", publish_recipe_file)
-        CaseInsensitiveRecipeFile().write(publish_recipe_file, parsed_component_recipe)
+        logging.debug("Creating component recipe at '%s'.", self.project_config.publish_recipe_file)
+        CaseInsensitiveRecipeFile().write(self.project_config.publish_recipe_file, parsed_component_recipe)

@@ -9,7 +9,7 @@ class ComponentBuildConfiguration(GDKProject):
         self.build_system = self.build_config.get("build_system", "")
         self.build_options = self.build_config.get("options", {})
         self.component_version = self.component_config.get("version", "NEXT_PATCH")
-        self.publisher = self.component_config.get("component_author", "")
+        self.publisher = self.component_config.get("author", "")
         self.region = self._get_region()
 
     def _get_region(self):

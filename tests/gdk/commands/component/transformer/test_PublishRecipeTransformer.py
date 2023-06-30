@@ -7,6 +7,9 @@ import pytest
 
 from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
+from gdk.commands.component.config.ComponentPublishConfiguration import ComponentPublishConfiguration
+import boto3
+from botocore.stub import Stubber
 
 
 class PublishRecipeTransformerTest(TestCase):
@@ -14,23 +17,44 @@ class PublishRecipeTransformerTest(TestCase):
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
         self.mock_get_proj_config = self.mocker.patch(
-            "gdk.commands.component.project_utils.get_project_config_values",
-            return_value=project_config(),
+            "gdk.common.configuration.get_configuration",
+            return_value=config(),
         )
+        self.mock_component_recipe = self.mocker.patch(
+            "gdk.commands.component.project_utils.get_recipe_file",
+            return_value=Path("some-recipe.json"),
+        )
+
         self.case_insensitive_recipe = CaseInsensitiveDict(fake_recipe())
         self.mock_component_recipe = self.mocker.patch.object(
             CaseInsensitiveRecipeFile,
             "read",
             return_value=self.case_insensitive_recipe,
         )
+        self.gg_client = boto3.client("greengrassv2", region_name="region")
+        self.sts_client = boto3.client("sts", region_name="region")
+
+        def _clients(*args, **kwargs):
+            if args[0] == "greengrassv2":
+                return self.gg_client
+            elif args[0] == "sts":
+                return self.sts_client
+
+        self.mocker.patch("boto3.client", side_effect=_clients)
+        self.gg_client_stub = Stubber(self.gg_client)
+        self.sts_client_stub = Stubber(self.sts_client)
+        self.gg_client_stub.activate()
+        self.sts_client_stub.activate()
+        self.gg_client_stub.add_response("list_components", {"components": []})
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": "123456789012"})
 
     def test_publish_recipe_transformer_instantiate(self):
-        pc = project_config()
+        pc = ComponentPublishConfiguration({})
         prg = PublishRecipeTransformer(pc)
         assert prg.project_config == pc
 
     def test_transform(self):
-        brg = PublishRecipeTransformer(project_config())
+        brg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
         mock_update = self.mocker.patch.object(PublishRecipeTransformer, "update_component_recipe_file", return_value=None)
         mock_create = self.mocker.patch.object(PublishRecipeTransformer, "create_publish_recipe_file", return_value=None)
         brg.transform()
@@ -58,7 +82,7 @@ class PublishRecipeTransformerTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeTransformer(project_config())
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({"bucket": "default"}))
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("hello_world.py")]
@@ -84,7 +108,7 @@ class PublishRecipeTransformerTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeTransformer(project_config())
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({"bucket": "default"}))
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("hello_world.py")]
@@ -110,15 +134,15 @@ class PublishRecipeTransformerTest(TestCase):
         mock_iter_dir_list = []
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeTransformer(project_config())
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("not-in_build.py")]
         assert cis_recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://not-in_build.py"
 
     def test_update_component_recipe_file_not_build(self):
-        proj_config = project_config()
-        proj_config.update({"component_name": "not-com.example.HelloWorld"})
+        proj_config = ComponentPublishConfiguration({})
+        proj_config.component_name = "not-com.example.HelloWorld"
         prg = PublishRecipeTransformer(proj_config)
         cis_recipe = CaseInsensitiveDict(fake_recipe())
         with pytest.raises(Exception) as e:
@@ -138,7 +162,7 @@ class PublishRecipeTransformerTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeTransformer(project_config())
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert not mock_glob.called
@@ -162,7 +186,7 @@ class PublishRecipeTransformerTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeTransformer(project_config())
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert not mock_glob.called
@@ -187,34 +211,31 @@ class PublishRecipeTransformerTest(TestCase):
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
         mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
 
-        prg = PublishRecipeTransformer(project_config())
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert not mock_glob.called
 
     def test_create_publish_recipe_file(self):
-        prg = PublishRecipeTransformer(project_config())
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
         cis_recipe = CaseInsensitiveDict(fake_recipe())
         mocker_recipe_write = self.mocker.patch.object(CaseInsensitiveRecipeFile, "write")
         prg.create_publish_recipe_file(cis_recipe)
-        recipe_path = Path(prg.project_config["publish_recipe_file"]).resolve()
+        recipe_path = Path(prg.project_config.publish_recipe_file).resolve()
         assert mocker_recipe_write.call_args_list == [call(recipe_path, cis_recipe)]
 
 
-def project_config():
+def config():
     return {
-        "component_name": "com.example.HelloWorld",
-        "component_build_config": {"build_system": "zip"},
-        "component_version": "1.0.0",
-        "component_author": "abc",
-        "bucket": "default",
-        "region": "us-east-1",
-        "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
-        "publish_recipe_file": Path("/src/GDK-CLI-Internal/greengrass-build/recipes/com.example.HelloWorld-1.0.0.json"),
-        "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
-        "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
-        "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
-        "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/project_utils/valid_component_recipe.json"),
+        "component": {
+            "com.example.HelloWorld": {
+                "author": "<PLACEHOLDER_AUTHOR>",
+                "version": "1.0.0",
+                "build": {"build_system": "zip"},
+                "publish": {"bucket": "<PLACEHOLDER_BUCKET>", "region": "region"},
+            }
+        },
+        "gdk_version": "1.0.0",
     }
 
 

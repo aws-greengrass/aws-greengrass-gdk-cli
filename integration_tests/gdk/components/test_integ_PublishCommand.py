@@ -239,14 +239,9 @@ class ComponentPublishCommandIntegTest(TestCase):
             },
         )
         self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/somefile").touch()
-        account_num = "123456789012"
-        self.sts_client_stub.add_response("get_caller_identity", {"Account": account_num}, {})
-
-        pc = PublishCommand({"options": str(self.tmpdir.joinpath("options.json").resolve())})
         with pytest.raises(Exception) as e:
-            pc.run()
-        assert "JSON string is incorrectly formatted." in str(e)
-        self.sts_client_stub.assert_no_pending_responses()
+            PublishCommand({"options": str(self.tmpdir.joinpath("options.json").resolve())})
+        assert "JSON string is incorrectly formatted." in e.value.args[0]
 
     def zip_test_data(self):
         shutil.copy(
