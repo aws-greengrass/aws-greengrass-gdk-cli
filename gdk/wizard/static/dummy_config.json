@@ -1,0 +1,16 @@
+{
+    "component": {
+      "com.example.JavaHelloWorld": {
+        "author": "<PLACEHOLDER_AUTHOR>",
+        "version": "NEXT_PATCH",
+        "build": {
+          "build_system": "maven"
+        },
+        "publish": {
+          "bucket": "<PLACEHOLDER_BUCKET>",
+          "region": "<PLACEHOLDER_REGION>"
+        }
+      }
+    },
+    "gdk_version": "1.0.0"
+  }
