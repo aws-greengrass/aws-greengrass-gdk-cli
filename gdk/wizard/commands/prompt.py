@@ -20,12 +20,8 @@ class Wizard:
     prompt_optional_fields()
         prompts the user of all the optional fields in the gdk config file 
     check_input(input)
-
-    
-
-
-    
     """
+
     def __init__(self) -> None:
         """
         Initialize the Wizard object
@@ -65,9 +61,8 @@ class Wizard:
         parser.add_argument('--region', help='AWS region')
         parser.add_argument('--gdk_version', help='Version of the gdk cli tool compatible with the provided configuration')
         parser.add_argument('--change_value', help='Change the value of a component field')
-        
-    
 
+        # later PRs will include a helper method to remove repetitive code
         component_author = project_config[component_name]['author']
         if self.change_value(parser, field='author', value=component_author):
             while True:
@@ -98,7 +93,6 @@ class Wizard:
                 print('Invalid build system name. Please input again.')  
 
 
-
         component_bucket = project_config[component_name]['publish']['bucket']
         if self.change_value(parser, field='bucket', value=component_bucket):
             while True:
@@ -127,20 +121,6 @@ class Wizard:
                     self.field_map['gdk_version'] = args.gdk_version
                     break
                 print('Invalid gdk-version. Please input again.')        
-
-
-    """
-    A helper function for the prompt_required_fields method to
-    reduce repetiitve code
-    """
-    def required_fields_helper(self, parser, field, value):
-        if self.change_value(parser, field=field, value=value):
-            while True:
-                args = parser.parse_args([f'--{field}', input(f'Enter the {field} of the component: ')])
-                if self.check_input(args.field):
-                    return args.field #look into what the type is of args.field, specifically the type after args.
-                print('Invalid author name. Please input again.')
-        return value    
 
 
     def prompt_optional_fields(self):
@@ -242,7 +222,7 @@ class Wizard:
 
     def prompt(self):
         """
-        Wapper method that prompts users of required and optional field values
+        Wapper method that prompts users for required and optional field values
         for the gdk config file
 
         Parameters
