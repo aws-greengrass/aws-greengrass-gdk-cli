@@ -6,7 +6,6 @@ from gdk.common.configuration import get_configuration
 from gdk.common.configuration import validate_configuration
 import gdk.common.utils as utils
 import argparse
-import sys
 import json  
 
 
