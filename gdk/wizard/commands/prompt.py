@@ -10,7 +10,33 @@ import json
 
 
 class Wizard:
+    """
+    A class used to represent the GDK Startup Wizard
+
+    Methods: 
+    -----------
+    prompt_required_fields()
+        prompts the user of all the required fields in the gdk config file
+    prompt_optional_fields()
+        prompts the user of all the optional fields in the gdk config file 
+    check_input(input)
+
+    
+
+
+    
+    """
     def __init__(self) -> None:
+        """
+        Initialize the Wizard object
+
+        Attributes
+        ----------
+        field_map : data(dict)
+            A dictionary object containing the configuration from greengrass project config file.
+
+        """
+
         # self.field_map is a dictionary object
         # self.field_map = get_configuration()
 
@@ -20,11 +46,20 @@ class Wizard:
 
         self.field_map = config_data
 
-    """
-    prompts the user of all required fields
-    """
     def prompt_required_fields(self):
+        """
+        Prompts the user of all the required fields in the gdk config file
+        and updates the field_map if their answer is valid  as the user 
+        answers the question to each prompt 
 
+        Parameters
+        ----------
+            None
+        
+        Returns
+        -------
+            None
+        """
         project_config = self.field_map["component"]
         component_name = next(iter(project_config))
         
@@ -33,73 +68,63 @@ class Wizard:
 
         parser.add_argument('--author', help='Author of the component')
         parser.add_argument('--version', help='Version of the component')
-        parser.add_argument('--build_system', choices=['zip', 'maven', 'gradle', 'gradlew', 'custom'], help='Build system to use')
-        # parser.add_argument('--custom-build-command', nargs='+', help='Custom build command (required if build system is custom)')
+        parser.add_argument('--build_system', help='Build system to use')
         parser.add_argument('--bucket', help='Prefix of the S3 bucket')
-        parser.add_argument('--region', choices=['us-east-2', 'us-east-1', 'us-west-2', 'ap-south-1', 'ap-northeast-2',
-                                                'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'ca-central-1',
-                                                'cn-north-1', 'eu-central-1', 'eu-west-1', 'eu-west-2',
-                                                'us-gov-west-1', 'us-gov-east-1'], help='AWS region')
+        parser.add_argument('--region', help='AWS region')
         parser.add_argument('--gdk_version', help='Version of the gdk cli tool compatible with the provided configuration')
         parser.add_argument('--change_value', help='Change the value of a component field')
         
     
-            # check if there's already a value for that field, show the current value of that field
-            # then prompt the user to answer (y/n) if they want to change the value in that field. 
-            # if no break out of loop, if yes prompt them to change the value of the field
 
-        # component_author = project_config[component_name]['author']
-        # # if component_author != "<PLACEHOLDER_AUTHOR>":
-        # if self.change_value(parser, field='author', value=component_author):
-        #     while True:
-        #         args = parser.parse_args(['--author', input('Enter the author of the component: ')])
-        #         if self.check_input(args.author):
-        #             self.field_map['component'][component_name]['author'] = args.author
-        #             break
-        #         print('Invalid author name. Please input again.')
+        component_author = project_config[component_name]['author']
+        if self.change_value(parser, field='author', value=component_author):
+            while True:
+                args = parser.parse_args(['--author', input('Enter the author of the component: ')])
+                if self.check_input(args.author):
+                    self.field_map['component'][component_name]['author'] = args.author
+                    break
+                print('Invalid author name. Please input again.')
 
     
-        # component_version = project_config[component_name]['version']
-        # # if component_version != "NEXT_PATCH":
-        # if self.change_value(parser, field='version', value=component_version):
-        #     while True: 
-        #         args = parser.parse_args(['--version', input('Enter the version of the component: ')])
-        #         if self.check_input(args.version):
-        #             self.field_map['component'][component_name]['version'] = args.version
-        #             break
-        #         print("Invalid version. Please input again.")
+        component_version = project_config[component_name]['version']
+        if self.change_value(parser, field='version', value=component_version):
+            while True: 
+                args = parser.parse_args(['--version', input('Enter the version of the component: ')])
+                if self.check_input(args.version):
+                    self.field_map['component'][component_name]['version'] = args.version
+                    break
+                print("Invalid version. Please input again.")
 
 
-        # component_build_system = project_config[component_name]['build']['build_system']
-        # if self.change_value(parser, field='build_system', value=component_build_system):
-        #     while True:
-        #         args = parser.parse_args(['--build_system', input('Enter the build system of the component: ')])
-        #         if self.check_input(args.build_system):
-        #             self.field_map['component'][component_name]['build']['build_system'] = args.build_system
-        #             break
-        #         print('Invalid build system name. Please input again.')  
+        component_build_system = project_config[component_name]['build']['build_system']
+        if self.change_value(parser, field='build_system', value=component_build_system):
+            while True:
+                args = parser.parse_args(['--build_system', input('Enter the build system of the component: ')])
+                if self.check_input(args.build_system):
+                    self.field_map['component'][component_name]['build']['build_system'] = args.build_system
+                    break
+                print('Invalid build system name. Please input again.')  
 
 
 
-        # component_bucket = project_config[component_name]['publish']['bucket']
-        # if self.change_value(parser, field='bucket', value=component_bucket):
-        #     while True:
-        #         args = parser.parse_args(['--bucket', input('Enter the S3 bucket of the component: ')])
-        #         if self.check_input(args.bucket):
-        #             self.field_map['component'][component_name]['publish']['bucket'] = args.bucket
-        #             break
-        #         print('Invalid S3 bucket name. Please input again.') 
+        component_bucket = project_config[component_name]['publish']['bucket']
+        if self.change_value(parser, field='bucket', value=component_bucket):
+            while True:
+                args = parser.parse_args(['--bucket', input('Enter the S3 bucket of the component: ')])
+                if self.check_input(args.bucket):
+                    self.field_map['component'][component_name]['publish']['bucket'] = args.bucket
+                    break
+                print('Invalid S3 bucket name. Please input again.') 
 
 
-        
-        # component_region = project_config[component_name]['publish']['region']
-        # if self.change_value(parser, field='region', value=component_region):
-        #     while True:
-        #         args = parser.parse_args(['--region', input('Enter the region of the component: ')])
-        #         if self.check_input(args.region):
-        #             self.field_map['component'][component_name]['publish']['region'] = args.region
-        #             break
-        #         print('Invalid region. Please input again.')
+        component_region = project_config[component_name]['publish']['region']
+        if self.change_value(parser, field='region', value=component_region):
+            while True:
+                args = parser.parse_args(['--region', input('Enter the region of the component: ')])
+                if self.check_input(args.region):
+                    self.field_map['component'][component_name]['publish']['region'] = args.region
+                    break
+                print('Invalid region. Please input again.')
 
 
         component_gdk_version = self.field_map['gdk_version'] 
@@ -110,8 +135,6 @@ class Wizard:
                     self.field_map['gdk_version'] = args.gdk_version
                     break
                 print('Invalid gdk-version. Please input again.')        
-
-
 
 
     """
@@ -128,23 +151,59 @@ class Wizard:
         return value    
 
 
-
-    """
-    prompt users of all optional fields in a heiarchical manner
-    """
     def prompt_optional_fields(self):
-        return
+        """
+        Prompts the user of all the optional fields of the gdk config file
+        and updates the field_map if their answer is valid  as the user 
+        answers the question to each prompt 
+
+        Parameters
+        ----------
+            None
+        
+        Returns
+        -------
+            None
+        """
+        pass
     
 
-    """
-    Check the user's inputs against the GDK-JSON file schema, returning True
-    for now
-    """
     def check_input(self,input):
+        """
+        Prompts the user of all the optional fields of the gdk config file
+        and updates the field_map if their answer is valid  as the user 
+        answers the question to each prompt 
+
+        Parameters
+        ----------
+            None
+        
+        Returns
+        -------
+            None
+        """
+        
         return True
     
 
     def change_value(self, parser, field, value):
+        """
+        Prompts the users to answer if they would like to change the field value
+        of a particular field in the gdk-config file
+
+        Parameters
+        ----------
+            field (string): a field key of the gdk-config file to be changed
+            value (string): the current value corresponding the field key to be changed
+            parser (ArgumentParser): parser for retriving command line arguments 
+
+        Returns
+        -------
+            boolean: True if the user answers 'y' they do want to change the value of field 'field'
+                    and False if the user answers 'n' they do not want to change the value of that field 
+                    
+                    
+        """
         while True:
             args = parser.parse_args(['--change_value', input(f'Do you want to change the field {field} with value {value} ?(y/n)')])
             if args.change_value.lower() in {'y', 'n'}:
@@ -153,23 +212,55 @@ class Wizard:
         return args.change_value.lower() == 'y'
 
 
-    """
-    upon exiting the wizard, it will first flush all the values 
-    stored in self.field_map to the config file 
-    """
     def write_to_config_file(self):
+        """
+        Writes all the values in field_map to the gdk-config.json file 
+
+        Parameters
+        ----------
+            None
+        
+        Returns
+        -------
+            None 
+        """
         pass
 
 
     def get_schema(self):
+
+        """
+        Retrieves the schema of the config file     
+        
+        Raises an exception if the schema file doesn't exist.
+
+        Parameters
+        ----------
+            None
+
+        Returns
+        -------
+            data(dict): config file schema as a python dictionary object
+        """     
         config_schema_file = utils.get_static_file_path(consts.config_schema_file)
         with open(config_schema_file, "r") as schemaFile:
             schema = json.loads(schemaFile.read())
         return schema
 
 
-
     def prompt(self):
+        """
+        Wapper method that prompts users of required and optional field values
+        for the gdk config file
+
+        Parameters
+        ----------
+            None
+        
+        Returns
+        -------
+            None
+        """
         self.prompt_required_fields()
         self.prompt_optional_fields()
 
