@@ -36,15 +36,7 @@ class Wizard:
             A dictionary object containing the configuration from greengrass project config file.
 
         """
-
-        # self.field_map is a dictionary object
-        # self.field_map = get_configuration()
-
-        project_config_file = '/home/jacksozh/workspace/aws-greengrass-gdk-cli/gdk/wizard/static/dummy_config.json'
-        with open(project_config_file, "r") as config_file:
-            config_data = json.loads(config_file.read())
-
-        self.field_map = config_data
+        self.field_map = get_configuration()
 
     def prompt_required_fields(self):
         """
@@ -263,29 +255,3 @@ class Wizard:
         """
         self.prompt_required_fields()
         self.prompt_optional_fields()
-
-    
-############################# Testing Code ##########################################
-
-
-def get_schema():
-    config_schema_file = utils.get_static_file_path(consts.config_schema_file)
-    with open(config_schema_file, "r") as schemaFile:
-        schema = json.loads(schemaFile.read())
-    return schema
-
-def main():
-    wiz = Wizard()
-    # print(wiz.get_schema())
-    # print('SCHEMA_KEYS:', list(get_schema().keys()))
-    # print('SCHEMA_values:', list(get_schema().values()))
-    # print(get_schema())
-
-    # print(utils.current_directory)
-
-    wiz.prompt_required_fields()
-    print(wiz.field_map)
-
-if __name__ == "__main__":
-    main()
-
