@@ -40,14 +40,26 @@ class ComponentPublishConfigurationTest(TestCase):
         self.mocker.patch("boto3.Session", return_value=boto3_ses)
 
     def test_GIVEN_config_with_no_arguments_WHEN_read_publish_config_THEN_read_from_config(self):
-        self.gg_client_stub.add_response(
-            "list_component_versions",
-            {"componentVersions": []},
-        )
+        self.gg_client_stub.add_client_error("get_component", service_error_code="ResourceNotFoundException")
+        self.mocker.patch.object(ComponentPublishConfiguration, "_get_region", return_value="us-east-1")
+
         pconfig = ComponentPublishConfiguration({})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
         assert pconfig.bucket == "default-us-east-1-123456789012"
+
+    def test_GIVEN_config_with_existing_component_version_WHEN_read_publish_config_THEN_raise_exc(self):
+        self.gg_client_stub.add_response(
+            "get_component", {"recipeOutputFormat": "JSON", "recipe": b'{"RecipeFormatVersion":"2020-01-25"}'}
+        )
+        self.mocker.patch.object(ComponentPublishConfiguration, "_get_region", return_value="us-east-1")
+
+        with pytest.raises(Exception) as e:
+            ComponentPublishConfiguration({})
+        assert (
+            "Component version 1.0.0 already exists in the us-east-1 region. Please provide a different version."
+            in e.value.args[0]
+        )
 
     def test_GIVEN_NEXT_PATCH_for_version_with_no_previous_versions_WHEN_get_next_version_THEN_get_fallback_version(self):
         conf = config()
@@ -80,20 +92,18 @@ class ComponentPublishConfigurationTest(TestCase):
         assert pconfig.bucket == "default-us-east-1-123456789012"
 
     def test_GIVEN_config_with_bucket_args_WHEN_get_bucket_THEN_get_bucket_from_args(self):
-        self.gg_client_stub.add_response(
-            "list_component_versions",
-            {"componentVersions": []},
-        )
+        self.mocker.patch.object(ComponentPublishConfiguration, "get_component_version", return_value="1.0.0")
+        self.mocker.patch.object(ComponentPublishConfiguration, "_get_region", return_value="us-east-1")
+
         pconfig = ComponentPublishConfiguration({"bucket": "my-bucket"})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
         assert pconfig.bucket == "my-bucket"
 
     def test_GIVEN_config_with_region_args_WHEN_get_region_THEN_get_region_from_args(self):
-        self.gg_client_stub.add_response(
-            "list_component_versions",
-            {"componentVersions": []},
-        )
+        self.mocker.patch.object(ComponentPublishConfiguration, "get_component_version", return_value="1.0.0")
+        self.mocker.patch.object(ComponentPublishConfiguration, "_get_region", return_value="us-east-1")
+
         pconfig = ComponentPublishConfiguration({"region": "us-east-1"})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
@@ -101,10 +111,9 @@ class ComponentPublishConfigurationTest(TestCase):
 
     def test_GIVEN_config_with_options_args_WHEN_get_options_THEN_get_options_from_args(self):
         opts = '{"metadata": "test"}'
-        self.gg_client_stub.add_response(
-            "list_component_versions",
-            {"componentVersions": []},
-        )
+        self.mocker.patch.object(ComponentPublishConfiguration, "get_component_version", return_value="1.0.0")
+        self.mocker.patch.object(ComponentPublishConfiguration, "_get_region", return_value="us-east-1")
+
         pconfig = ComponentPublishConfiguration({"options": opts})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
@@ -146,6 +155,7 @@ class ComponentPublishConfigurationTest(TestCase):
             "list_component_versions",
             {"componentVersions": []},
         )
+        self.mocker.patch.object(ComponentPublishConfiguration, "get_component_version", return_value="1.0.0")
         with patch("builtins.open", mock_open(read_data=valid_json_string)):
             pconfig = ComponentPublishConfiguration({"options": opts})
             assert pconfig.publisher == "author"
@@ -154,19 +164,19 @@ class ComponentPublishConfigurationTest(TestCase):
             assert pconfig.options == {"metadata": "test"}
 
     def test_GIVEN_config_with_invalid_file_options_args_WHEN_get_options_THEN_raise_exception(self):
+        self.mocker.patch.object(ComponentPublishConfiguration, "get_component_version", return_value="1.0.0")
+        self.mocker.patch.object(ComponentPublishConfiguration, "_get_region", return_value="us-east-1")
+
         opts = "some_file.json"
         invalid_json_string = "invalid_json"
         self.mocker.patch("pathlib.Path.is_file", return_value=True)
-        self.gg_client_stub.add_response(
-            "list_component_versions",
-            {"componentVersions": []},
-        )
         with patch("builtins.open", mock_open(read_data=invalid_json_string)):
             with pytest.raises(Exception) as e:
                 ComponentPublishConfiguration({"options": opts})
         assert "JSON string is incorrectly formatted." in e.value.args[0]
 
     def test_GIVEN_config_with_no_region_WHEN_get_config_THEN_raise_exception(self):
+        self.mocker.patch.object(ComponentPublishConfiguration, "get_component_version", return_value="1.0.0")
         conf = config()
         conf["component"]["com.example.HelloWorld"]["publish"]["region"] = ""
         self.mock_get_proj_config = self.mocker.patch(

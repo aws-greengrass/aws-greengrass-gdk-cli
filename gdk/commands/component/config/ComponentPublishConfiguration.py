@@ -13,6 +13,7 @@ class ComponentPublishConfiguration(GDKProject):
     def __init__(self, _args) -> None:
         super().__init__()
         self._args = _args
+        self._gg_client = None
         self._publish_config = self.component_config.get("publish", {})
         self.options = self._get_options()
         self.account_num = self.get_account_number()
@@ -23,6 +24,11 @@ class ComponentPublishConfiguration(GDKProject):
         self.publish_recipe_file = self.gg_build_recipes_dir.joinpath(
             f"{self.component_name}-{self.component_version}.{self.recipe_file.name.split('.')[-1]}"
         )
+
+    def gg_client(self, region):
+        if not self._gg_client:
+            self._gg_client = Greengrassv2Client(region)
+        return self._gg_client
 
     def _get_region(self):
         _region = ""
@@ -39,7 +45,7 @@ class ComponentPublishConfiguration(GDKProject):
             raise ValueError("Region cannot be empty. Please provide a valid region.")
         component_arn = self._get_component_arn(region)
         try:
-            Greengrassv2Client(region).get_component_version(component_arn)
+            self.gg_client(region).get_component_version(component_arn)
         except exceptions.EndpointConnectionError:
             raise ValueError("Greengrass does not exist in %s region. Please provide a valid region.", region)
         except Exception as e:
@@ -102,6 +108,14 @@ class ComponentPublishConfiguration(GDKProject):
             )
             return self._get_next_version(_region)
         logging.info("Using the version %s set for the component '%s' in the config file.", _version, self.component_name)
+        return self._validated_version(_region, _version)
+
+    def _validated_version(self, _region, _version):
+        component_version_arn = self._get_component_arn(_region) + ":versions:" + _version
+        if self.gg_client(_region).component_version_exists(component_version_arn):
+            raise ValueError(
+                f"Component version {_version} already exists in the {_region} region. Please provide a different version."
+            )
         return _version
 
     def _get_next_version(self, _region) -> str:
@@ -114,7 +128,7 @@ class ComponentPublishConfiguration(GDKProject):
         try:
             c_name = self.component_name
             component_arn = self._get_component_arn(_region)
-            c_next_patch_version = Greengrassv2Client(_region).get_highest_cloud_component_version(component_arn)
+            c_next_patch_version = self.gg_client(_region).get_highest_cloud_component_version(component_arn)
             if not c_next_patch_version:
                 logging.info(
                     "No private version of the component '%s' exist in the account. Using '%s' as the next version to create.",

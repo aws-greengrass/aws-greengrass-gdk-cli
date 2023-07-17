@@ -48,6 +48,7 @@ class PublishCommandTest(TestCase):
         boto3_ses = Mock()
         boto3_ses.get_partition_for_region.return_value = "aws"
         self.mocker.patch("boto3.Session", return_value=boto3_ses)
+        self.gg_client_stub.add_client_error("get_component", service_error_code="ResourceNotFoundException")
 
     def test_upload_artifacts_with_no_artifacts(self):
         publish = PublishCommand({})

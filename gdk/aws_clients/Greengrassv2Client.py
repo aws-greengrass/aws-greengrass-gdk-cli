@@ -1,5 +1,6 @@
 import logging
 import boto3
+from botocore.exceptions import ClientError
 
 
 class Greengrassv2Client:
@@ -47,3 +48,16 @@ class Greengrassv2Client:
             except Exception:
                 logging.error("Failed to create a private version of the component using the recipe at '%s'.", file_path)
                 raise
+
+    def component_version_exists(self, component_arn) -> bool:
+        """
+        Checks if the component version exists in the account. Returns True if the component exists else False.
+        """
+        try:
+            self.client.get_component(arn=component_arn)
+            return True
+        except ClientError as exc:
+            error_code = exc.response["Error"]["Code"]
+            if error_code == "ResourceNotFoundException":
+                return False
+            raise exc

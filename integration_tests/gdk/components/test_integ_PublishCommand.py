@@ -114,7 +114,7 @@ class ComponentPublishCommandIntegTest(TestCase):
         self.sts_client_stub.add_response("get_caller_identity", {"Account": account_num}, {})
         self.mocker.patch.object(self.s3_client, "get_bucket_location", return_value={"LocationConstraint": "us-east-2"})
         mock_upload_file = self.mocker.patch.object(self.s3_client, "upload_file", return_value=None)
-
+        self.gg_client_stub.add_client_error("get_component", service_error_code="ResourceNotFoundException")
         self.gg_client_stub.add_response(
             "create_component_version",
             {
@@ -226,6 +226,32 @@ class ComponentPublishCommandIntegTest(TestCase):
             pc = PublishCommand({})
             pc.run()
         assert "AccessDeniedException" in str(e)
+        self.sts_client_stub.assert_no_pending_responses()
+        self.gg_client_stub.assert_no_pending_responses()
+        assert len(list(self.tmpdir.joinpath("greengrass-build/recipes/").iterdir())) == 1
+
+    def test_GIVEN_artifacts_WHEN_component_version_provided_exists_already_THEN_raise_ex(self):
+        self.zip_test_data()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value={
+                "component": {
+                    "abc": {
+                        "author": "author",
+                        "version": "1.9.0",
+                        "build": {"build_system": "zip"},
+                        "publish": {"bucket": "default", "region": "us-east-1"},
+                    }
+                }
+            },
+        )
+        self.gg_client_stub.add_response(
+            "get_component", {"recipeOutputFormat": "JSON", "recipe": b'{"RecipeFormatVersion":"2020-01-25"}'}
+        )
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": "1234"}, {})
+        with pytest.raises(Exception) as e:
+            PublishCommand({})
+        assert "Component version 1.9.0 already exists in the us-east-1 region. Please provide a different version." in str(e)
         self.sts_client_stub.assert_no_pending_responses()
         self.gg_client_stub.assert_no_pending_responses()
         assert len(list(self.tmpdir.joinpath("greengrass-build/recipes/").iterdir())) == 1

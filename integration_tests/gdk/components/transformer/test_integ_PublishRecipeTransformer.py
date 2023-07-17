@@ -72,6 +72,7 @@ class ComponentPublishRecipeTransformerIntegTest(TestCase):
                 "nextToken": "string",
             },
         )
+        self.gg_client_stub.add_client_error("get_component", service_error_code="ResourceNotFoundException")
 
     def test_transform_publish_recipe_artifact_in_build_json(self):
         recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()

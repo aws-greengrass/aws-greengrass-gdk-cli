@@ -53,6 +53,7 @@ class PublishRecipeTransformerTest(TestCase):
                 "nextToken": "string",
             },
         )
+        self.gg_client_stub.add_client_error("get_component", service_error_code="ResourceNotFoundException")
 
     def test_publish_recipe_transformer_instantiate(self):
         pc = ComponentPublishConfiguration({})
