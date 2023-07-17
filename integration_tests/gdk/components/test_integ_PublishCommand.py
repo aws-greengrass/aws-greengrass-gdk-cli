@@ -11,6 +11,8 @@ import shutil
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile
 from botocore.stub import Stubber, ANY
 
+from unittest.mock import Mock
+
 
 class ComponentPublishCommandIntegTest(TestCase):
     @pytest.fixture(autouse=True)
@@ -43,7 +45,16 @@ class ComponentPublishCommandIntegTest(TestCase):
 
         self.gg_client_stub.activate()
         self.sts_client_stub.activate()
-        self.gg_client_stub.add_response("list_components", {"components": []})
+        self.gg_client_stub.add_response(
+            "list_component_versions",
+            {
+                "componentVersions": [],
+                "nextToken": "string",
+            },
+        )
+        boto3_ses = Mock()
+        boto3_ses.get_partition_for_region.return_value = "aws"
+        self.mocker.patch("boto3.Session", return_value=boto3_ses)
 
     def test_GIVEN_no_artifacts_and_NEXT_PATCH_WHEN_publish_THEN_create_a_component_with_recipe(self):
         self.zip_test_data()

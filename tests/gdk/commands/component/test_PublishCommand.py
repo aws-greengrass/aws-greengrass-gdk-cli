@@ -1,6 +1,6 @@
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import call
+from unittest.mock import call, Mock
 from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 
 import pytest
@@ -38,7 +38,16 @@ class PublishCommandTest(TestCase):
         self.gg_client_stub.activate()
         self.sts_client_stub.activate()
         self.sts_client_stub.add_response("get_caller_identity", {"Account": "123456789012"})
-        self.gg_client_stub.add_response("list_components", {"components": []})
+        self.gg_client_stub.add_response(
+            "list_component_versions",
+            {
+                "componentVersions": [],
+                "nextToken": "string",
+            },
+        )
+        boto3_ses = Mock()
+        boto3_ses.get_partition_for_region.return_value = "aws"
+        self.mocker.patch("boto3.Session", return_value=boto3_ses)
 
     def test_upload_artifacts_with_no_artifacts(self):
         publish = PublishCommand({})

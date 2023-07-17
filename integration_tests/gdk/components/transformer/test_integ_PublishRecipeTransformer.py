@@ -65,7 +65,13 @@ class ComponentPublishRecipeTransformerIntegTest(TestCase):
         self.gg_client_stub.activate()
         self.sts_client_stub.activate()
         self.sts_client_stub.add_response("get_caller_identity", {"Account": "123456789012"})
-        self.gg_client_stub.add_response("list_components", {"components": []})
+        self.gg_client_stub.add_response(
+            "list_component_versions",
+            {
+                "componentVersions": [],
+                "nextToken": "string",
+            },
+        )
 
     def test_transform_publish_recipe_artifact_in_build_json(self):
         recipe = self.c_dir.joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()

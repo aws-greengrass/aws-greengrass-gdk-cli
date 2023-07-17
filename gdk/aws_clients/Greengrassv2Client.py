@@ -1,6 +1,5 @@
 import logging
 import boto3
-from botocore import exceptions
 
 
 class Greengrassv2Client:
@@ -11,19 +10,6 @@ class Greengrassv2Client:
     def __init__(self, _region):
         self.client = boto3.client("greengrassv2", region_name=_region)
 
-    def is_gg_available(self) -> bool:
-        """
-        Verifies if Greengrass is available in the provided region by making a GG API request.
-        """
-        try:
-            self.client.list_components(scope="PRIVATE", maxResults=1)
-            return True
-        except exceptions.EndpointConnectionError:
-            logging.error("Unable to connect to the Greengrass endpoint using the given region.")
-        except Exception as e:
-            logging.error("Error while checking Greengrass availability: %s", e)
-        return False
-
     def get_highest_cloud_component_version(self, component_arn) -> str:
         """
         Gets highest version of the component from the sorted order of its versions from an account in a region.
@@ -32,7 +18,7 @@ class Greengrassv2Client:
         """
 
         try:
-            component_versions = self._get_component_version(component_arn)
+            component_versions = self.get_component_version(component_arn)
             if not component_versions:
                 return None
             return component_versions[0]["componentVersion"]
@@ -40,7 +26,7 @@ class Greengrassv2Client:
             logging.error("Error while getting the component versions using arn: %s.", component_arn)
             raise
 
-    def _get_component_version(self, component_arn) -> dict:
+    def get_component_version(self, component_arn) -> dict:
         comp_list_response = self.client.list_component_versions(arn=component_arn)
         return comp_list_response["componentVersions"]
 

@@ -1,9 +1,8 @@
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import call
+from unittest.mock import call, Mock
 
 import pytest
-
 
 from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
@@ -43,8 +42,17 @@ class PublishRecipeTransformerTest(TestCase):
         self.sts_client_stub = Stubber(self.sts_client)
         self.gg_client_stub.activate()
         self.sts_client_stub.activate()
-        self.gg_client_stub.add_response("list_components", {"components": []})
         self.sts_client_stub.add_response("get_caller_identity", {"Account": "123456789012"})
+        boto3_ses = Mock()
+        boto3_ses.get_partition_for_region.return_value = "aws"
+        self.mocker.patch("boto3.Session", return_value=boto3_ses)
+        self.gg_client_stub.add_response(
+            "list_component_versions",
+            {
+                "componentVersions": [],
+                "nextToken": "string",
+            },
+        )
 
     def test_publish_recipe_transformer_instantiate(self):
         pc = ComponentPublishConfiguration({})

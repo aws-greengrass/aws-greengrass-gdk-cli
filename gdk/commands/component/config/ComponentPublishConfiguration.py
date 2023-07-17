@@ -6,6 +6,7 @@ import logging
 import gdk.common.utils as utils
 from gdk.aws_clients.Greengrassv2Client import Greengrassv2Client
 import boto3
+from botocore import exceptions
 
 
 class ComponentPublishConfiguration(GDKProject):
@@ -13,10 +14,9 @@ class ComponentPublishConfiguration(GDKProject):
         super().__init__()
         self._args = _args
         self._publish_config = self.component_config.get("publish", {})
-
-        self.region = self._get_region()
         self.options = self._get_options()
         self.account_num = self.get_account_number()
+        self.region = self._get_region()
         self.bucket = self._get_bucket(self.region, self.account_num)
         self.component_version = self.get_component_version(self.region)
         self.publisher = self.component_config.get("author", "")
@@ -37,10 +37,14 @@ class ComponentPublishConfiguration(GDKProject):
     def _validated_region(self, region):
         if region == "":
             raise ValueError("Region cannot be empty. Please provide a valid region.")
-
-        if not Greengrassv2Client(region).is_gg_available():
-            raise ValueError("Greengrass does not exist in this region. Please provide a valid region.")
-
+        component_arn = self._get_component_arn(region)
+        try:
+            Greengrassv2Client(region).get_component_version(component_arn)
+        except exceptions.EndpointConnectionError:
+            raise ValueError("Greengrass does not exist in %s region. Please provide a valid region.", region)
+        except Exception as e:
+            logging.error("Error occurred while checking Greengrass availability: %s", e)
+            raise e
         return region
 
     def _get_bucket(self, _region, _account):
@@ -142,7 +146,7 @@ class ComponentPublishConfiguration(GDKProject):
         Raises an exception when the request is unsuccessful.
         """
         try:
-            _sts_client = boto3.client("sts", region_name=self.region)
+            _sts_client = boto3.client("sts")
             account_num = _sts_client.get_caller_identity().get("Account")
             logging.debug("Identified account number as '%s'.", account_num)
             return account_num
