@@ -32,7 +32,16 @@ class ComponentPublishConfiguration(GDKProject):
         else:
             _region = self._publish_config.get("region", "")
 
-        return _region
+        return self._validated_region(_region)
+
+    def _validated_region(self, region):
+        if region == "":
+            raise ValueError("Region cannot be empty. Please provide a valid region.")
+
+        if not Greengrassv2Client(region).is_gg_available():
+            raise ValueError("Greengrass does not exist in this region. Please provide a valid region.")
+
+        return region
 
     def _get_bucket(self, _region, _account):
         _bucket = ""

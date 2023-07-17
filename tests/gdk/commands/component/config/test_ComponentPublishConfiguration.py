@@ -8,6 +8,7 @@ from gdk.commands.component.config.ComponentPublishConfiguration import Componen
 import boto3
 from botocore.stub import Stubber
 from gdk.common.config.GDKProject import GDKProject
+from botocore.exceptions import EndpointConnectionError
 
 
 class ComponentPublishConfigurationTest(TestCase):
@@ -40,6 +41,7 @@ class ComponentPublishConfigurationTest(TestCase):
         self.mocker.patch("boto3.Session", return_value=boto3_ses)
 
     def test_GIVEN_config_with_no_arguments_WHEN_read_publish_config_THEN_read_from_config(self):
+        self.gg_client_stub.add_response("list_components", {"components": []})
         pconfig = ComponentPublishConfiguration({})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
@@ -53,6 +55,7 @@ class ComponentPublishConfigurationTest(TestCase):
             return_value=conf,
         )
         response = {"componentVersions": []}
+        self.gg_client_stub.add_response("list_components", {"components": []})
         self.gg_client_stub.add_response("list_component_versions", response)
         pconfig = ComponentPublishConfiguration({})
         assert pconfig.publisher == "author"
@@ -67,6 +70,7 @@ class ComponentPublishConfigurationTest(TestCase):
             return_value=conf,
         )
         response = {"componentVersions": [{"componentVersion": "1.0.4"}, {"componentVersion": "1.0.1"}]}
+        self.gg_client_stub.add_response("list_components", {"components": []})
         self.gg_client_stub.add_response("list_component_versions", response)
         pconfig = ComponentPublishConfiguration({})
         assert pconfig.publisher == "author"
@@ -74,12 +78,14 @@ class ComponentPublishConfigurationTest(TestCase):
         assert pconfig.bucket == "default-us-east-1-123456789012"
 
     def test_GIVEN_config_with_bucket_args_WHEN_get_bucket_THEN_get_bucket_from_args(self):
+        self.gg_client_stub.add_response("list_components", {"components": []})
         pconfig = ComponentPublishConfiguration({"bucket": "my-bucket"})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
         assert pconfig.bucket == "my-bucket"
 
     def test_GIVEN_config_with_region_args_WHEN_get_region_THEN_get_region_from_args(self):
+        self.gg_client_stub.add_response("list_components", {"components": []})
         pconfig = ComponentPublishConfiguration({"region": "us-east-1"})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
@@ -87,6 +93,7 @@ class ComponentPublishConfigurationTest(TestCase):
 
     def test_GIVEN_config_with_options_args_WHEN_get_options_THEN_get_options_from_args(self):
         opts = '{"metadata": "test"}'
+        self.gg_client_stub.add_response("list_components", {"components": []})
         pconfig = ComponentPublishConfiguration({"options": opts})
         assert pconfig.publisher == "author"
         assert pconfig.component_version == "1.0.0"
@@ -96,6 +103,7 @@ class ComponentPublishConfigurationTest(TestCase):
     def test_GIVEN_config_with_invalid_options_args_WHEN_get_options_THEN_raise_exception(self):
         opts = '{"metadata: "test"}'
         with pytest.raises(Exception) as e:
+            self.gg_client_stub.add_response("list_components", {"components": []})
             pconfig = ComponentPublishConfiguration({"options": opts})
             assert pconfig.publisher == "author"
             assert pconfig.component_version == "1.0.0"
@@ -105,6 +113,7 @@ class ComponentPublishConfigurationTest(TestCase):
 
     def test_GIVEN_config_with_file_options_args_and_path_not_exists_WHEN_get_options_THEN_raise_exception(self):
         opts = "file_does_not_exist.json"
+        self.gg_client_stub.add_response("list_components", {"components": []})
         with pytest.raises(Exception) as e:
             pconfig = ComponentPublishConfiguration({"options": opts})
             assert pconfig.publisher == "author"
@@ -116,6 +125,7 @@ class ComponentPublishConfigurationTest(TestCase):
         opts = "some_file.json"
         valid_json_string = '{"metadata": "test"}'
         self.mocker.patch("pathlib.Path.is_file", return_value=True)
+        self.gg_client_stub.add_response("list_components", {"components": []})
         with patch("builtins.open", mock_open(read_data=valid_json_string)):
             pconfig = ComponentPublishConfiguration({"options": opts})
             assert pconfig.publisher == "author"
@@ -127,10 +137,35 @@ class ComponentPublishConfigurationTest(TestCase):
         opts = "some_file.json"
         invalid_json_string = "invalid_json"
         self.mocker.patch("pathlib.Path.is_file", return_value=True)
+        self.gg_client_stub.add_response("list_components", {"components": []})
         with patch("builtins.open", mock_open(read_data=invalid_json_string)):
             with pytest.raises(Exception) as e:
                 ComponentPublishConfiguration({"options": opts})
         assert "JSON string is incorrectly formatted." in e.value.args[0]
+
+    def test_GIVEN_config_with_invalid_region_arg_WHEN_get_config_THEN_raise_exception(self):
+        self.gg_client_stub.add_client_error("list_components", EndpointConnectionError)
+        with pytest.raises(Exception) as e:
+            ComponentPublishConfiguration({"region": "region"})
+        assert "Greengrass does not exist in this region. Please provide a valid region." in str(e)
+
+    def test_GIVEN_config_with_invalid_region_WHEN_get_config_THEN_raise_exception(self):
+        self.gg_client_stub.add_client_error("list_components", EndpointConnectionError)
+        with pytest.raises(Exception) as e:
+            ComponentPublishConfiguration({})
+        assert "Greengrass does not exist in this region. Please provide a valid region." in str(e)
+
+    def test_GIVEN_config_with_no_region_WHEN_get_config_THEN_raise_exception(self):
+        conf = config()
+        conf["component"]["com.example.HelloWorld"]["publish"]["region"] = ""
+        self.mock_get_proj_config = self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value=conf,
+        )
+        self.gg_client_stub.add_client_error("list_components", EndpointConnectionError)
+        with pytest.raises(Exception) as e:
+            ComponentPublishConfiguration({})
+        assert "Region cannot be empty. Please provide a valid region." in str(e)
 
 
 def config():

@@ -43,6 +43,7 @@ class ComponentPublishCommandIntegTest(TestCase):
 
         self.gg_client_stub.activate()
         self.sts_client_stub.activate()
+        self.gg_client_stub.add_response("list_components", {"components": []})
 
     def test_GIVEN_no_artifacts_and_NEXT_PATCH_WHEN_publish_THEN_create_a_component_with_recipe(self):
         self.zip_test_data()

@@ -38,6 +38,7 @@ class PublishCommandTest(TestCase):
         self.gg_client_stub.activate()
         self.sts_client_stub.activate()
         self.sts_client_stub.add_response("get_caller_identity", {"Account": "123456789012"})
+        self.gg_client_stub.add_response("list_components", {"components": []})
 
     def test_upload_artifacts_with_no_artifacts(self):
         publish = PublishCommand({})

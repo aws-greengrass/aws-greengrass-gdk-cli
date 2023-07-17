@@ -1,5 +1,6 @@
 import logging
 import boto3
+from botocore import exceptions
 
 
 class Greengrassv2Client:
@@ -9,6 +10,19 @@ class Greengrassv2Client:
 
     def __init__(self, _region):
         self.client = boto3.client("greengrassv2", region_name=_region)
+
+    def is_gg_available(self) -> bool:
+        """
+        Verifies if Greengrass is available in the provided region by making a GG API request.
+        """
+        try:
+            self.client.list_components(scope="PRIVATE", maxResults=1)
+            return True
+        except exceptions.EndpointConnectionError:
+            logging.error("Unable to connect to the Greengrass endpoint using the given region.")
+        except Exception as e:
+            logging.error("Error while checking Greengrass availability: %s", e)
+        return False
 
     def get_highest_cloud_component_version(self, component_arn) -> str:
         """
