@@ -18,7 +18,7 @@ class Greengrassv2Client:
         """
 
         try:
-            component_versions = self._get_component_version(component_arn)
+            component_versions = self.get_component_version(component_arn)
             if not component_versions:
                 return None
             return component_versions[0]["componentVersion"]
@@ -26,7 +26,7 @@ class Greengrassv2Client:
             logging.error("Error while getting the component versions using arn: %s.", component_arn)
             raise
 
-    def _get_component_version(self, component_arn) -> dict:
+    def get_component_version(self, component_arn) -> dict:
         comp_list_response = self.client.list_component_versions(arn=component_arn)
         return comp_list_response["componentVersions"]
 

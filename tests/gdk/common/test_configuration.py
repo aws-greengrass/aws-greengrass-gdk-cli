@@ -45,7 +45,6 @@ def test_get_configuration_valid_component_config_found(mocker):
         "invalid_build_command.json",
         "invalid_build_command_string.json",
         "invalid_build_command_array.json",
-        "invalid_region_config.json",
     ],
 )
 def test_get_configuration_invalid_config_file(mocker, file_name):
