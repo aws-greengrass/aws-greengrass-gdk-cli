@@ -5,7 +5,7 @@ import shutil
 from behave import step
 from pathlib import Path
 from constants import (
-    GG_CONFIG_JSON, GG_RECIPE_YAML, GG_BUILD_DIR, GG_BUILD_ZIP_DIR, GDK_TEST_DIR,
+    GG_CONFIG_JSON, GG_RECIPE_YAML, GG_BUILD_DIR, GG_BUILD_ZIP_DIR,
     DEFAULT_AWS_REGION, DEFAULT_S3_BUCKET_PREFIX, DEFAULT_ARTIFACT_AUTHOR
 )
 
@@ -17,13 +17,7 @@ def verify_component_files(context):
     assert Path(cwd).joinpath(GG_CONFIG_JSON).resolve().exists(), f"{GG_CONFIG_JSON} does not exist"
 
 
-@step("we verify gdk test files")
-def verify_test_files(context):
-    cwd = context.cwd if "cwd" in context else os.getcwd()
-    assert Path(cwd).joinpath(GDK_TEST_DIR).resolve().exists(), f"{GDK_TEST_DIR} does not exist"
-
-
-@step('we verify component zip build files')
+@step("we verify component zip build files")
 def verify_component_zip_build_files(context):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     assert Path(cwd).joinpath(GG_BUILD_DIR).resolve().exists()
