@@ -50,6 +50,11 @@ class BuildCommand(Command):
         build_system.build(path=self._gg_build_e2e_test_dir)
 
     def _copy_e2e_test_dir_to_build(self):
+        if not self.test_directory.exists():
+            raise Exception(
+                "Could not find 'gg-e2e-tests' in the current directory. Please initialize the project with testing module"
+                " using `gdk test-e2e init` command before building it."
+            )
         logging.debug("Copying the E2E testing module to greengrass-build directory")
         shutil.copytree(self.test_directory, self._gg_build_e2e_test_dir)
 
