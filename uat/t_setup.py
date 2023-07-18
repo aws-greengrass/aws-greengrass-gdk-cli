@@ -12,6 +12,7 @@ class ProcessOutput:
     def __init__(self, exit_code, output) -> None:
         self.returncode = exit_code
         self.output = output
+        print(output)
 
 
 class GdkProcess:
