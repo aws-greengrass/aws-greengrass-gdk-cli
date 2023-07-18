@@ -12,6 +12,14 @@ from gdk.aws_clients.S3Client import S3Client
 class BuildRecipeTransformer:
     def __init__(self, project_config: ComponentBuildConfiguration) -> None:
         self.project_config = project_config
+        self._s3_client = None
+
+    def _get_s3_client(self, _region):
+        if not _region:
+            raise ValueError("Region cannot be empty. Please provide a valid region.")
+        if self._s3_client is None:
+            self._s3_client = S3Client(_region)
+        return self._s3_client
 
     def transform(self, build_folders):
         component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)
@@ -38,7 +46,6 @@ class BuildRecipeTransformer:
         """
         logging.info("Copying over the build artifacts to the greengrass component artifacts build folder.")
         logging.info("Updating artifact URIs in the recipe.")
-        s3_client = S3Client(self.project_config.region)
         if "Manifests" not in parsed_component_recipe:
             logging.debug("No 'Manifests' key in the recipe.")
             return
@@ -56,7 +63,7 @@ class BuildRecipeTransformer:
                 if not artifact["URI"].startswith(utils.s3_prefix):
                     continue
                 if not self.is_artifact_in_build(artifact, build_folders):
-                    if not s3_client.s3_artifact_exists(artifact["URI"]):
+                    if not self._get_s3_client(self.project_config.region).s3_artifact_exists(artifact["URI"]):
                         raise Exception(
                             "Could not find artifact with URI '{}' on s3 or inside the build folders.".format(artifact["URI"])
                         )

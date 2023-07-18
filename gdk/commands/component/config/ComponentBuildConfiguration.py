@@ -15,6 +15,4 @@ class ComponentBuildConfiguration(GDKProject):
     def _get_region(self):
         _publish_config = self.component_config.get("publish", {})
         _region = _publish_config.get("region", "")
-        if _region == "":
-            raise ValueError("Region cannot be empty. Please provide a valid region.")
         return _region
