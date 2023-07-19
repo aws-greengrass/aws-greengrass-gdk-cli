@@ -3,3 +3,4 @@ jsonschema
 PyYAML
 requests
 packaging
+semver
