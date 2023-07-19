@@ -12,7 +12,7 @@ class GDKProject:
     def __init__(self):
         self._config = configuration.get_configuration()
         self._component = self._config.get("component")
-        self._test = self._config.get("test", {})
+        self._test = self._config.get("test-e2e", {})
         self._project_dir = utils.get_current_directory()
 
         self.component_name = next(iter(self._component))
