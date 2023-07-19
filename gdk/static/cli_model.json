@@ -147,7 +147,7 @@
                         "arguments": {
                             "otf_options": {
                                 "name": [
-                                    "-t",
+                                    "-oo",
                                     "--otf-options"
                                 ],
                                 "help": "OTF configuration options used when running the E2E tests. This argument needs to be a valid json string or file path to a JSON file containing the config options. This argument overrides the options provided in the gdk configuration."
