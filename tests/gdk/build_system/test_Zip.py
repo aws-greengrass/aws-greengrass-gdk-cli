@@ -12,16 +12,20 @@ class ZipTests(TestCase):
         self.mocker = mocker
 
     def setUp(self):
-        self.build_folder = Path(Path(".").resolve()).joinpath('zip-build')
+        self.build_folder = Path(Path(".").resolve()).joinpath("zip-build")
 
     def project_config(self, build_options: dict):
-        return arrange_project_config({
-            "component_build_config": {
-                "build_system": "zip",
-                "options": build_options
-            },
-            "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.json")
-        })
+        return arrange_project_config(
+            {
+                "component_build_config": {
+                    "build_system": "zip",
+                    "options": build_options,
+                },
+                "component_recipe_file": Path(
+                    "/src/GDK-CLI-Internal/tests/gdk/static/build_command/recipe.json"
+                ),
+            }
+        )
 
     def test_zip_ignore_list_with_exclude_option(self):
         # Given
@@ -32,8 +36,12 @@ class ZipTests(TestCase):
         zip = Zip(config, {self.build_folder})
 
         # Then
-        assert ["gdk-config.json", "greengrass-build",
-                "recipe.json", ".env"] == zip.get_ignored_file_patterns()
+        assert [
+            "gdk-config.json",
+            "greengrass-build",
+            "recipe.json",
+            ".env",
+        ] == zip.get_ignored_file_patterns()
 
     def test_zip_ignore_list_without_exclude_option(self):
         # Given
@@ -44,5 +52,11 @@ class ZipTests(TestCase):
         zip = Zip(config, {self.build_folder})
 
         # Then
-        assert ["gdk-config.json", "greengrass-build", "recipe.json",
-                "test*", ".*", "node_modules"] == zip.get_ignored_file_patterns()
+        assert [
+            "gdk-config.json",
+            "greengrass-build",
+            "recipe.json",
+            "test*",
+            ".*",
+            "node_modules",
+        ] == zip.get_ignored_file_patterns()

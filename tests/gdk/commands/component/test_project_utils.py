@@ -8,10 +8,23 @@ import pytest
 import yaml
 
 valid_project_config_file = (
-    Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_project_config.json").resolve()
+    Path(".")
+    .joinpath("tests/gdk/static/project_utils")
+    .joinpath("valid_project_config.json")
+    .resolve()
 )
-valid_json_recipe_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
-valid_yaml_recipe_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
+valid_json_recipe_file = (
+    Path(".")
+    .joinpath("tests/gdk/static/project_utils")
+    .joinpath("valid_component_recipe.json")
+    .resolve()
+)
+valid_yaml_recipe_file = (
+    Path(".")
+    .joinpath("tests/gdk/static/project_utils")
+    .joinpath("valid_component_recipe.yaml")
+    .resolve()
+)
 
 
 with open(valid_project_config_file, "r") as f:
@@ -107,9 +120,12 @@ def test_get_recipe_file_both_exist(mocker):
 def test_get_project_config_values(mocker):
     # Check if the values are correctly created with valid recipe and config files.
     mock_get_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
+        "gdk.commands.component.project_utils.get_recipe_file",
+        return_value=valid_json_recipe_file,
     )
-    mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", return_value=parsed_config_file)
+    mock_get_parsed_config = mocker.patch(
+        "gdk.common.configuration.get_configuration", return_value=parsed_config_file
+    )
     values = project_utils.get_project_config_values()
     assert mock_get_recipe_file.call_count == 1
     assert mock_get_parsed_config.call_count == 1
@@ -131,9 +147,12 @@ def test_get_project_config_values(mocker):
 def test_get_project_config_values_invalid_config(mocker):
     # Check if an exception is thrown with invalid config
     mock_get_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
+        "gdk.commands.component.project_utils.get_recipe_file",
+        return_value=valid_json_recipe_file,
     )
-    mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", side_effect=KeyError("key"))
+    mock_get_parsed_config = mocker.patch(
+        "gdk.common.configuration.get_configuration", side_effect=KeyError("key")
+    )
     with pytest.raises(Exception) as e:
         project_utils.get_project_config_values()
 
@@ -144,7 +163,9 @@ def test_get_project_config_values_invalid_config(mocker):
 
 def test_get_project_config_values_recipe_file_not_exists(mocker):
     # Check if an exception is thrown for if no recipe file exists
-    mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", return_value=parsed_config_file)
+    mock_get_parsed_config = mocker.patch(
+        "gdk.common.configuration.get_configuration", return_value=parsed_config_file
+    )
     with pytest.raises(Exception) as e:
         project_utils.get_project_config_values()
     assert e.value.args[0] == error_messages.PROJECT_RECIPE_FILE_NOT_FOUND
@@ -160,9 +181,12 @@ def test_get_project_config_values_config_file_not_exists():
 
 def test_component_version_build_specific_version(mocker):
     mock_get_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
+        "gdk.commands.component.project_utils.get_recipe_file",
+        return_value=valid_json_recipe_file,
     )
-    mock_get_parsed_config = mocker.patch("gdk.common.configuration.get_configuration", return_value=parsed_config_file)
+    mock_get_parsed_config = mocker.patch(
+        "gdk.common.configuration.get_configuration", return_value=parsed_config_file
+    )
     values = project_utils.get_project_config_values()
     assert values["component_version"] == "1.0.0"
     assert mock_get_recipe_file.call_count == 1
@@ -170,9 +194,16 @@ def test_component_version_build_specific_version(mocker):
 
 
 def test_service_clients(mocker):
-    mock_s3_client = mocker.patch("gdk.commands.component.project_utils.create_s3_client", return_value=None)
-    mock_sts_client = mocker.patch("gdk.commands.component.project_utils.create_sts_client", return_value=None)
-    mock_greengrass_client = mocker.patch("gdk.commands.component.project_utils.create_greengrass_client", return_value=None)
+    mock_s3_client = mocker.patch(
+        "gdk.commands.component.project_utils.create_s3_client", return_value=None
+    )
+    mock_sts_client = mocker.patch(
+        "gdk.commands.component.project_utils.create_sts_client", return_value=None
+    )
+    mock_greengrass_client = mocker.patch(
+        "gdk.commands.component.project_utils.create_greengrass_client",
+        return_value=None,
+    )
     project_utils.get_service_clients("region")
     assert mock_s3_client.call_count == 1
     assert mock_sts_client.call_count == 1
@@ -204,14 +235,18 @@ def test_service_clients_with_sts_region(mocker):
 
 
 def test_get_supported_component_builds_not_exists(mocker):
-    mock_file_not_exists = mocker.patch("gdk.common.utils.get_static_file_path", return_value=None)
+    mock_file_not_exists = mocker.patch(
+        "gdk.common.utils.get_static_file_path", return_value=None
+    )
     project_utils.get_supported_component_builds()
     assert mock_file_not_exists.called
 
 
 def test_get_supported_component_builds_exists(mocker):
     mock_file_path = Path(".").resolve()
-    mock_file_not_exists = mocker.patch("gdk.common.utils.get_static_file_path", return_value=mock_file_path)
+    mock_file_not_exists = mocker.patch(
+        "gdk.common.utils.get_static_file_path", return_value=mock_file_path
+    )
     mock_json_loads = mocker.patch("json.loads")
     with patch("builtins.open", mock_open(read_data="{}")) as mock_file:
         project_utils.get_supported_component_builds()

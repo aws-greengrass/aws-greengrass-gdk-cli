@@ -8,7 +8,6 @@ import gdk.common.utils as utils
 
 
 def test_get_static_file_path_exists(mocker):
-
     mock_is_file = mocker.patch("pathlib.Path.is_file", return_value=True)
     file_name = ""
 
@@ -77,7 +76,9 @@ def test_file_exists_not_a_file(mocker):
 
 
 def test_file_exists_exception(mocker):
-    mock_is_file = mocker.patch("pathlib.Path.is_file", return_value=True, side_effect=HTTPError("some error"))
+    mock_is_file = mocker.patch(
+        "pathlib.Path.is_file", return_value=True, side_effect=HTTPError("some error")
+    )
     file_path = Path(".")
     assert not utils.file_exists(file_path)
     assert mock_is_file.call_count == 1
@@ -98,7 +99,9 @@ def test_dir_exists_not_a_dir(mocker):
 
 
 def test_dir_exists_exception(mocker):
-    mock_is_dir = mocker.patch("pathlib.Path.is_dir", return_value=True, side_effect=HTTPError("some error"))
+    mock_is_dir = mocker.patch(
+        "pathlib.Path.is_dir", return_value=True, side_effect=HTTPError("some error")
+    )
     dir_path = Path(".")
     assert not utils.dir_exists(dir_path)
     assert mock_is_dir.call_count == 1
@@ -132,14 +135,18 @@ def test_get_latest_cli_version_invalid_version(mocker):
 def test_get_latest_cli_version_invalid_request(mocker):
     res_text = "__version__ = 1.0.0"
     mock_response = mocker.Mock(status_code=200, text=lambda: res_text)
-    mock_get_version = mocker.patch("requests.get", return_value=mock_response, side_effect=HTTPError("hi"))
+    mock_get_version = mocker.patch(
+        "requests.get", return_value=mock_response, side_effect=HTTPError("hi")
+    )
     # Since the request failed, it'll be the version of the cli tool installed.
     assert utils.get_latest_cli_version() == utils.cli_version
     assert mock_get_version.called
 
 
 def test_cli_version_check_latest_not_available(mocker):
-    mock_get_latest_cli_version = mocker.patch("gdk.common.utils.get_latest_cli_version", return_value=utils.cli_version)
+    mock_get_latest_cli_version = mocker.patch(
+        "gdk.common.utils.get_latest_cli_version", return_value=utils.cli_version
+    )
     spy_log = mocker.spy(logging, "info")
     utils.cli_version_check()
     assert mock_get_latest_cli_version.called
@@ -147,7 +154,9 @@ def test_cli_version_check_latest_not_available(mocker):
 
 
 def test_cli_version_check_latest_available(mocker):
-    mock_get_latest_cli_version = mocker.patch("gdk.common.utils.get_latest_cli_version", return_value="1000.0.0")
+    mock_get_latest_cli_version = mocker.patch(
+        "gdk.common.utils.get_latest_cli_version", return_value="1000.0.0"
+    )
     spy_log = mocker.spy(logging, "info")
     utils.cli_version_check()
     assert mock_get_latest_cli_version.called

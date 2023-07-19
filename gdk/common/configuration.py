@@ -31,7 +31,11 @@ def get_configuration():
         validate_cli_version(config_data)
         return config_data
     except jsonschema.exceptions.ValidationError as err:
-        raise Exception(error_messages.PROJECT_CONFIG_FILE_INVALID.format(project_config_file.name, err.message))
+        raise Exception(
+            error_messages.PROJECT_CONFIG_FILE_INVALID.format(
+                project_config_file.name, err.message
+            )
+        )
 
 
 def validate_configuration(data):
@@ -88,7 +92,9 @@ def _get_project_config_file():
     -------
        config_file(pathlib.Path): Path of the config file.
     """
-    config_file = Path(utils.current_directory).joinpath(consts.cli_project_config_file).resolve()
+    config_file = (
+        Path(utils.current_directory).joinpath(consts.cli_project_config_file).resolve()
+    )
     if not utils.file_exists(config_file):
         raise Exception(error_messages.CONFIG_FILE_NOT_EXISTS)
     return config_file

@@ -40,7 +40,11 @@ def test_CLIParser_create_parser():
 
 def test_CLIParser_get_arg_from_model():
     # Check that only known params are passed in the form of names and kwargs as needed by parser.add_argument.
-    test_arg = {"name": ["-l", "--lang"], "help": "Specify the language of the template.", "choices": ["python", "java"]}
+    test_arg = {
+        "name": ["-l", "--lang"],
+        "help": "Specify the language of the template.",
+        "choices": ["python", "java"],
+    }
     cli_tool = cli_parser.CLIParser(consts.cli_tool_name, None)
     params_of_add_arg_command = cli_tool._get_arg_from_model(test_arg)
     names_in_command, rest_args_as_dict = params_of_add_arg_command
@@ -65,7 +69,9 @@ def test_CLIParser_get_arg_from_model_unknown_arg_param():
     names_in_command2, rest_args_as_dict2 = params_of_add_arg_command2
     assert len(names_in_command2) == 1
 
-    assert "unknown_param" not in rest_args_as_dict2  # Full list of accepted params in common.consts file.
+    assert (
+        "unknown_param" not in rest_args_as_dict2
+    )  # Full list of accepted params in common.consts file.
 
 
 def test_add_arg_to_group_or_parser_with_group(mocker):
@@ -92,7 +98,11 @@ def test_model_file():
         "component": {"sub-commands": ["init", "build", "publish"]},
         "init": {
             "arguments": {
-                "language": {"name": ["-l", "--language"], "help": "help", "choices": ["python", "java"]},
+                "language": {
+                    "name": ["-l", "--language"],
+                    "help": "help",
+                    "choices": ["python", "java"],
+                },
                 "template": {"name": ["-t", "--template"], "help": "help"},
                 "repository": {"name": ["-r", "--repository"], "help": "help"},
                 "project-name": {
@@ -102,8 +112,16 @@ def test_model_file():
             },
             "conflicting_arg_groups": [["language", "template"], ["repository"]],
             "arg_groups": [
-                {"title": "Title", "args": ["language", "template"], "description": "Description"},
-                {"title": "Title", "args": ["repository"], "description": "Description"},
+                {
+                    "title": "Title",
+                    "args": ["language", "template"],
+                    "description": "Description",
+                },
+                {
+                    "title": "Title",
+                    "args": ["repository"],
+                    "description": "Description",
+                },
             ],
         },
         "build": {},
@@ -114,10 +132,22 @@ def test_model_file():
 
 
 def test_main(mocker):
-    args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
-    mock_cli_parser = mocker.patch("gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace)
-    mock_run_command = mocker.patch("gdk.common.parse_args_actions.run_command", return_value=None)
-    mock_validate_cli_version = mocker.patch("gdk.common.utils.cli_version_check", return_value=None)
+    args_namespace = argparse.Namespace(
+        component="init",
+        init=None,
+        lang="python",
+        template="name",
+        **{"gdk": "component"}
+    )
+    mock_cli_parser = mocker.patch(
+        "gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace
+    )
+    mock_run_command = mocker.patch(
+        "gdk.common.parse_args_actions.run_command", return_value=None
+    )
+    mock_validate_cli_version = mocker.patch(
+        "gdk.common.utils.cli_version_check", return_value=None
+    )
     cli_parser.main()
     mock_cli_parser.assert_any_call()
     mock_run_command.assert_any_call(args_namespace)
@@ -125,12 +155,24 @@ def test_main(mocker):
 
 
 def test_main_exception(mocker):
-    args_namespace = argparse.Namespace(component="init", init=None, lang="python", template="name", **{"gdk": "component"})
-    mock_cli_parser = mocker.patch("gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace)
-    mock_run_command = mocker.patch(
-        "gdk.common.parse_args_actions.run_command", return_value=None, side_effect=HTTPError("some")
+    args_namespace = argparse.Namespace(
+        component="init",
+        init=None,
+        lang="python",
+        template="name",
+        **{"gdk": "component"}
     )
-    mock_validate_cli_version = mocker.patch("gdk.common.utils.cli_version_check", return_value=None)
+    mock_cli_parser = mocker.patch(
+        "gdk.CLIParser.cli_parser.parse_args", return_value=args_namespace
+    )
+    mock_run_command = mocker.patch(
+        "gdk.common.parse_args_actions.run_command",
+        return_value=None,
+        side_effect=HTTPError("some"),
+    )
+    mock_validate_cli_version = mocker.patch(
+        "gdk.common.utils.cli_version_check", return_value=None
+    )
     with pytest.raises(SystemExit):
         cli_parser.main()
     mock_cli_parser.assert_any_call()

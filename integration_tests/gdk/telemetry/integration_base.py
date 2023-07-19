@@ -6,7 +6,9 @@ from werkzeug.serving import make_server
 
 TELEMETRY_ENDPOINT_PORT = "18298"
 TELEMETRY_ENDPOINT_HOST = "localhost"
-TELEMETRY_ENDPOINT_URL = "http://{}:{}".format(TELEMETRY_ENDPOINT_HOST, TELEMETRY_ENDPOINT_PORT)
+TELEMETRY_ENDPOINT_URL = "http://{}:{}".format(
+    TELEMETRY_ENDPOINT_HOST, TELEMETRY_ENDPOINT_PORT
+)
 
 
 class TelemetryServer:
@@ -30,9 +32,13 @@ class TelemetryServer:
         self._requests = []
 
     def __enter__(self):
-        self.server = make_server(TELEMETRY_ENDPOINT_HOST, TELEMETRY_ENDPOINT_PORT, self.flask_app)
+        self.server = make_server(
+            TELEMETRY_ENDPOINT_HOST, TELEMETRY_ENDPOINT_PORT, self.flask_app
+        )
         self.thread = Thread(target=self.server.serve_forever)
-        self.thread.daemon = True  # When test completes, this thread will die automatically
+        self.thread.daemon = (
+            True  # When test completes, this thread will die automatically
+        )
         self.thread.start()  # Start the thread
 
         return self

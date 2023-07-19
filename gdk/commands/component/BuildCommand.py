@@ -11,7 +11,9 @@ import gdk.common.utils as utils
 from gdk.build_system.BuildSystem import BuildSystem
 from gdk.build_system.Zip import Zip
 from gdk.commands.Command import Command
-from gdk.commands.component.transformer.BuildRecipeTransformer import BuildRecipeTransformer
+from gdk.commands.component.transformer.BuildRecipeTransformer import (
+    BuildRecipeTransformer,
+)
 
 
 class BuildCommand(Command):
@@ -44,7 +46,9 @@ class BuildCommand(Command):
         build_system = component_build_config["build_system"]
 
         logging.info(
-            "Building the component '{}' with the given project configuration.".format(self.project_config["component_name"])
+            "Building the component '{}' with the given project configuration.".format(
+                self.project_config["component_name"]
+            )
         )
         # Create build directories
         self.create_gg_build_directories()
@@ -53,7 +57,9 @@ class BuildCommand(Command):
             # Run custom command as is.
             custom_build_command = component_build_config["custom_build_command"]
             logging.info("Using custom build configuration to build the component.")
-            logging.info("Running the following command\n{}".format(custom_build_command))
+            logging.info(
+                "Running the following command\n{}".format(custom_build_command)
+            )
             sp.run(custom_build_command, check=True)
         else:
             logging.info(f"Using '{build_system}' build system to build the component.")
@@ -76,10 +82,20 @@ class BuildCommand(Command):
         # Clean build directory if it exists already.
         utils.clean_dir(self.project_config["gg_build_directory"])
 
-        logging.debug("Creating '{}' directory with artifacts and recipes.".format(consts.greengrass_build_dir))
+        logging.debug(
+            "Creating '{}' directory with artifacts and recipes.".format(
+                consts.greengrass_build_dir
+            )
+        )
         # Create build artifacts and recipe directories
-        Path.mkdir(self.project_config["gg_build_recipes_dir"], parents=True, exist_ok=True)
-        Path.mkdir(self.project_config["gg_build_component_artifacts_dir"], parents=True, exist_ok=True)
+        Path.mkdir(
+            self.project_config["gg_build_recipes_dir"], parents=True, exist_ok=True
+        )
+        Path.mkdir(
+            self.project_config["gg_build_component_artifacts_dir"],
+            parents=True,
+            exist_ok=True,
+        )
 
     def default_build_component(self):
         """
@@ -102,7 +118,9 @@ class BuildCommand(Command):
         try:
             # Build the project with specified build system
             self.run_build_command()
-            self.build_recipe_transformer.transform(self._get_build_folder_by_build_system())
+            self.build_recipe_transformer.transform(
+                self._get_build_folder_by_build_system()
+            )
         except Exception:
             logging.error(error_messages.BUILD_FAILED)
             raise
@@ -120,7 +138,10 @@ class BuildCommand(Command):
             build_command(list): List of build commands of the build system specific to the platform.
         """
         platform_sys = platform.system()
-        if platform_sys == "Windows" and "build_command_win" in self.supported_build_sytems[build_system]:
+        if (
+            platform_sys == "Windows"
+            and "build_command_win" in self.supported_build_sytems[build_system]
+        ):
             return self.supported_build_sytems[build_system]["build_command_win"]
         return self.supported_build_sytems[build_system]["build_command"]
 
@@ -151,7 +172,9 @@ class BuildCommand(Command):
                 logging.info("Zipping source code files of the component.")
                 self._build_system_zip()
             else:
-                logging.info("Running the build command '{}'".format(" ".join(build_command)))
+                logging.info(
+                    "Running the build command '{}'".format(" ".join(build_command))
+                )
                 sp.run(build_command, check=True)
         except Exception:
             logging.error("Error building the component with the given build system.")
@@ -160,7 +183,9 @@ class BuildCommand(Command):
     def _build_system_zip(self):
         # Delegate to avoid breaking tests - TODO: We need to avoid testing private methods
         build_system = BuildSystem()
-        build_system.register(Zip(self.project_config, self._get_build_folder_by_build_system()))
+        build_system.register(
+            Zip(self.project_config, self._get_build_folder_by_build_system())
+        )
         build_system.build("zip")
 
     def _get_build_folder_by_build_system(self):
@@ -208,7 +233,9 @@ class BuildCommand(Command):
             paths(set): Set of build folder paths in a multi-module project.
         """
         # Filter module directories which contain pom.xml, build.gradle, build.gradle.kts build files.
-        set_dirs_with_build_file = set(f.parent for f in Path(utils.current_directory).rglob(build_file))
+        set_dirs_with_build_file = set(
+            f.parent for f in Path(utils.current_directory).rglob(build_file)
+        )
         set_of_module_dirs = set()
         for module_dir in set_dirs_with_build_file:
             module_build_folder = Path(module_dir).joinpath(*build_folder).resolve()

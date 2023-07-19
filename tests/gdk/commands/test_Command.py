@@ -14,7 +14,9 @@ class CommandTest(TestCase):
 
     def test_Command_instantiation_without_conflicting_args(self):
         command_args = {"a": "b"}
-        mock_conflicting_arg_groups = self.mocker.patch.object(Command, "check_if_arguments_conflict", return_value=False)
+        mock_conflicting_arg_groups = self.mocker.patch.object(
+            Command, "check_if_arguments_conflict", return_value=False
+        )
         mock_run = self.mocker.patch.object(Command, "run", return_value=None)
         comm = Command(command_args, "init")
         assert mock_conflicting_arg_groups.call_count == 1
@@ -25,19 +27,26 @@ class CommandTest(TestCase):
     def test_Command_instantiation_with_conflicting_args(self):
         command_args = {"a": "b"}
         mock_conflicting_arg_groups = self.mocker.patch.object(
-            Command, "check_if_arguments_conflict", side_effect=ConflictingArgumentsError("a", "b")
+            Command,
+            "check_if_arguments_conflict",
+            side_effect=ConflictingArgumentsError("a", "b"),
         )
         mock_run = self.mocker.patch.object(Command, "run", return_value=None)
         with pytest.raises(Exception) as e:
             Command(command_args, "init")
-        assert "Arguments 'a' and 'b' are conflicting and cannot be used together in a command." in e.value.args[0]
+        assert (
+            "Arguments 'a' and 'b' are conflicting and cannot be used together in a command."
+            in e.value.args[0]
+        )
         assert not mock_run.called
         assert mock_conflicting_arg_groups.call_count == 1
 
     def test_check_if_arguments_conflict_with_empty_dict(self):
         mock_init = self.mocker.patch.object(Command, "__init__", return_value=None)
         command_args = {"a": "b"}
-        mock_non_conflicting_args_map = self.mocker.patch.object(Command, "_non_conflicting_args_map", return_value={})
+        mock_non_conflicting_args_map = self.mocker.patch.object(
+            Command, "_non_conflicting_args_map", return_value={}
+        )
         mock__identify_conflicting_args_in_command = self.mocker.patch.object(
             Command, "_identify_conflicting_args_in_command", return_value=None
         )
@@ -51,13 +60,24 @@ class CommandTest(TestCase):
         mock_init = self.mocker.patch.object(Command, "__init__", return_value=None)
         command_args = {"a": "b"}
         mock_non_conflicting_args_map = self.mocker.patch.object(
-            Command, "_non_conflicting_args_map", return_value={"non-empty-key": "value"}
+            Command,
+            "_non_conflicting_args_map",
+            return_value={"non-empty-key": "value"},
         )
         mock__identify_conflicting_args_in_command = self.mocker.patch.object(
-            Command, "_identify_conflicting_args_in_command", side_effect=ConflictingArgumentsError("a", "b")
+            Command,
+            "_identify_conflicting_args_in_command",
+            side_effect=ConflictingArgumentsError("a", "b"),
         )
         cli_model = {
-            "init": {"conflicting_arg_groups": [["language", "template"], ["repository"], ["project"], ["interactive"]]}
+            "init": {
+                "conflicting_arg_groups": [
+                    ["language", "template"],
+                    ["repository"],
+                    ["project"],
+                    ["interactive"],
+                ]
+            }
         }
         self.mocker.patch.object(gdk.CLIParser.cli_tool, "cli_model", cli_model)
         c = Command(command_args, "init")
@@ -71,13 +91,22 @@ class CommandTest(TestCase):
         mock_init = self.mocker.patch.object(Command, "__init__", return_value=None)
         command_args = {"a": "b"}
         mock_non_conflicting_args_map = self.mocker.patch.object(
-            Command, "_non_conflicting_args_map", return_value={"non-empty-key": "value"}
+            Command,
+            "_non_conflicting_args_map",
+            return_value={"non-empty-key": "value"},
         )
         mock__identify_conflicting_args_in_command = self.mocker.patch.object(
             Command, "_identify_conflicting_args_in_command", return_value=False
         )
         cli_model = {
-            "init": {"conflicting_arg_groups": [["language", "template"], ["repository"], ["project"], ["interactive"]]}
+            "init": {
+                "conflicting_arg_groups": [
+                    ["language", "template"],
+                    ["repository"],
+                    ["project"],
+                    ["interactive"],
+                ]
+            }
         }
         self.mocker.patch.object(gdk.CLIParser.cli_tool, "cli_model", cli_model)
         c = Command(command_args, "init")
@@ -90,7 +119,9 @@ class CommandTest(TestCase):
         mock_init = self.mocker.patch.object(Command, "__init__", return_value=None)
         conflicting_arg_groups = {}
         command_args = {"a": "b"}
-        mock_arguments_list = self.mocker.patch.object(Command, "_arguments_list", return_value=[])
+        mock_arguments_list = self.mocker.patch.object(
+            Command, "_arguments_list", return_value=[]
+        )
 
         c = Command(command_args, "init")
         assert mock_init.called
@@ -98,7 +129,9 @@ class CommandTest(TestCase):
         assert mock_arguments_list.call_count == 1
 
     def test__identify_conflicting_args_in_command_with_conflicting_args(self):
-        mock_arguments_list = self.mocker.patch.object(Command, "_arguments_list", return_value=["language", "repository"])
+        mock_arguments_list = self.mocker.patch.object(
+            Command, "_arguments_list", return_value=["language", "repository"]
+        )
 
         conflicting_arg_groups = {
             "language": {"language", "template"},
@@ -118,7 +151,9 @@ class CommandTest(TestCase):
         assert mock_arguments_list.call_count == 1
 
     def test__identify_conflicting_args_in_command_without_conflicting_args(self):
-        mock_arguments_list = self.mocker.patch.object(Command, "_arguments_list", return_value=["language", "template"])
+        mock_arguments_list = self.mocker.patch.object(
+            Command, "_arguments_list", return_value=["language", "template"]
+        )
 
         conflicting_arg_groups = {
             "language": {"language", "template"},
@@ -134,7 +169,9 @@ class CommandTest(TestCase):
 
     def test__identify_conflicting_args_in_command_mixed_args(self):
         mock_arguments_list = self.mocker.patch.object(
-            Command, "_arguments_list", return_value=["language", "template", "repository"]
+            Command,
+            "_arguments_list",
+            return_value=["language", "template", "repository"],
         )
 
         conflicting_arg_groups = {
@@ -202,7 +239,14 @@ class CommandTest(TestCase):
     def test_non_conflicting_args_map(self):
         # Test if dictionary of conflicting args of a commmand is correctly formed.
         cli_model = {
-            "init": {"conflicting_arg_groups": [["language", "template"], ["repository"], ["project"], ["interactive"]]}
+            "init": {
+                "conflicting_arg_groups": [
+                    ["language", "template"],
+                    ["repository"],
+                    ["project"],
+                    ["interactive"],
+                ]
+            }
         }
         expected_dic = {
             "language": {"language", "template"},
@@ -230,7 +274,10 @@ class CommandTest(TestCase):
         assert c._non_conflicting_args_map() == {}
 
         cli_model = {"init": {"conflicting_arg_groups": [["language", "template"], []]}}
-        expected_dic = {"language": {"language", "template"}, "template": {"language", "template"}}
+        expected_dic = {
+            "language": {"language", "template"},
+            "template": {"language", "template"},
+        }
         self.mocker.patch.object(gdk.CLIParser.cli_tool, "cli_model", cli_model)
         assert c._non_conflicting_args_map() == expected_dic
 

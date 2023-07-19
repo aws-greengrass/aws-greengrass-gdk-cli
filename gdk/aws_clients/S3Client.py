@@ -36,11 +36,19 @@ class S3Client:
                 self.s3_client.create_bucket(Bucket=bucket)
             else:
                 location = {"LocationConstraint": region}
-                self.s3_client.create_bucket(Bucket=bucket, CreateBucketConfiguration=location)
+                self.s3_client.create_bucket(
+                    Bucket=bucket, CreateBucketConfiguration=location
+                )
         except Exception:
-            logging.error("Failed to create the bucket '%s' in region '%s'", bucket, region)
+            logging.error(
+                "Failed to create the bucket '%s' in region '%s'", bucket, region
+            )
             raise
-        logging.info("Successfully created the artifacts bucket '%s' in region '%s'", bucket, region)
+        logging.info(
+            "Successfully created the artifacts bucket '%s' in region '%s'",
+            bucket,
+            region,
+        )
 
     def upload_artifacts(self, artifacts_to_upload):
         """
@@ -66,8 +74,17 @@ class S3Client:
 
             for artifact in artifacts_to_upload:
                 s3_file_path = f"{component_name}/{component_version}/{artifact.name}"
-                logging.debug("Uploading artifact '%s' to the bucket '%s'.", artifact.resolve(), bucket)
-                self.s3_client.upload_file(str(artifact.resolve()), bucket, s3_file_path, ExtraArgs=s3_upload_file_args)
+                logging.debug(
+                    "Uploading artifact '%s' to the bucket '%s'.",
+                    artifact.resolve(),
+                    bucket,
+                )
+                self.s3_client.upload_file(
+                    str(artifact.resolve()),
+                    bucket,
+                    s3_file_path,
+                    ExtraArgs=s3_upload_file_args,
+                )
         except Exception:
             logging.error("Failed to upload artifacts to s3 during publish.")
             raise
@@ -85,7 +102,11 @@ class S3Client:
         except ClientError as exc:
             error_code = exc.response["Error"]["Code"]
             if error_code != "AccessDenied" and error_code != "NoSuchBucket":
-                logging.error("Could not verify if the bucket '%s' exists in the region '%s'.", bucket, region)
+                logging.error(
+                    "Could not verify if the bucket '%s' exists in the region '%s'.",
+                    bucket,
+                    region,
+                )
                 raise
             elif error_code == "AccessDenied":
                 logging.error(
@@ -96,5 +117,9 @@ class S3Client:
                 raise
             return False
         except Exception:
-            logging.error("Could not verify if the bucket '%s' exists in the region '%s'.", bucket, region)
+            logging.error(
+                "Could not verify if the bucket '%s' exists in the region '%s'.",
+                bucket,
+                region,
+            )
             raise

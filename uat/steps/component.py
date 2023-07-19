@@ -5,32 +5,41 @@ import shutil
 from behave import step
 from pathlib import Path
 from constants import (
-    GG_CONFIG_JSON, GG_RECIPE_YAML, GG_BUILD_DIR, GG_BUILD_ZIP_DIR,
-    DEFAULT_AWS_REGION, DEFAULT_S3_BUCKET_PREFIX, DEFAULT_ARTIFACT_AUTHOR
+    GG_CONFIG_JSON,
+    GG_RECIPE_YAML,
+    GG_BUILD_DIR,
+    GG_BUILD_ZIP_DIR,
+    DEFAULT_AWS_REGION,
+    DEFAULT_S3_BUCKET_PREFIX,
+    DEFAULT_ARTIFACT_AUTHOR,
 )
 
 
-@step('we verify gdk project files')
+@step("we verify gdk project files")
 def verify_component_files(context):
     cwd = context.cwd if "cwd" in context else os.getcwd()
-    assert Path(cwd).joinpath(GG_RECIPE_YAML).resolve().exists(), f"{GG_RECIPE_YAML} does not exist"
-    assert Path(cwd).joinpath(GG_CONFIG_JSON).resolve().exists(), f"{GG_CONFIG_JSON} does not exist"
+    assert (
+        Path(cwd).joinpath(GG_RECIPE_YAML).resolve().exists()
+    ), f"{GG_RECIPE_YAML} does not exist"
+    assert (
+        Path(cwd).joinpath(GG_CONFIG_JSON).resolve().exists()
+    ), f"{GG_CONFIG_JSON} does not exist"
 
 
-@step('we verify component zip build files')
+@step("we verify component zip build files")
 def verify_component_zip_build_files(context):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     assert Path(cwd).joinpath(GG_BUILD_DIR).resolve().exists()
     assert Path(cwd).joinpath(GG_BUILD_ZIP_DIR).resolve().exists()
 
 
-@step('we verify component build files')
+@step("we verify component build files")
 def verify_component_build_files(context):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     assert Path(cwd).joinpath(GG_BUILD_DIR).resolve().exists()
 
 
-@step('we verify build artifact named {artifact_name}')
+@step("we verify build artifact named {artifact_name}")
 def verify_component_build_artifact(context, artifact_name):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     component_name = context.last_component
@@ -43,10 +52,12 @@ def verify_component_build_artifact(context, artifact_name):
         .joinpath(artifact_name)
         .resolve()
     )
-    assert artifact_path.exists(), f"Artifact {artifact_name} not found at {artifact_path}"
+    assert (
+        artifact_path.exists()
+    ), f"Artifact {artifact_name} not found at {artifact_path}"
 
 
-@step('change component name to {component_name}')
+@step("change component name to {component_name}")
 def update_component_config(context, component_name):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     config_file = Path(cwd).joinpath(GG_CONFIG_JSON).resolve()
@@ -55,14 +66,18 @@ def update_component_config(context, component_name):
     unique_component_name = f"{component_name}.{t_utils.random_id()}"
 
     t_utils.update_config(
-        config_file, unique_component_name, DEFAULT_AWS_REGION, bucket=DEFAULT_S3_BUCKET_PREFIX,
-        author=DEFAULT_ARTIFACT_AUTHOR, old_component_name=component_name
+        config_file,
+        unique_component_name,
+        DEFAULT_AWS_REGION,
+        bucket=DEFAULT_S3_BUCKET_PREFIX,
+        author=DEFAULT_ARTIFACT_AUTHOR,
+        old_component_name=component_name,
     )
     # for cleanup
     context.last_component = unique_component_name
 
 
-@step('change build system to {build_system}')
+@step("change build system to {build_system}")
 def update_component_config_build_system(context, build_system):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     config_file = Path(cwd).joinpath(GG_CONFIG_JSON).resolve()
@@ -75,10 +90,12 @@ def update_component_config_build_options(context, build_options):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     config_file = Path(cwd).joinpath(GG_CONFIG_JSON).resolve()
     assert config_file.exists(), f"{GG_CONFIG_JSON} does not exist"
-    t_utils.update_config_build_options(config_file, context.last_component, build_options)
+    t_utils.update_config_build_options(
+        config_file, context.last_component, build_options
+    )
 
 
-@step('change artifact uri for {platform_type} platform from {search} to {replace}')
+@step("change artifact uri for {platform_type} platform from {search} to {replace}")
 def update_artifact_uri(context, platform_type, search, replace):
     cwd = context.cwd if "cwd" in context else os.getcwd()
     recipe_file = Path(cwd).joinpath(GG_RECIPE_YAML).resolve()
@@ -99,7 +116,9 @@ def verify_files_in_build_zip_artifact(context, artifact_name):
         .joinpath(artifact_name)
         .resolve()
     )
-    assert artifact_path.exists(), f"Artifact {artifact_name} not found at {artifact_path}"
+    assert (
+        artifact_path.exists()
+    ), f"Artifact {artifact_name} not found at {artifact_path}"
     unpack_dir = Path(cwd).joinpath("unarchived-artifact").resolve()
     shutil.unpack_archive(artifact_path, unpack_dir)
 
@@ -108,6 +127,10 @@ def verify_files_in_build_zip_artifact(context, artifact_name):
         included_files = ast.literal_eval(row["included"])
 
     for file in excluded_files:
-        assert not unpack_dir.joinpath(file).exists(), f"File {file} found at {unpack_dir}"
+        assert not unpack_dir.joinpath(
+            file
+        ).exists(), f"File {file} found at {unpack_dir}"
     for file in included_files:
-        assert unpack_dir.joinpath(file).exists(), f"File {file} not found at {unpack_dir}"
+        assert unpack_dir.joinpath(
+            file
+        ).exists(), f"File {file} not found at {unpack_dir}"

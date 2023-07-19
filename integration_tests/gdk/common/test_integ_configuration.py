@@ -22,7 +22,10 @@ def test_get_static_file_path_cli_schema():
 def test_get_configuration_invalid_gdk_version(mocker, file_name):
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath(file_name)
+        .resolve(),
     )
     spy_log_debug = mocker.spy(logging, "debug")
     with pytest.raises(Exception) as err:
@@ -44,7 +47,10 @@ def test_get_configuration_invalid_gdk_version(mocker, file_name):
 def test_get_configuration_invalid_config_file(mocker, file_name):
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath(file_name)
+        .resolve(),
     )
 
     with pytest.raises(Exception) as err:
@@ -60,7 +66,10 @@ def test_get_configuration_invalid_config_file(mocker, file_name):
 def test_get_configuration_valid_component_config_found(mocker, file_name):
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath(file_name)
+        .resolve(),
     )
     spy_log_debug = mocker.spy(logging, "debug")
 

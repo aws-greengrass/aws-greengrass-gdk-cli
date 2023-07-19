@@ -1,4 +1,3 @@
-
 import requests
 from unittest import TestCase
 
@@ -20,5 +19,5 @@ class TestTelemetryServerSetup(TestCase):
 
             all_requests = server.get_all_requests()
             self.assertEqual(1, len(all_requests))
-            data = all_requests[0]['data']
+            data = all_requests[0]["data"]
             self.assertEqual(fake_metric, data)

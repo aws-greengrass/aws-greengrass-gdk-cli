@@ -51,7 +51,10 @@ def test_get_configuration_valid_component_config_found(mocker):
 def test_get_configuration_invalid_config_file(mocker, file_name):
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath(file_name)
+        .resolve(),
     )
 
     with pytest.raises(Exception) as err:
@@ -67,9 +70,14 @@ def test_get_configuration_invalid_config_file(mocker, file_name):
 def test_get_configuration_invalid_gdk_version(mocker, file_name):
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath(file_name)
+        .resolve(),
     )
-    mock_validate_configuration = mocker.patch("gdk.common.configuration.validate_configuration", return_value=None)
+    mock_validate_configuration = mocker.patch(
+        "gdk.common.configuration.validate_configuration", return_value=None
+    )
     spy_log_debug = mocker.spy(logging, "debug")
     with pytest.raises(Exception) as err:
         config.get_configuration()
@@ -88,9 +96,14 @@ def test_get_configuration_invalid_gdk_version(mocker, file_name):
 def test_get_configuration_config_file(mocker, file_name):
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath(file_name)
+        .resolve(),
     )
-    mock_validate_cli_version = mocker.patch("gdk.common.configuration.validate_cli_version", return_value=None)
+    mock_validate_cli_version = mocker.patch(
+        "gdk.common.configuration.validate_cli_version", return_value=None
+    )
     config.get_configuration()
     assert mock_get_project_config_file.called
     assert mock_validate_cli_version.called
@@ -98,8 +111,12 @@ def test_get_configuration_config_file(mocker, file_name):
 
 def test_get_configuration_no_project_config_file(mocker):
     mock_file_exists = mocker.patch("gdk.common.utils.file_exists", return_value=False)
-    mock_validate_configuration = mocker.patch("gdk.common.configuration.validate_configuration", return_value="data")
-    mock_validate_cli_version = mocker.patch("gdk.common.configuration.validate_cli_version", return_value=None)
+    mock_validate_configuration = mocker.patch(
+        "gdk.common.configuration.validate_configuration", return_value="data"
+    )
+    mock_validate_cli_version = mocker.patch(
+        "gdk.common.configuration.validate_cli_version", return_value=None
+    )
     with pytest.raises(Exception) as e_info:
         config.get_configuration()
 
@@ -112,7 +129,10 @@ def test_get_configuration_no_project_config_file(mocker):
 def test_get_project_config_file_exists(mocker):
     mock_file_exists = mocker.patch("gdk.common.utils.file_exists", return_value=True)
     assert (
-        config._get_project_config_file() == Path(utils.current_directory).joinpath(consts.cli_project_config_file).resolve()
+        config._get_project_config_file()
+        == Path(utils.current_directory)
+        .joinpath(consts.cli_project_config_file)
+        .resolve()
     )
     assert mock_file_exists.called
 

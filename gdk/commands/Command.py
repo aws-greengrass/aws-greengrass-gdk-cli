@@ -41,8 +41,13 @@ class Command:
         command_arg_keys = self._arguments_list(_non_conflicting_args_map)
         for i in range(len(command_arg_keys)):
             for j in range(i + 1, len(command_arg_keys)):
-                if command_arg_keys[j] not in _non_conflicting_args_map[command_arg_keys[i]]:
-                    raise ConflictingArgumentsError(command_arg_keys[i], command_arg_keys[j])
+                if (
+                    command_arg_keys[j]
+                    not in _non_conflicting_args_map[command_arg_keys[i]]
+                ):
+                    raise ConflictingArgumentsError(
+                        command_arg_keys[i], command_arg_keys[j]
+                    )
 
     def _arguments_list(self, _non_conflicting_args_map):
         """

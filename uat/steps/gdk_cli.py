@@ -17,14 +17,12 @@ def gdk_command_with_args_and_capture_mode(context, capture_output, commands=Non
 
     # update placeholders
     for index, arg in enumerate(args):
-        if '<' in arg:
+        if "<" in arg:
             key = arg[1:-1]
             if key in context:
                 args[index] = getattr(context, key)
 
     # run command with args
-    context.last_cli_output = context.gdk_cli.run(
-        args, capture_output=capture_output
-    )
+    context.last_cli_output = context.gdk_cli.run(args, capture_output=capture_output)
     context.last_cli_command_type = f"{args[0]} {args[1]}"
     context.last_cli_command_args = args

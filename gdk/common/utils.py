@@ -85,7 +85,9 @@ def is_directory_empty(directory_path):
         (bool): True if the directory exists and is empty. False if directory doesn't exist or not empty.
     """
     dir_path = Path(directory_path).resolve()
-    logging.debug("Checking if the directory '{}' exists and is empty.".format(dir_path.resolve()))
+    logging.debug(
+        "Checking if the directory '{}' exists and is empty.".format(dir_path.resolve())
+    )
     if dir_path.is_dir() and not list(dir_path.iterdir()):
         return True
     return False
@@ -145,7 +147,9 @@ def get_next_patch_version(version_number: str) -> str:
 error_line = "\n=============================== ERROR ===============================\n"
 help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()
-doc_link_device_role = "https://docs.aws.amazon.com/greengrass/v2/developerguide/device-service-role.html"
+doc_link_device_role = (
+    "https://docs.aws.amazon.com/greengrass/v2/developerguide/device-service-role.html"
+)
 cli_version = version.__version__
 latest_cli_version_file = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-gdk-cli/main/gdk/_version.py"
 s3_prefix = "s3://"

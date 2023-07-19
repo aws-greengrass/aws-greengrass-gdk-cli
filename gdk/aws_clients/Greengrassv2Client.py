@@ -25,7 +25,9 @@ class Greengrassv2Client:
             region = self.project_config["region"]
             component_name = self.project_config["component_name"]
             account_num = self.project_config["account_number"]
-            component_arn = f"arn:aws:greengrass:{region}:{account_num}:components:{component_name}"
+            component_arn = (
+                f"arn:aws:greengrass:{region}:{account_num}:components:{component_name}"
+            )
 
             component_versions = self._get_component_version(component_arn)
             if not component_versions:
@@ -41,7 +43,9 @@ class Greengrassv2Client:
             raise
 
     def _get_component_version(self, component_arn) -> dict:
-        comp_list_response = self.greengrass_client.list_component_versions(arn=component_arn)
+        comp_list_response = self.greengrass_client.list_component_versions(
+            arn=component_arn
+        )
         return comp_list_response["componentVersions"]
 
     def create_gg_component(self) -> None:
@@ -58,8 +62,13 @@ class Greengrassv2Client:
             try:
                 self.greengrass_client.create_component_version(inlineRecipe=f.read())
                 logging.info(
-                    "Created private version '%s' of the component '%s' in the account.", component_version, component_name
+                    "Created private version '%s' of the component '%s' in the account.",
+                    component_version,
+                    component_name,
                 )
             except Exception:
-                logging.error("Failed to create the component using the recipe at '%s'.", publish_recipe_file)
+                logging.error(
+                    "Failed to create the component using the recipe at '%s'.",
+                    publish_recipe_file,
+                )
                 raise

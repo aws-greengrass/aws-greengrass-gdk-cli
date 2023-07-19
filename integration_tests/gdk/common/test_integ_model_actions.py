@@ -27,9 +27,13 @@ def test_get_static_file_path_cli_model():
 def test_model_existence(mocker):
     # Integ test for validating the cli model type
     command_model = model_actions.get_validated_model()
-    assert type(command_model) == dict  # Command model obtained should always be a dictionary
+    assert (
+        type(command_model) == dict
+    )  # Command model obtained should always be a dictionary
     assert len(command_model) > 0  # Command model is never empty
-    assert consts.cli_tool_name in command_model  # Command model should contain the name of CLI as a key
+    assert (
+        consts.cli_tool_name in command_model
+    )  # Command model should contain the name of CLI as a key
 
 
 def test_cli_model(mocker):
@@ -63,7 +67,9 @@ def test_is_valid_model_with_invalid_argument():
         },
         "component": {"help": "help"},
     }
-    assert not model_actions.is_valid_model(invalid_model_without_name_in_args, consts.cli_tool_name)
+    assert not model_actions.is_valid_model(
+        invalid_model_without_name_in_args, consts.cli_tool_name
+    )
 
 
 def test_is_valid_model_with_invalid_sub_command():
@@ -72,7 +78,9 @@ def test_is_valid_model_with_invalid_sub_command():
         "gdk": {"sub-commands": ["component", "invalid-sub-command"]},
         "component": {},
     }
-    assert not model_actions.is_valid_model(invalid_model_subcommands, consts.cli_tool_name)
+    assert not model_actions.is_valid_model(
+        invalid_model_subcommands, consts.cli_tool_name
+    )
 
 
 def test_is_valid_model_with_invalid_arg_group_missing_title():

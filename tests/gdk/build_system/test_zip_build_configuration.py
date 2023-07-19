@@ -14,13 +14,8 @@ def configuration_base(options: dict) -> dict:
             "com.build.zip": {
                 "author": "abc",
                 "version": "1.0.0",
-                "build": {
-                    "build_system": "zip"
-                },
-                "publish": {
-                    "bucket": "default",
-                    "region": "us-east-1"
-                },
+                "build": {"build_system": "zip"},
+                "publish": {"bucket": "default", "region": "us-east-1"},
             }
         },
         "gdk_version": "1.2.0",

@@ -14,14 +14,15 @@ class ArgumentParser(argparse.ArgumentParser):
         Add custom message with help text at the command level. Python3.9 supports 'exit_on_error' method to achieve
         the same.
         """
-        logging.error(f"Command failed due to an argument error.{utils.error_line}{message}")
+        logging.error(
+            f"Command failed due to an argument error.{utils.error_line}{message}"
+        )
         print(f"{utils.help_line}")
         self.print_help()
         self.exit()
 
 
 class CLIParser:
-
     cli_model = model_actions.get_validated_model()
 
     def __init__(self, command, top_level_parser):
@@ -34,7 +35,9 @@ class CLIParser:
                 command, help=help_text_for_command, description=help_text_for_command
             )
         else:
-            self.parser = ArgumentParser(prog=consts.cli_tool_name, description=help_text_for_command)
+            self.parser = ArgumentParser(
+                prog=consts.cli_tool_name, description=help_text_for_command
+            )
         self.subparsers = self.parser.add_subparsers(dest=command)
 
     def create_parser(self):
@@ -78,7 +81,9 @@ class CLIParser:
                 for arg_group in self.command_model["arg_groups"]:
                     group_description = arg_group["description"]
                     group_title = arg_group["title"]
-                    group = self.parser.add_argument_group(title=group_title, description=group_description)
+                    group = self.parser.add_argument_group(
+                        title=group_title, description=group_description
+                    )
                     for arg in arg_group["args"]:
                         if arg not in added_args:
                             if self._add_arg_to_group_or_parser(arguments[arg], group):
@@ -174,9 +179,17 @@ class CLIParser:
         -------
           None
         """
-        self.parser.add_argument("-d", "--debug", help="Increase command output to debug level", action="store_true")
         self.parser.add_argument(
-            "-v", "--version", action="version", version="{} {}".format(consts.cli_tool_name, utils.cli_version)
+            "-d",
+            "--debug",
+            help="Increase command output to debug level",
+            action="store_true",
+        )
+        self.parser.add_argument(
+            "-v",
+            "--version",
+            action="version",
+            version="{} {}".format(consts.cli_tool_name, utils.cli_version),
         )
 
 
@@ -198,6 +211,8 @@ try:
 except Exception as e:
     print(
         f"{utils.error_line}Command failed due to CLI error.\nPlease report it at"
-        " https://github.com/aws-greengrass/aws-greengrass-gdk-cli/issues if the issue persists.\nError details: {}".format(e)
+        " https://github.com/aws-greengrass/aws-greengrass-gdk-cli/issues if the issue persists.\nError details: {}".format(
+            e
+        )
     )
     exit(1)

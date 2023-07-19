@@ -98,7 +98,11 @@ def is_valid_argument_group_model(arg_group, arguments):
     """
 
     # Every argument group should have title, description and args that go in a group
-    if "title" not in arg_group or "description" not in arg_group or "args" not in arg_group:
+    if (
+        "title" not in arg_group
+        or "description" not in arg_group
+        or "args" not in arg_group
+    ):
         return False
 
     # Args of a group must be there in args of the command

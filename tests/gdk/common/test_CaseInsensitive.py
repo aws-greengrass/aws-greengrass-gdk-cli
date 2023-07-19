@@ -6,8 +6,7 @@ from unittest import TestCase
 import pytest
 import yaml
 
-from gdk.common.CaseInsensitive import (CaseInsensitiveDict,
-                                        CaseInsensitiveRecipeFile)
+from gdk.common.CaseInsensitive import CaseInsensitiveDict, CaseInsensitiveRecipeFile
 
 
 class CaseInsensitiveRecipeFileTest(TestCase):
@@ -16,9 +15,16 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         self.mocker = mocker
 
     def test_read_json(self):
-        json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+        json_file = (
+            Path(".")
+            .joinpath("tests/gdk/static/project_utils")
+            .joinpath("valid_component_recipe.json")
+            .resolve()
+        )
         case_insensitive_recipe = CaseInsensitiveRecipeFile().read(json_file)
-        assert isinstance(CaseInsensitiveRecipeFile().read(json_file), CaseInsensitiveDict)
+        assert isinstance(
+            CaseInsensitiveRecipeFile().read(json_file), CaseInsensitiveDict
+        )
         assert "manifests" in case_insensitive_recipe
         assert "MANIFESTS" in case_insensitive_recipe
         assert "artifacts" in case_insensitive_recipe["manifests"][0]
@@ -27,7 +33,12 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         assert "URI" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
 
     def test_read_yaml(self):
-        yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
+        yaml_file = (
+            Path(".")
+            .joinpath("tests/gdk/static/project_utils")
+            .joinpath("valid_component_recipe.yaml")
+            .resolve()
+        )
         case_insensitive_recipe = CaseInsensitiveRecipeFile().read(yaml_file)
         assert isinstance(case_insensitive_recipe, CaseInsensitiveDict)
         assert "manifests" in case_insensitive_recipe
@@ -38,32 +49,60 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         assert "URI" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
 
     def test_read_invalid_format(self):
-        invalid_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("not_exists.txt").resolve()
+        invalid_file = (
+            Path(".")
+            .joinpath("tests/gdk/static/project_utils")
+            .joinpath("not_exists.txt")
+            .resolve()
+        )
         with pytest.raises(Exception) as e:
             CaseInsensitiveRecipeFile().read(invalid_file)
         assert "Recipe file must be in json or yaml format" in e.value.args[0]
 
     def test_write_json(self):
-        json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+        json_file = (
+            Path(".")
+            .joinpath("tests/gdk/static/project_utils")
+            .joinpath("valid_component_recipe.json")
+            .resolve()
+        )
         with tempfile.TemporaryDirectory() as newDir:
             tmp_path = Path(newDir).joinpath("valid.json").resolve()
-            CaseInsensitiveRecipeFile().write(tmp_path, CaseInsensitiveRecipeFile().read(json_file))
+            CaseInsensitiveRecipeFile().write(
+                tmp_path, CaseInsensitiveRecipeFile().read(json_file)
+            )
             with open(json_file, "r") as original_yaml:
                 with open(tmp_path, "r") as updated_yaml:
-                    assert json.loads(original_yaml.read()) == json.loads(updated_yaml.read())
+                    assert json.loads(original_yaml.read()) == json.loads(
+                        updated_yaml.read()
+                    )
 
     def test_write_yaml(self):
-        yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
+        yaml_file = (
+            Path(".")
+            .joinpath("tests/gdk/static/project_utils")
+            .joinpath("valid_component_recipe.yaml")
+            .resolve()
+        )
         with tempfile.TemporaryDirectory() as newDir:
             tmp_path = Path(newDir).joinpath("valid.yaml").resolve()
-            CaseInsensitiveRecipeFile().write(tmp_path, CaseInsensitiveRecipeFile().read(yaml_file))
+            CaseInsensitiveRecipeFile().write(
+                tmp_path, CaseInsensitiveRecipeFile().read(yaml_file)
+            )
             with open(yaml_file, "r") as original_yaml:
                 with open(tmp_path, "r") as updated_yaml:
-                    assert yaml.safe_load(original_yaml.read()) == yaml.safe_load(updated_yaml.read())
+                    assert yaml.safe_load(original_yaml.read()) == yaml.safe_load(
+                        updated_yaml.read()
+                    )
 
     def test_write_invalid_format(self):
         with tempfile.TemporaryDirectory() as newDir:
-            yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
+            yaml_file = (
+                Path(".")
+                .joinpath("tests/gdk/static/project_utils")
+                .joinpath("valid_component_recipe.yaml")
+                .resolve()
+            )
             contents = CaseInsensitiveRecipeFile().read(yaml_file)
             tmp_path = Path(newDir).joinpath("invalid.txt").resolve()
             with pytest.raises(Exception) as e:
@@ -81,7 +120,7 @@ class CaseInsensitiveDictTest(TestCase):
             "key1": "value1",
             "key2": [{"key21": "value21"}, {"key22": "value22"}],
             "key3": {"key31": {"key311": "key312"}},
-            "key4": ["entry1", "entry2"]
+            "key4": ["entry1", "entry2"],
         }
         cis = CaseInsensitiveDict(dictionary)
         assert "KEY1" in cis

@@ -22,9 +22,7 @@ project_build_system_file = "project_build_system.json"
 project_build_schema_file = "project_build_schema.json"
 
 # URLS
-templates_list_url = (
-    "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/templates.json"
-)
+templates_list_url = "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/templates.json"
 repository_list_url = (
     "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/"
     + "community-components.json"

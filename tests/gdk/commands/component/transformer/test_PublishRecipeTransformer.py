@@ -5,7 +5,9 @@ from unittest.mock import call
 import pytest
 
 
-from gdk.commands.component.transformer.PublishRecipeTransformer import PublishRecipeTransformer
+from gdk.commands.component.transformer.PublishRecipeTransformer import (
+    PublishRecipeTransformer,
+)
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
 
 
@@ -31,12 +33,20 @@ class PublishRecipeTransformerTest(TestCase):
 
     def test_transform(self):
         brg = PublishRecipeTransformer(project_config())
-        mock_update = self.mocker.patch.object(PublishRecipeTransformer, "update_component_recipe_file", return_value=None)
-        mock_create = self.mocker.patch.object(PublishRecipeTransformer, "create_publish_recipe_file", return_value=None)
+        mock_update = self.mocker.patch.object(
+            PublishRecipeTransformer, "update_component_recipe_file", return_value=None
+        )
+        mock_create = self.mocker.patch.object(
+            PublishRecipeTransformer, "create_publish_recipe_file", return_value=None
+        )
         brg.transform()
 
-        assert mock_update.call_args_list == [call(self.mock_component_recipe.return_value)]
-        assert mock_create.call_args_list == [call(self.mock_component_recipe.return_value)]
+        assert mock_update.call_args_list == [
+            call(self.mock_component_recipe.return_value)
+        ]
+        assert mock_create.call_args_list == [
+            call(self.mock_component_recipe.return_value)
+        ]
 
     def test_update_component_recipe_file(self):
         recipe = {
@@ -49,20 +59,27 @@ class PublishRecipeTransformerTest(TestCase):
             "Manifests": [
                 {
                     "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                    "Lifecycle": {
+                        "Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"
+                    },
                     "Artifacts": [{"UrI": "s3://hello_world.py"}],
                 }
             ],
         }
 
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+        mock_glob = self.mocker.patch(
+            "pathlib.Path.glob", return_value=mock_iter_dir_list
+        )
 
         prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("hello_world.py")]
-        assert cis_recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://default/com.example.HelloWorld/1.0.0/hello_world.py"
+        assert (
+            cis_recipe["Manifests"][0]["Artifacts"][0]["URI"]
+            == "s3://default/com.example.HelloWorld/1.0.0/hello_world.py"
+        )
 
     def test_update_component_recipe_file_with_docker_uris(self):
         recipe = {
@@ -75,20 +92,30 @@ class PublishRecipeTransformerTest(TestCase):
             "Manifests": [
                 {
                     "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                    "Artifacts": [{"UrI": "s3://hello_world.py"}, {"UrI": "docker://hello_world.py"}],
+                    "Lifecycle": {
+                        "Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"
+                    },
+                    "Artifacts": [
+                        {"UrI": "s3://hello_world.py"},
+                        {"UrI": "docker://hello_world.py"},
+                    ],
                 }
             ],
         }
 
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+        mock_glob = self.mocker.patch(
+            "pathlib.Path.glob", return_value=mock_iter_dir_list
+        )
 
         prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("hello_world.py")]
-        assert cis_recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://default/com.example.HelloWorld/1.0.0/hello_world.py"
+        assert (
+            cis_recipe["Manifests"][0]["Artifacts"][0]["URI"]
+            == "s3://default/com.example.HelloWorld/1.0.0/hello_world.py"
+        )
 
     def test_update_component_recipe_file_not_found(self):
         recipe = {
@@ -101,20 +128,26 @@ class PublishRecipeTransformerTest(TestCase):
             "Manifests": [
                 {
                     "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                    "Lifecycle": {
+                        "Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"
+                    },
                     "Artifacts": [{"uri": "s3://not-in_build.py"}],
                 }
             ],
         }
 
         mock_iter_dir_list = []
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+        mock_glob = self.mocker.patch(
+            "pathlib.Path.glob", return_value=mock_iter_dir_list
+        )
 
         prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
         prg.update_component_recipe_file(cis_recipe)
         assert mock_glob.call_args_list == [call("not-in_build.py")]
-        assert cis_recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://not-in_build.py"
+        assert (
+            cis_recipe["Manifests"][0]["Artifacts"][0]["URI"] == "s3://not-in_build.py"
+        )
 
     def test_update_component_recipe_file_not_build(self):
         proj_config = project_config()
@@ -123,7 +156,10 @@ class PublishRecipeTransformerTest(TestCase):
         cis_recipe = CaseInsensitiveDict(fake_recipe())
         with pytest.raises(Exception) as e:
             prg.update_component_recipe_file(cis_recipe)
-        assert "as it is not build.\nBuild the component `gdk component build` before publishing it." in e.value.args[0]
+        assert (
+            "as it is not build.\nBuild the component `gdk component build` before publishing it."
+            in e.value.args[0]
+        )
 
     def test_update_component_recipe_file_not_manifests(self):
         recipe = {
@@ -136,7 +172,9 @@ class PublishRecipeTransformerTest(TestCase):
         }
 
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+        mock_glob = self.mocker.patch(
+            "pathlib.Path.glob", return_value=mock_iter_dir_list
+        )
 
         prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
@@ -154,13 +192,17 @@ class PublishRecipeTransformerTest(TestCase):
             "Manifests": [
                 {
                     "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                    "Lifecycle": {
+                        "Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"
+                    },
                 }
             ],
         }
 
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+        mock_glob = self.mocker.patch(
+            "pathlib.Path.glob", return_value=mock_iter_dir_list
+        )
 
         prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
@@ -178,14 +220,18 @@ class PublishRecipeTransformerTest(TestCase):
             "Manifests": [
                 {
                     "Platform": {"os": "linux"},
-                    "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
+                    "Lifecycle": {
+                        "Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"
+                    },
                     "Artifacts": [{}],
                 }
             ],
         }
 
         mock_iter_dir_list = [Path("hello_world.py").resolve()]
-        mock_glob = self.mocker.patch("pathlib.Path.glob", return_value=mock_iter_dir_list)
+        mock_glob = self.mocker.patch(
+            "pathlib.Path.glob", return_value=mock_iter_dir_list
+        )
 
         prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(recipe)
@@ -195,7 +241,9 @@ class PublishRecipeTransformerTest(TestCase):
     def test_create_publish_recipe_file(self):
         prg = PublishRecipeTransformer(project_config())
         cis_recipe = CaseInsensitiveDict(fake_recipe())
-        mocker_recipe_write = self.mocker.patch.object(CaseInsensitiveRecipeFile, "write")
+        mocker_recipe_write = self.mocker.patch.object(
+            CaseInsensitiveRecipeFile, "write"
+        )
         prg.create_publish_recipe_file(cis_recipe)
         recipe_path = Path(prg.project_config["publish_recipe_file"]).resolve()
         assert mocker_recipe_write.call_args_list == [call(recipe_path, cis_recipe)]
@@ -210,11 +258,19 @@ def project_config():
         "bucket": "default",
         "region": "us-east-1",
         "gg_build_directory": Path("/src/GDK-CLI-Internal/greengrass-build"),
-        "publish_recipe_file": Path("/src/GDK-CLI-Internal/greengrass-build/recipes/com.example.HelloWorld-1.0.0.json"),
-        "gg_build_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts"),
+        "publish_recipe_file": Path(
+            "/src/GDK-CLI-Internal/greengrass-build/recipes/com.example.HelloWorld-1.0.0.json"
+        ),
+        "gg_build_artifacts_dir": Path(
+            "/src/GDK-CLI-Internal/greengrass-build/artifacts"
+        ),
         "gg_build_recipes_dir": Path("/src/GDK-CLI-Internal/greengrass-build/recipes"),
-        "gg_build_component_artifacts_dir": Path("/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"),
-        "component_recipe_file": Path("/src/GDK-CLI-Internal/tests/gdk/static/project_utils/valid_component_recipe.json"),
+        "gg_build_component_artifacts_dir": Path(
+            "/src/GDK-CLI-Internal/greengrass-build/artifacts/component_name/1.0.0"
+        ),
+        "component_recipe_file": Path(
+            "/src/GDK-CLI-Internal/tests/gdk/static/project_utils/valid_component_recipe.json"
+        ),
     }
 
 
@@ -229,8 +285,14 @@ def fake_recipe():
         "Manifests": [
             {
                 "Platform": {"os": "linux"},
-                "Lifecycle": {"Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"},
-                "Artifacts": [{"URI": "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"}],
+                "Lifecycle": {
+                    "Run": "python3 -u {artifacts:path}/hello_world.py '{configuration:/Message}'"
+                },
+                "Artifacts": [
+                    {
+                        "URI": "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"
+                    }
+                ],
             }
         ],
     }

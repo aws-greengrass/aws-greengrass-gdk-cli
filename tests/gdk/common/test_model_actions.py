@@ -7,8 +7,12 @@ import pytest
 
 
 def test_get_validated_model_file_not_exists(mocker):
-    mock_get_static_file_path = mocker.patch("gdk.common.utils.get_static_file_path", return_value=None)
-    mock_is_valid_model = mocker.patch("gdk.common.model_actions.is_valid_model", return_value=False)
+    mock_get_static_file_path = mocker.patch(
+        "gdk.common.utils.get_static_file_path", return_value=None
+    )
+    mock_is_valid_model = mocker.patch(
+        "gdk.common.model_actions.is_valid_model", return_value=False
+    )
     with pytest.raises(Exception) as e_info:
         model_actions.get_validated_model()
 
@@ -20,8 +24,12 @@ def test_get_validated_model_file_not_exists(mocker):
 
 def test_get_validated_model_file_exists(mocker):
     file_path = Path("path/to/open")
-    mock_get_static_file_path = mocker.patch("gdk.common.utils.get_static_file_path", return_value=file_path)
-    mock_is_valid_model = mocker.patch("gdk.common.model_actions.is_valid_model", return_value=True)
+    mock_get_static_file_path = mocker.patch(
+        "gdk.common.utils.get_static_file_path", return_value=file_path
+    )
+    mock_is_valid_model = mocker.patch(
+        "gdk.common.model_actions.is_valid_model", return_value=True
+    )
 
     with patch("builtins.open", mock_open(read_data="{}")) as mock_file:
         model_actions.get_validated_model()
@@ -40,27 +48,37 @@ def test_get_validated_model_with_valid_model(mocker):
 
 def test_get_validated_model_with_invalid_model(mocker):
     # Should raise an exception when the model is invalid
-    mock_is_valid_model = mocker.patch("gdk.common.model_actions.is_valid_model", return_value=False)
+    mock_is_valid_model = mocker.patch(
+        "gdk.common.model_actions.is_valid_model", return_value=False
+    )
     model_actions.get_validated_model()
     assert not mock_is_valid_model.called
 
 
 def test_is_valid_argument_model_valid():
     # Valid argument that contains both name and help.
-    valid_arg = {"name": ["-l", "--lang"], "help": "language help", "choices": ["p", "j"]}
+    valid_arg = {
+        "name": ["-l", "--lang"],
+        "help": "language help",
+        "choices": ["p", "j"],
+    }
     assert model_actions.is_valid_argument_model(valid_arg)
 
 
 def test_is_valid_argument_model_without_name():
     # Invalid arg without name.
     invalid_arg_without_name = {"names": ["-l", "--lang"], "help": "help"}
-    assert not model_actions.is_valid_model(invalid_arg_without_name, consts.cli_tool_name)
+    assert not model_actions.is_valid_model(
+        invalid_arg_without_name, consts.cli_tool_name
+    )
 
 
 def test_is_valid_argument_model_without_help():
     # Invalid arg without help.
     invalid_arg_without_help = {"name": ["-l", "--lang"], "helper": "help"}
-    assert not model_actions.is_valid_model(invalid_arg_without_help, consts.cli_tool_name)
+    assert not model_actions.is_valid_model(
+        invalid_arg_without_help, consts.cli_tool_name
+    )
 
 
 def test_is_valid_subcommand_model_valid():
@@ -95,7 +113,10 @@ def test_is_valid_subcommand_model_invalid():
         "init": {},
         "build": {},
     }
-    invalid_model_subcommands = ["component", "invalid-subcommand-that-is-not-present-as-key"]
+    invalid_model_subcommands = [
+        "component",
+        "invalid-subcommand-that-is-not-present-as-key",
+    ]
     assert not model_actions.is_valid_subcommand_model(model, invalid_model_subcommands)
 
 
@@ -121,7 +142,9 @@ def test_is_valid_model_call_counts(mocker):
     }
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
-    spy_is_valid_argument_group_model = mocker.spy(model_actions, "is_valid_argument_group_model")
+    spy_is_valid_argument_group_model = mocker.spy(
+        model_actions, "is_valid_argument_group_model"
+    )
     spy_is_valid_sub_command = mocker.spy(model_actions, "is_valid_subcommand_model")
     assert model_actions.is_valid_model(valid_model, consts.cli_tool_name)
     assert spy_is_valid_argument_model.call_count == 2
@@ -151,7 +174,9 @@ def test_is_valid_model_invalid_argument_model(mocker):
     }
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
-    spy_is_valid_argument_group_model = mocker.spy(model_actions, "is_valid_argument_group_model")
+    spy_is_valid_argument_group_model = mocker.spy(
+        model_actions, "is_valid_argument_group_model"
+    )
     spy_is_valid_sub_command = mocker.spy(model_actions, "is_valid_subcommand_model")
     assert not model_actions.is_valid_model(invalid_model, consts.cli_tool_name)
     assert spy_is_valid_argument_model.call_count == 1
@@ -180,7 +205,9 @@ def test_is_valid_model_invalid_argument_group_model(mocker):
     }
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
-    spy_is_valid_argument_group_model = mocker.spy(model_actions, "is_valid_argument_group_model")
+    spy_is_valid_argument_group_model = mocker.spy(
+        model_actions, "is_valid_argument_group_model"
+    )
     spy_is_valid_sub_command = mocker.spy(model_actions, "is_valid_subcommand_model")
     assert not model_actions.is_valid_model(valid_model, consts.cli_tool_name)
     assert spy_is_valid_argument_model.call_count == 2
@@ -210,7 +237,9 @@ def test_is_valid_model_invalid_sub_commands(mocker):
     }
     spy_is_valid_argument_model = mocker.spy(model_actions, "is_valid_argument_model")
 
-    spy_is_valid_argument_group_model = mocker.spy(model_actions, "is_valid_argument_group_model")
+    spy_is_valid_argument_group_model = mocker.spy(
+        model_actions, "is_valid_argument_group_model"
+    )
     spy_is_valid_sub_command = mocker.spy(model_actions, "is_valid_subcommand_model")
     assert not model_actions.is_valid_model(valid_model, consts.cli_tool_name)
     assert spy_is_valid_argument_model.call_count == 2
@@ -220,9 +249,17 @@ def test_is_valid_model_invalid_sub_commands(mocker):
 
 def test_is_valid_argument_group_valid():
     # Valid argument group model with correct arguments
-    t_arg_group = {"title": "Greengrass component templates.", "args": ["language", "template"], "description": "description"}
+    t_arg_group = {
+        "title": "Greengrass component templates.",
+        "args": ["language", "template"],
+        "description": "description",
+    }
     t_args = {
-        "language": {"name": ["-l", "--language"], "help": "help", "choices": ["p", "j"]},
+        "language": {
+            "name": ["-l", "--language"],
+            "help": "help",
+            "choices": ["p", "j"],
+        },
         "template": {"name": ["-t", "--template"], "help": "help"},
         "repository": {"name": ["-r", "--repository"], "help": "help"},
     }
@@ -233,7 +270,11 @@ def test_is_valid_argument_group_invalid_group():
     # Invalid argument group model without title
     t_arg_group = {"args": ["language", "template"], "description": "description"}
     t_args = {
-        "language": {"name": ["-l", "--language"], "help": "help", "choices": ["p", "j"]},
+        "language": {
+            "name": ["-l", "--language"],
+            "help": "help",
+            "choices": ["p", "j"],
+        },
         "template": {"name": ["-t", "--template"], "help": "help"},
         "repository": {"name": ["-r", "--repository"], "help": "help"},
     }
@@ -242,7 +283,11 @@ def test_is_valid_argument_group_invalid_group():
     # Invalid argument group model without args
     t_arg_group = {"title": "title", "description": "description"}
     t_args = {
-        "language": {"name": ["-l", "--language"], "help": "help", "choices": ["p", "j"]},
+        "language": {
+            "name": ["-l", "--language"],
+            "help": "help",
+            "choices": ["p", "j"],
+        },
         "template": {"name": ["-t", "--template"], "help": "help"},
         "repository": {"name": ["-r", "--repository"], "help": "help"},
     }
@@ -251,7 +296,11 @@ def test_is_valid_argument_group_invalid_group():
     # Invalid argument group model without description
     t_arg_group = {"title": "title", "args": ["language", "template"]}
     t_args = {
-        "language": {"name": ["-l", "--language"], "help": "help", "choices": ["p", "j"]},
+        "language": {
+            "name": ["-l", "--language"],
+            "help": "help",
+            "choices": ["p", "j"],
+        },
         "template": {"name": ["-t", "--template"], "help": "help"},
         "repository": {"name": ["-r", "--repository"], "help": "help"},
     }
@@ -266,7 +315,11 @@ def test_is_valid_argument_group_invalid_with_arg_not_in_arguments():
         "title": "title",
     }
     t_args = {
-        "language": {"name": ["-l", "--language"], "help": "help", "choices": ["p", "j"]},
+        "language": {
+            "name": ["-l", "--language"],
+            "help": "help",
+            "choices": ["p", "j"],
+        },
         "template": {"name": ["-t", "--template"], "help": "help"},
         "repository": {"name": ["-r", "--repository"], "help": "help"},
     }

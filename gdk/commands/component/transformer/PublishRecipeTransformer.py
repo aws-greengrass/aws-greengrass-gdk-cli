@@ -24,10 +24,14 @@ class PublishRecipeTransformer:
                 consts.cli_project_config_file
             )
         )
-        parsed_component_recipe.update_value("ComponentVersion", self.project_config["component_version"])
+        parsed_component_recipe.update_value(
+            "ComponentVersion", self.project_config["component_version"]
+        )
         self._update_artifact_uris(parsed_component_recipe)
 
-    def _update_artifact_uris(self, parsed_component_recipe: CaseInsensitiveDict) -> None:
+    def _update_artifact_uris(
+        self, parsed_component_recipe: CaseInsensitiveDict
+    ) -> None:
         """
         Updates recipe with the component version calculated and artifact URIs of the artifacts. This updated recipe is
         used to create a new publish recipe file in build recipes directory.
@@ -38,12 +42,20 @@ class PublishRecipeTransformer:
         component_version = self.project_config["component_version"]
 
         if parsed_component_recipe.get("ComponentName") != component_name:
-            logging.error("Component '{}' is not built.".format(parsed_component_recipe["ComponentName"]))
+            logging.error(
+                "Component '{}' is not built.".format(
+                    parsed_component_recipe["ComponentName"]
+                )
+            )
             raise Exception(
                 "Failed to publish the component '{}' as it is not build.\nBuild the component `gdk component"
-                " build` before publishing it.".format(parsed_component_recipe["ComponentName"])
+                " build` before publishing it.".format(
+                    parsed_component_recipe["ComponentName"]
+                )
             )
-        gg_build_component_artifacts = self.project_config["gg_build_component_artifacts_dir"]
+        gg_build_component_artifacts = self.project_config[
+            "gg_build_component_artifacts_dir"
+        ]
         bucket = self.project_config["bucket"]
         artifact_uri = f"{utils.s3_prefix}{bucket}/{component_name}/{component_version}"
 
@@ -63,9 +75,15 @@ class PublishRecipeTransformer:
                     continue
                 artifact_file = Path(artifact["URI"]).name
                 # For artifact in build component artifacts folder, update its URI
-                build_artifact_files = list(gg_build_component_artifacts.glob(artifact_file))
+                build_artifact_files = list(
+                    gg_build_component_artifacts.glob(artifact_file)
+                )
                 if len(build_artifact_files) == 1:
-                    logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file))
+                    logging.debug(
+                        "Updating artifact URI of '{}' in the recipe file.".format(
+                            artifact_file
+                        )
+                    )
                     artifact.update_value("Uri", f"{artifact_uri}/{artifact_file}")
                 else:
                     logging.warning(

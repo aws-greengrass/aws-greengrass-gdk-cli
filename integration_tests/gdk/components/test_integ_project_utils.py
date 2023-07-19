@@ -28,10 +28,12 @@ def test_get_supported_component_builds():
 
 
 def test_get_project_config_values_without_recipe(mocker):
-
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json").resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath("config.json")
+        .resolve(),
     )
     with pytest.raises(Exception) as e:
         project_utils.get_project_config_values()
@@ -40,16 +42,22 @@ def test_get_project_config_values_without_recipe(mocker):
 
 
 def test_get_project_config_values_with_recipe(mocker):
-
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json").resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath("config.json")
+        .resolve(),
     )
     valid_json_recipe_file = (
-        Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+        Path(".")
+        .joinpath("tests/gdk/static/project_utils")
+        .joinpath("valid_component_recipe.json")
+        .resolve()
     )
     mock_get_recipe_file = mocker.patch(
-        "gdk.commands.component.project_utils.get_recipe_file", return_value=valid_json_recipe_file
+        "gdk.commands.component.project_utils.get_recipe_file",
+        return_value=valid_json_recipe_file,
     )
     values = project_utils.get_project_config_values()
     assert mock_get_project_config_file.call_count == 1
@@ -77,7 +85,10 @@ def test_get_project_config_values_both_exist(mocker):
 
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json").resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath("config.json")
+        .resolve(),
     )
 
     mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
@@ -95,7 +106,10 @@ def test_get_project_config_values_both_exist(mocker):
 def test_get_project_config_values_json_exists(mocker):
     # recipe.json exists
     valid_json_recipe_file = (
-        Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
+        Path(".")
+        .joinpath("tests/gdk/static/project_utils")
+        .joinpath("valid_component_recipe.json")
+        .resolve()
     )
 
     def use_this_for_recipe(*args):
@@ -106,7 +120,10 @@ def test_get_project_config_values_json_exists(mocker):
 
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json").resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath("config.json")
+        .resolve(),
     )
 
     mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)
@@ -122,7 +139,10 @@ def test_get_project_config_values_json_exists(mocker):
 def test_get_project_config_values_yaml_exists(mocker):
     # recipe.yaml exists
     valid_yaml_recipe_file = (
-        Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
+        Path(".")
+        .joinpath("tests/gdk/static/project_utils")
+        .joinpath("valid_component_recipe.yaml")
+        .resolve()
     )
 
     def use_this_for_recipe(*args):
@@ -133,7 +153,10 @@ def test_get_project_config_values_yaml_exists(mocker):
 
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json").resolve(),
+        return_value=Path(".")
+        .joinpath("tests/gdk/static")
+        .joinpath("config.json")
+        .resolve(),
     )
 
     mock_glob = mocker.patch("pathlib.Path.glob", side_effect=use_this_for_recipe)

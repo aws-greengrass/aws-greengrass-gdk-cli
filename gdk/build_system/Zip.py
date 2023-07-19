@@ -30,13 +30,20 @@ class Zip:
         try:
             # Only one zip-build folder in the set
             zip_build = next(iter(self.build_folders))
-            artifacts_zip_build = Path(zip_build).joinpath(
-                utils.current_directory.name).resolve()
+            artifacts_zip_build = (
+                Path(zip_build).joinpath(utils.current_directory.name).resolve()
+            )
             utils.clean_dir(zip_build)
-            logging.debug("Copying over component files to the '{}' folder.".format(
-                artifacts_zip_build.name))
-            shutil.copytree(utils.current_directory, artifacts_zip_build,
-                            ignore=shutil.ignore_patterns(*self.get_ignored_file_patterns()))
+            logging.debug(
+                "Copying over component files to the '{}' folder.".format(
+                    artifacts_zip_build.name
+                )
+            )
+            shutil.copytree(
+                utils.current_directory,
+                artifacts_zip_build,
+                ignore=shutil.ignore_patterns(*self.get_ignored_file_patterns()),
+            )
 
             # Get build file name without extension. This will be used as name of the archive.
             archive_file = utils.current_directory.name
@@ -45,10 +52,8 @@ class Zip:
                     archive_file, zip_build.name, artifacts_zip_build.name
                 )
             )
-            archive_file_name = Path(zip_build).joinpath(
-                archive_file).resolve()
-            shutil.make_archive(archive_file_name, "zip",
-                                root_dir=artifacts_zip_build)
+            archive_file_name = Path(zip_build).joinpath(archive_file).resolve()
+            shutil.make_archive(archive_file_name, "zip", root_dir=artifacts_zip_build)
             logging.debug("Archive complete.")
 
         except Exception:
@@ -82,11 +87,13 @@ class Zip:
         ]
 
         if not options:
-            ignore_list.extend([
-                "test*",
-                ".*",
-                "node_modules",
-            ])
+            ignore_list.extend(
+                [
+                    "test*",
+                    ".*",
+                    "node_modules",
+                ]
+            )
         else:
             ignore_list.extend(options.get("excludes", []))
 

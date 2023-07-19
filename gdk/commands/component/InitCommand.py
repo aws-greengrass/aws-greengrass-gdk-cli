@@ -44,10 +44,16 @@ class InitCommand(Command):
             # Create a new directory with name.
             project_dir = Path(project_dir).joinpath(self.arguments["name"]).resolve()
             try:
-                logging.debug("Creating new project directory '{}' in the current directory.".format(project_dir.name))
+                logging.debug(
+                    "Creating new project directory '{}' in the current directory.".format(
+                        project_dir.name
+                    )
+                )
                 Path(project_dir).mkdir(exist_ok=False)
             except FileExistsError:
-                raise Exception(error_messages.INIT_DIR_EXISTS_ERROR.format(project_dir.name))
+                raise Exception(
+                    error_messages.INIT_DIR_EXISTS_ERROR.format(project_dir.name)
+                )
 
         # Choose appropriate action based on commands
         if self.arguments["template"] and self.arguments["language"]:
@@ -55,7 +61,9 @@ class InitCommand(Command):
             language = self.arguments["language"]
             if template and language:
                 logging.info(
-                    "Initializing the project directory with a {} component template - '{}'.".format(language, template)
+                    "Initializing the project directory with a {} component template - '{}'.".format(
+                        language, template
+                    )
                 )
                 self.init_with_template(template, language, project_dir)
                 return
@@ -63,7 +71,9 @@ class InitCommand(Command):
             repository = self.arguments["repository"]
             if repository:
                 logging.info(
-                    "Initializing the project directory with a component from repository catalog - '{}'.".format(repository)
+                    "Initializing the project directory with a component from repository catalog - '{}'.".format(
+                        repository
+                    )
                 )
                 self.init_with_repository(repository, project_dir)
                 return
@@ -72,18 +82,32 @@ class InitCommand(Command):
     def init_with_template(self, template, language, project_dir):
         try:
             template_name = "{}-{}".format(template, language)
-            logging.info("Fetching the component template '{}' from Greengrass Software Catalog.".format(template_name))
+            logging.info(
+                "Fetching the component template '{}' from Greengrass Software Catalog.".format(
+                    template_name
+                )
+            )
             self.download_and_clean(template_name, "template", project_dir)
         except Exception:
-            logging.error("Could not initialize the project with component template '%s'.", template)
+            logging.error(
+                "Could not initialize the project with component template '%s'.",
+                template,
+            )
             raise
 
     def init_with_repository(self, repository, project_dir):
         try:
-            logging.info("Fetching the component repository '{}' from Greengrass Software Catalog.".format(repository))
+            logging.info(
+                "Fetching the component repository '{}' from Greengrass Software Catalog.".format(
+                    repository
+                )
+            )
             self.download_and_clean(repository, "repository", project_dir)
         except Exception:
-            logging.error("Could not initialize the project with component repository '%s'.", repository)
+            logging.error(
+                "Could not initialize the project with component repository '%s'.",
+                repository,
+            )
             raise
 
     def download_and_clean(self, comp_name, comp_type, project_dir):
@@ -108,7 +132,11 @@ class InitCommand(Command):
             try:
                 download_response.raise_for_status()
             except Exception:
-                logging.error(error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(comp_type))
+                logging.error(
+                    error_messages.INIT_FAILS_DURING_COMPONENT_DOWNLOAD.format(
+                        comp_type
+                    )
+                )
                 raise
 
         logging.debug("Downloading the component {}...".format(comp_type))
@@ -127,9 +155,15 @@ class InitCommand(Command):
             url = consts.repository_list_url
         available_components = ListCommand({}).get_component_list_from_github(url)
         if comp_name in available_components:
-            logging.debug("Component {} '{}' is available in Greengrass Software Catalog.".format(comp_type, comp_name))
+            logging.debug(
+                "Component {} '{}' is available in Greengrass Software Catalog.".format(
+                    comp_type, comp_name
+                )
+            )
             return available_components[comp_name]
         else:
             raise Exception(
-                "Could not find the component {} '{}' in Greengrass Software Catalog.".format(comp_type, comp_name)
+                "Could not find the component {} '{}' in Greengrass Software Catalog.".format(
+                    comp_type, comp_name
+                )
             )

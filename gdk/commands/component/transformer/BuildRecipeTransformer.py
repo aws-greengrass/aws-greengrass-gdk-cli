@@ -13,22 +13,34 @@ class BuildRecipeTransformer:
         self.project_config = project_config
 
     def transform(self, build_folders):
-        component_recipe = CaseInsensitiveRecipeFile().read(self.project_config["component_recipe_file"])
+        component_recipe = CaseInsensitiveRecipeFile().read(
+            self.project_config["component_recipe_file"]
+        )
         self.update_component_recipe_file(component_recipe, build_folders)
         self.create_build_recipe_file(component_recipe)
 
-    def update_component_recipe_file(self, parsed_component_recipe: CaseInsensitiveDict, build_folders):
+    def update_component_recipe_file(
+        self, parsed_component_recipe: CaseInsensitiveDict, build_folders
+    ):
         logging.debug(
             "Updating component recipe with the 'component' configuration provided in '{}'.".format(
                 consts.cli_project_config_file
             )
         )
-        parsed_component_recipe.update_value("ComponentName", self.project_config["component_name"])
-        parsed_component_recipe.update_value("ComponentVersion", self.project_config["component_version"])
-        parsed_component_recipe.update_value("ComponentPublisher", self.project_config["component_author"])
+        parsed_component_recipe.update_value(
+            "ComponentName", self.project_config["component_name"]
+        )
+        parsed_component_recipe.update_value(
+            "ComponentVersion", self.project_config["component_version"]
+        )
+        parsed_component_recipe.update_value(
+            "ComponentPublisher", self.project_config["component_author"]
+        )
         self.update_artifact_uris(parsed_component_recipe, build_folders)
 
-    def update_artifact_uris(self, parsed_component_recipe, build_folders: list) -> None:
+    def update_artifact_uris(
+        self, parsed_component_recipe, build_folders: list
+    ) -> None:
         """
         The artifact URIs in the recipe are used to identify the artifacts in local build folders of the component or on s3.
 
@@ -37,7 +49,9 @@ class BuildRecipeTransformer:
 
         Build command fails when the artifacts are neither not found in local both folders not on s3.
         """
-        logging.info("Copying over the build artifacts to the greengrass component artifacts build folder.")
+        logging.info(
+            "Copying over the build artifacts to the greengrass component artifacts build folder."
+        )
         logging.info("Updating artifact URIs in the recipe.")
         if "Manifests" not in parsed_component_recipe:
             logging.debug("No 'Manifests' key in the recipe.")
@@ -58,10 +72,14 @@ class BuildRecipeTransformer:
                     continue
                 if not self.is_artifact_in_build(artifact, build_folders):
                     if not s3_client:
-                        s3_client = project_utils.create_s3_client(self.project_config["region"])
+                        s3_client = project_utils.create_s3_client(
+                            self.project_config["region"]
+                        )
                     if not self.is_artifact_in_s3(s3_client, artifact["URI"]):
                         raise Exception(
-                            "Could not find artifact with URI '{}' on s3 or inside the build folders.".format(artifact["URI"])
+                            "Could not find artifact with URI '{}' on s3 or inside the build folders.".format(
+                                artifact["URI"]
+                            )
                         )
 
     def is_artifact_in_build(self, artifact, build_folders) -> bool:
@@ -79,7 +97,9 @@ class BuildRecipeTransformer:
 
         """
         artifact_uri = f"{utils.s3_prefix}BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION"
-        gg_build_component_artifacts_dir = self.project_config["gg_build_component_artifacts_dir"]
+        gg_build_component_artifacts_dir = self.project_config[
+            "gg_build_component_artifacts_dir"
+        ]
         artifact_file_name = Path(artifact["URI"]).name
         # If the artifact is present in build system specific build folder, copy it to greengrass artifacts build folder
         for build_folder in build_folders:
@@ -87,11 +107,17 @@ class BuildRecipeTransformer:
             if artifact_file.is_file():
                 logging.debug(
                     "Copying file '{}' from '{}' to '{}'.".format(
-                        artifact_file_name, build_folder, gg_build_component_artifacts_dir
+                        artifact_file_name,
+                        build_folder,
+                        gg_build_component_artifacts_dir,
                     )
                 )
                 shutil.copy(artifact_file, gg_build_component_artifacts_dir)
-                logging.debug("Updating artifact URI of '{}' in the recipe file.".format(artifact_file_name))
+                logging.debug(
+                    "Updating artifact URI of '{}' in the recipe file.".format(
+                        artifact_file_name
+                    )
+                )
                 # artifact["URI"] = f"{artifact_uri}/{artifact_file_name}"
                 artifact.update_value("Uri", f"{artifact_uri}/{artifact_file_name}")
                 return True
@@ -100,7 +126,9 @@ class BuildRecipeTransformer:
                     f"Could not find the artifact file specified in the recipe '{artifact_file_name}' inside the build folder"
                     f" '{build_folder}'."
                 )
-        logging.warning(f"Could not find the artifact file '{artifact_file_name}' in the build folder '{build_folders}'.")
+        logging.warning(
+            f"Could not find the artifact file '{artifact_file_name}' in the build folder '{build_folders}'."
+        )
         return False
 
     def is_artifact_in_s3(self, s3_client, artifact_uri) -> bool:
@@ -112,7 +140,9 @@ class BuildRecipeTransformer:
             s3_client(boto3.client): S3 client created specific to the region in the gdk config.
             artifact_uri(string): S3 URI to look up for
         """
-        bucket_name, object_key = artifact_uri.replace(utils.s3_prefix, "").split("/", 1)
+        bucket_name, object_key = artifact_uri.replace(utils.s3_prefix, "").split(
+            "/", 1
+        )
         try:
             response = s3_client.head_object(Bucket=bucket_name, Key=object_key)
             return response["ResponseMetadata"]["HTTPStatusCode"] == 200
@@ -133,6 +163,10 @@ class BuildRecipeTransformer:
         """
 
         component_recipe_file_name = self.project_config["component_recipe_file"].name
-        gg_build_recipe_file = Path(self.project_config["gg_build_recipes_dir"]).joinpath(component_recipe_file_name).resolve()
+        gg_build_recipe_file = (
+            Path(self.project_config["gg_build_recipes_dir"])
+            .joinpath(component_recipe_file_name)
+            .resolve()
+        )
         logging.debug("Creating component recipe at '%s'.", gg_build_recipe_file)
         CaseInsensitiveRecipeFile().write(gg_build_recipe_file, parsed_component_recipe)

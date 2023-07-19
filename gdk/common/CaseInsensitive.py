@@ -28,13 +28,20 @@ class CaseInsensitiveDict(_CaseInsensitiveDict):
                 case_insensitive_dict.update({key: CaseInsensitiveDict(value)})
             elif isinstance(value, list):
                 case_insensitive_dict.update(
-                    {key: [CaseInsensitiveDict(val) if isinstance(val, dict) else val for val in value]}
+                    {
+                        key: [
+                            CaseInsensitiveDict(val) if isinstance(val, dict) else val
+                            for val in value
+                        ]
+                    }
                 )
 
     def _convert_nested_case_insensitive_dict(self, dictObj: dict) -> dict:
         for key, value in dictObj.items():
             if isinstance(value, CaseInsensitiveDict):
-                dictObj.update({key: self._convert_nested_case_insensitive_dict(dict(value))})
+                dictObj.update(
+                    {key: self._convert_nested_case_insensitive_dict(dict(value))}
+                )
             elif isinstance(value, list):
                 dictObj.update(
                     {
@@ -55,7 +62,9 @@ class CaseInsensitiveRecipeFile:
         Writes CaseInsensitiveDict contents to a JSON or a YAML file based on the file path.
         """
         if not self._is_json(file_path) and not self._is_yaml(file_path):
-            raise Exception(f"Invalid recipe file : {file_path}. Recipe file must be in json or yaml format.")
+            raise Exception(
+                f"Invalid recipe file : {file_path}. Recipe file must be in json or yaml format."
+            )
         self._write(file_path, content.to_dict())
 
     def read(self, file_path: Path) -> CaseInsensitiveDict:
@@ -63,7 +72,9 @@ class CaseInsensitiveRecipeFile:
         Reads a JSON or a YAMl file contents as a CaseInsensitiveDict and returns it.
         """
         if not self._is_json(file_path) and not self._is_yaml(file_path):
-            raise Exception(f"Invalid recipe file : {file_path}. Recipe file must be in json or yaml format.")
+            raise Exception(
+                f"Invalid recipe file : {file_path}. Recipe file must be in json or yaml format."
+            )
         return CaseInsensitiveDict(self._read(file_path))
 
     def _write(self, file_path, content):

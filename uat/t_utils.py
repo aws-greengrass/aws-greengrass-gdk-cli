@@ -7,12 +7,22 @@ import boto3
 import yaml
 
 
-def update_config(config_file, component_name, region, bucket, author, version="NEXT_PATCH", old_component_name=None):
+def update_config(
+    config_file,
+    component_name,
+    region,
+    bucket,
+    author,
+    version="NEXT_PATCH",
+    old_component_name=None,
+):
     # Update gdk-config file mandatory field like region.
     with open(str(config_file), "r") as f:
         config = json.loads(f.read())
         if old_component_name is not None:
-            config["component"][component_name] = config["component"].pop(old_component_name)
+            config["component"][component_name] = config["component"].pop(
+                old_component_name
+            )
         config["component"][component_name]["author"] = author
         config["component"][component_name]["publish"]["region"] = region
         config["component"][component_name]["publish"]["bucket"] = bucket
@@ -45,7 +55,9 @@ def replace_uri_in_recipe(recipe_file, os_type, uri_search, uri_replace):
             if recipe["Manifests"][i]["Platform"]["os"] == os_type:
                 for j in range(0, len(recipe["Manifests"][i]["Artifacts"])):
                     uri = recipe["Manifests"][i]["Artifacts"][j]["URI"]
-                    recipe["Manifests"][i]["Artifacts"][j]["URI"] = uri.replace(uri_search, uri_replace, 1)
+                    recipe["Manifests"][i]["Artifacts"][j]["URI"] = uri.replace(
+                        uri_search, uri_replace, 1
+                    )
     with open(str(recipe_file), "w") as f:
         f.write(yaml.dump(recipe))
 

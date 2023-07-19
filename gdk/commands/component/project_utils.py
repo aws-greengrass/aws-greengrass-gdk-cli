@@ -21,10 +21,14 @@ def get_supported_component_builds():
     -------
       (dict): Returns a dict object with supported component builds information.
     """
-    supported_component_builds_file = utils.get_static_file_path(consts.project_build_system_file)
+    supported_component_builds_file = utils.get_static_file_path(
+        consts.project_build_system_file
+    )
     if supported_component_builds_file:
         with open(supported_component_builds_file, "r") as supported_builds_file:
-            logging.debug("Identifying build systems supported by the CLI tool with default configuration.")
+            logging.debug(
+                "Identifying build systems supported by the CLI tool with default configuration."
+            )
             return json.loads(supported_builds_file.read())
     return None
 
@@ -53,22 +57,31 @@ def get_recipe_file():
     yaml_file = list(Path(utils.current_directory).glob("recipe.yaml"))
 
     if not json_file and not yaml_file:
-        logging.error("Could not find 'recipe.json' or 'recipe.yaml' in the project directory.")
+        logging.error(
+            "Could not find 'recipe.json' or 'recipe.yaml' in the project directory."
+        )
         raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
 
     if json_file and yaml_file:
-        logging.error("Found both 'recipe.json' and 'recipe.yaml' in the given project directory.")
+        logging.error(
+            "Found both 'recipe.json' and 'recipe.yaml' in the given project directory."
+        )
         raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
 
     recipe_file = (json_file + yaml_file)[0].resolve()
-    logging.info("Found component recipe file '{}' in the  project directory.".format(recipe_file.name))
+    logging.info(
+        "Found component recipe file '{}' in the  project directory.".format(
+            recipe_file.name
+        )
+    )
     return recipe_file
 
 
 def get_project_config_values():
-
     # Get component configuration from the greengrass project config file.
-    logging.info("Getting project configuration from {}".format(consts.cli_project_config_file))
+    logging.info(
+        "Getting project configuration from {}".format(consts.cli_project_config_file)
+    )
     project_config = config_actions.get_configuration()["component"]
 
     # Since there's only one key in the component configuration, use next() instead of looping in.
@@ -82,10 +95,16 @@ def get_project_config_values():
     options = component_config["publish"].get("options", dict())
 
     # Build directories
-    gg_build_directory = Path(utils.current_directory).joinpath(consts.greengrass_build_dir).resolve()
+    gg_build_directory = (
+        Path(utils.current_directory).joinpath(consts.greengrass_build_dir).resolve()
+    )
     gg_build_artifacts_dir = Path(gg_build_directory).joinpath("artifacts").resolve()
     gg_build_recipes_dir = Path(gg_build_directory).joinpath("recipes").resolve()
-    gg_build_component_artifacts_dir = Path(gg_build_artifacts_dir).joinpath(component_name, component_version).resolve()
+    gg_build_component_artifacts_dir = (
+        Path(gg_build_artifacts_dir)
+        .joinpath(component_name, component_version)
+        .resolve()
+    )
 
     # Get recipe file
     component_recipe_file = get_recipe_file()

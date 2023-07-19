@@ -1,8 +1,8 @@
-
 class BuildSystem:
     """
     Delegates build tasks to the appropriate build system
     """
+
     _instance = None
 
     def __new__(cls):
