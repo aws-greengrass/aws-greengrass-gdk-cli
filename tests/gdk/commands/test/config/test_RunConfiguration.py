@@ -34,7 +34,7 @@ class RunConfigurationUnitTest(TestCase):
     def test_GIVEN_gdk_config_with_tags_WHEN_run_with_tag_args_THEN_use_tags_from_args(self):
         config = self._get_config(
             {
-                "test": {
+                "test-e2e": {
                     "otf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
                 }
             }
@@ -55,7 +55,7 @@ class RunConfigurationUnitTest(TestCase):
     def test_GIVEN_gdk_config_with_three_options_WHEN_run_with_two_overriding_args_THEN_merge_args(self):
         config = self._get_config(
             {
-                "test": {
+                "test-e2e": {
                     "otf_options": {
                         "tags": "some-tags",
                         "ggc-install-root": "some-install-root",
@@ -83,7 +83,7 @@ class RunConfigurationUnitTest(TestCase):
     def test_GIVEN_gdk_config_with_three_options_WHEN_run_with_two_overriding_args_from_file_THEN_merge_args(self):
         config = self._get_config(
             {
-                "test": {
+                "test-e2e": {
                     "otf_options": {
                         "tags": "some-tags",
                         "ggc-install-root": "some-install-root",
@@ -114,7 +114,7 @@ class RunConfigurationUnitTest(TestCase):
     def test_given_gdk_config_with_tags_when_get_test_run_configuration_tags_then_return_given_tags(self):
         config = self._get_config(
             {
-                "test": {
+                "test-e2e": {
                     "otf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
                 }
             }
@@ -135,7 +135,7 @@ class RunConfigurationUnitTest(TestCase):
     def test_given_gdk_config_with_empty_tags_when_get_test_run_configuration_tags_then_raise_exception(self):
         config = self._get_config(
             {
-                "test": {
+                "test-e2e": {
                     "otf_options": {"tags": "", "ggc-version": "1.0.0"},
                 }
             }
@@ -153,7 +153,7 @@ class RunConfigurationUnitTest(TestCase):
     ):
         config = self._get_config(
             {
-                "test": {
+                "test-e2e": {
                     "otf_options": {"ggc-archive": "some-path.zip"},
                 }
             }
@@ -172,7 +172,7 @@ class RunConfigurationUnitTest(TestCase):
     def test_given_gdk_config_with_nucleus_archive_path_when_path_not_exists_then_raise_exception(self):
         config = self._get_config(
             {
-                "test": {
+                "test-e2e": {
                     "otf_options": {"ggc-archive": "some-path.zip"},
                 }
             }

@@ -97,7 +97,7 @@ class E2ETestRunCommandTest(TestCase):
         run_jar = self.mocker.patch("gdk.commands.test.RunCommand.RunCommand.run_testing_jar", return_value=None)
         with open(Path().joinpath("gdk-config.json"), "r") as f:
             content = json.loads(f.read())
-            content["test"] = {"otf_options": {"ggc-archive": "/doesn/not/exis/nucleus.zip"}}
+            content["test-e2e"] = {"otf_options": {"ggc-archive": "/doesn/not/exis/nucleus.zip"}}
         with open(Path().joinpath("gdk-config.json"), "w") as f:
             f.write(json.dumps(content))
 
