@@ -14,7 +14,7 @@ Feature: gdk component build works
     And we verify component zip build files
     And we verify build artifact named HelloWorld.zip
 
-  @version(min='1.0.0')
+  @version(min='1.3.0')
   @change_cwd
   Scenario: build template zip using component name as zip name
     Given we have cli installed

@@ -36,7 +36,7 @@ class RunConfiguration(GDKProject):
 
         _nucleus_archive_path = Path(_nucleus_archive).resolve()
         if not _nucleus_archive_path.exists():
-            raise Exception(
+            raise ValueError(
                 f"Cannot find nucleus archive at path {_nucleus_archive}. Please check 'ggc-archive' in the test config"
             )
         return _nucleus_archive_path
@@ -47,7 +47,7 @@ class RunConfiguration(GDKProject):
         """
         tags = self._test_options_from_config.get("tags", self._default_tags)
         if not tags:
-            raise Exception("Test tags provided in the config are invalid. Please check 'tags' in the test config")
+            raise ValueError("Test tags provided in the config are invalid. Please check 'tags' in the test config")
         return tags
 
     def _get_options(self) -> dict:
@@ -61,19 +61,19 @@ class RunConfiguration(GDKProject):
             else:
                 _options_args_json = json.loads(_options_args)
         except json.decoder.JSONDecodeError as err:
-            raise Exception(
-                "JSON string provided in the test commandis incorrectly formatted.\nError:\t" + str(err),
-            )
+            raise ValueError(
+                "JSON string provided in the test command is incorrectly formatted.\nError:\t" + str(err),
+            ) from err
         # Merge the options provided in the gdk-config.json with the ones provided as args in test command.
         # Options in args override the config.
-        logging.debug("Overriding the E2E testing options provided in the config with the ones provided as args")
+        logging.info("Overriding the E2E testing options provided in the config with the ones provided as args")
         _merged_dict = {**_options_from_config, **_options_args_json}
         return _merged_dict
 
     def _read_options_from_file(self, file: str) -> str:
         file_path = Path(file).resolve()
         if not file_path.exists():
-            raise Exception("Cannot find the E2E testing options file at the given path %s.", file)
+            raise ValueError(f"Cannot find the E2E testing options file at the given path {file}.")
 
         logging.debug("Reading E2E testing options from file %s", file)
         with open(file_path, "r", encoding="utf-8") as f:

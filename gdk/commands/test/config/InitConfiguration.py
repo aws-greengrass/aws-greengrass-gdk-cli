@@ -14,9 +14,9 @@ class InitConfiguration(GDKProject):
     def _get_otf_version(self):
         _version_arg = self._args.get("otf_version", None)
         if _version_arg:
-            logging.info("Using the OTF version specified in the command argument: %s", _version_arg)
+            logging.info("Using the OTF version provided in the command %s", _version_arg)
             return self._validated_otf_version(_version_arg)
-        logging.info("Using the OTF version specified in the GDK test config %s", self.test_config.otf_version)
+        logging.info("Using the OTF version provided in the GDK test config %s", self.test_config.otf_version)
         return self._validated_otf_version(self.test_config.otf_version)
 
     def _validated_otf_version(self, version) -> str:
