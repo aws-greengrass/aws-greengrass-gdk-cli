@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 from gdk.commands.test.config.InitConfiguration import InitConfiguration
 from gdk.common.config.GDKProject import GDKProject
+import requests
 
 
 class InitConfigurationUnitTest(TestCase):
@@ -14,6 +15,10 @@ class InitConfigurationUnitTest(TestCase):
         self.c_dir = Path(".").resolve()
         self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
         os.chdir(tmpdir)
+        response = requests.Response()
+        response.status_code = 200
+
+        self.mocker.patch("requests.head", return_value=response)
         yield
         os.chdir(self.c_dir)
 
@@ -22,7 +27,7 @@ class InitConfigurationUnitTest(TestCase):
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         init_config = InitConfiguration({})
-        assert init_config.otf_version == "1.1.0-SNAPSHOT"
+        assert init_config.otf_version == "1.1.0"
 
     def test_GIVEN_gdk_config_with_otf_version_WHEN_test_init_THEN_use_version_from_config(self):
         config = self._get_config(
@@ -32,7 +37,6 @@ class InitConfigurationUnitTest(TestCase):
                 }
             }
         )
-
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
 
         init_config = InitConfiguration({})
@@ -47,7 +51,6 @@ class InitConfigurationUnitTest(TestCase):
                 }
             }
         )
-
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
 
         with pytest.raises(ValueError) as e:
@@ -61,7 +64,6 @@ class InitConfigurationUnitTest(TestCase):
 
     def test_GIVEN_gdk_config_WHEN_test_init_with_otf_version_arg_THEN_use_version_from_arg(self):
         config = self._get_config()
-
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         init_config = InitConfiguration({"otf_version": "1.1.0+12-build"})
         assert init_config.otf_version == "1.1.0+12-build"
@@ -79,7 +81,7 @@ class InitConfigurationUnitTest(TestCase):
             in str(e.value)
         )
 
-    def test_GIVEN_gdk_config_with_otf_version_WHEN_test_init_with__otf_version_arg_THEN_use_version_from_arg(self):
+    def test_GIVEN_gdk_config_with_otf_version_WHEN_test_init_with_otf_version_arg_THEN_use_version_from_arg(self):
         config = self._get_config(
             {
                 "test-e2e": {
@@ -87,10 +89,30 @@ class InitConfigurationUnitTest(TestCase):
                 }
             }
         )
-
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         init_config = InitConfiguration({"otf_version": "1.2.3"})
         assert init_config.otf_version == "1.2.3"
+
+    def test_GIVEN_gdk_config_with_otf_version_and_version_not_exits_and_WHEN_test_init_THEN_raise_ex(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "otf_version": "1.a.b",
+                }
+            }
+        )
+        response = requests.Response()
+        response.status_code = 404
+
+        self.mocker.patch("requests.head", return_value=response)
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        with pytest.raises(ValueError) as e:
+            InitConfiguration({"otf_version": "1.2.3"})
+        assert (
+            "The specified Open Test Framework (OTF) version '1.2.3' does not exist. Please provide a valid OTF version from"
+            " the releases here:"
+            in e.value.args[0]
+        )
 
     def _get_config(self, value=None):
         config = {

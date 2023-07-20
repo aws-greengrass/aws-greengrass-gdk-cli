@@ -1,12 +1,14 @@
 import semver
 from gdk.common.config.GDKProject import GDKProject
 import logging
+import requests
 
 
 class InitConfiguration(GDKProject):
     def __init__(self, _args) -> None:
         super().__init__()
         self._args = _args
+        self._otf_releases_url = "https://github.com/aws-greengrass/aws-greengrass-testing/releases"
         self.otf_version = self._get_otf_version()
 
     def _get_otf_version(self):
@@ -31,4 +33,15 @@ class InitConfiguration(GDKProject):
                 " the command argument."
             )
 
+        if not self._otf_version_exists(_version):
+            raise ValueError(
+                f"The specified Open Test Framework (OTF) version '{_version}' does not exist. Please"
+                f" provide a valid OTF version from the releases here: {self._otf_releases_url}"
+            )
+
         return _version
+
+    def _otf_version_exists(self, _version) -> bool:
+        _testing_jar_url = "https://github.com/aws-greengrass/aws-greengrass-testing/releases/tag/v" + _version
+        head_response = requests.head(_testing_jar_url, timeout=10)
+        return head_response.status_code == 200
