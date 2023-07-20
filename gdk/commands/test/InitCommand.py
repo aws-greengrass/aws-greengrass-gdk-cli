@@ -25,9 +25,9 @@ class InitCommand(Command):
         )
 
     def run(self):
-        if self.test_directory.exists():
+        if self.test_directory.exists() and len(list(self.test_directory.iterdir())) > 0:
             logging.warning(
-                "Not downloading the E2E testing template as '%s' already exists in the current directory.",
+                "Not downloading the E2E testing template as '%s' already exists in the current directory and is not empty.",
                 consts.E2E_TESTS_DIR_NAME,
             )
             return
