@@ -31,6 +31,9 @@ class InitCommand(Command):
                 consts.E2E_TESTS_DIR_NAME,
             )
             return
+
+        logging.info("Downloading the E2E testing template from GitHub into %s directory...", consts.E2E_TESTS_DIR_NAME)
+
         URLDownloader(self.template_url).download_and_extract(self.test_directory)
         self.update_testing_module_build_identifiers(self._test_config.test_build_system, self._init_config.otf_version)
 
@@ -46,7 +49,7 @@ class InitCommand(Command):
             with open(build_file, "r", encoding="utf-8") as f:
                 build_file_content = f.read()
 
-            build_file_content = build_file_content.replace("GDK_TESTING_VERSION", otf_version)
+            build_file_content = build_file_content.replace("GDK_TESTING_VERSION", otf_version + "-SNAPSHOT")
 
             with open(build_file, "w", encoding="utf-8") as f:
                 f.write(build_file_content)

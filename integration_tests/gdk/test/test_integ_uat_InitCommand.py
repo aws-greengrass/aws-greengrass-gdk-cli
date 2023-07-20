@@ -8,6 +8,7 @@ import shutil
 from urllib3.exceptions import HTTPError
 import gdk.common.consts as consts
 from gdk.common.config.GDKProject import GDKProject
+import requests
 
 
 class E2ETestInitCommandTest(TestCase):
@@ -31,21 +32,11 @@ class E2ETestInitCommandTest(TestCase):
         yield
         os.chdir(self.c_dir)
 
-    def test_init_run_gdk_project(self):
-        self.setup_test_data_config("config.json")
-        self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
-        InitCommand({}).run()
-        assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
-        e2e_test_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
-        assert e2e_test_folder.exists()
-        assert e2e_test_folder.joinpath("pom.xml") in list(e2e_test_folder.iterdir())
-        # Downloaded template has GDK_TESTING_VERSION variable in pom.xml
-        with open(e2e_test_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
-            content = f.read()
-            assert "GDK_TESTING_VERSION" in content
-
     def test_Given_GDK_project_with_an_empty_e2e_test_folder_When_test_init_Then_download_template(self):
         self.setup_test_data_config("config.json")
+        response = requests.Response()
+        response.status_code = 200
+        self.mocker.patch("requests.head", return_value=response)
         self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
         # consts.E2E_TESTS_DIR_NAME already exists but is empty
         Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).mkdir()
@@ -62,6 +53,9 @@ class E2ETestInitCommandTest(TestCase):
 
     def test_Given_GDK_project_with_non_empty_e2e_test_folder_When_test_init_Then_raise_exc(self):
         self.setup_test_data_config("config.json")
+        response = requests.Response()
+        response.status_code = 200
+        self.mocker.patch("requests.head", return_value=response)
         self.mocker.patch.object(InitCommand, "update_testing_module_build_identifiers")
         Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).mkdir()
         some_file = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).joinpath("some_file").resolve()
@@ -73,8 +67,12 @@ class E2ETestInitCommandTest(TestCase):
         assert Path(self.tmpdir).resolve(consts.E2E_TESTS_DIR_NAME).exists()
         assert list(Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).iterdir()) == [some_file]
 
-    def test_init_run_gdk_project_update_otf_version(self):
+    def test_GIVEN_gdk_project_WHEN_test_init_THEN_initialize_the_curr_dir_with_testing_template(self):
         self.setup_test_data_config("config.json")
+        response = requests.Response()
+        response.status_code = 200
+        self.mocker.patch("requests.head", return_value=response)
+
         InitCommand({}).run()
         assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
 
@@ -86,11 +84,11 @@ class E2ETestInitCommandTest(TestCase):
             content = f.read()
             assert "GDK_TESTING_VERSION" not in content
             # OTF version set in config file
-            assert "<otf.version>1.2.0</otf.version>" in content
+            assert "<otf.version>1.2.0-SNAPSHOT</otf.version>" in content
 
     def test_GIVEN_gdk_project_WHEN_test_init_with_otf_version_arg_THEN_version_is_arg_is_used(self):
         self.setup_test_data_config("config.json")
-        InitCommand({"otf_version": "1.3.0"}).run()
+        InitCommand({"otf_version": "1.0.0"}).run()
         assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
 
         # existing consts.E2E_TESTS_DIR_NAME folder is not overridden
@@ -101,7 +99,18 @@ class E2ETestInitCommandTest(TestCase):
             content = f.read()
             assert "GDK_TESTING_VERSION" not in content
             # OTF version set in config file
-            assert "<otf.version>1.3.0</otf.version>" in content
+            assert "<otf.version>1.0.0-SNAPSHOT</otf.version>" in content
+
+    def test_GIVEN_gdk_project_WHEN_test_init_with_otf_version_and_otf_version_not_exists_THEN_raise_exc(self):
+        self.setup_test_data_config("config.json")
+
+        with pytest.raises(ValueError) as e:
+            InitCommand({"otf_version": "10.0.0"}).run()
+        assert "The specified Open Test Framework (OTF) version '10.0.0' does not exist." in e.value.args[0]
+
+        assert not self.mock_template_download.called
+
+        assert not Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME).exists()
 
     def test_init_run_error_downloading_template(self):
         self.setup_test_data_config("config.json")
