@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 import gdk.common.configuration as config
@@ -6,6 +5,7 @@ import gdk.common.consts as consts
 import gdk.common.exceptions.error_messages as error_messages
 import gdk.common.utils as utils
 import pytest
+import json
 
 
 def test_get_static_file_path_cli_schema():
@@ -24,7 +24,6 @@ def test_get_configuration_invalid_gdk_version(mocker, file_name):
         "gdk.common.configuration._get_project_config_file",
         return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
     )
-    spy_log_debug = mocker.spy(logging, "debug")
     with pytest.raises(Exception) as err:
         config.get_configuration()
     assert mock_get_project_config_file.called
@@ -33,8 +32,6 @@ def test_get_configuration_invalid_gdk_version(mocker, file_name):
         " git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1000.0.0` before proceeding."
         == err.value.args[0]
     )
-
-    assert spy_log_debug.call_count == 2
 
 
 @pytest.mark.parametrize(
@@ -58,18 +55,16 @@ def test_get_configuration_invalid_config_file(mocker, file_name):
     ["config.json"],
 )
 def test_get_configuration_valid_component_config_found(mocker, file_name):
+    config_file = Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve()
     mock_get_project_config_file = mocker.patch(
         "gdk.common.configuration._get_project_config_file",
-        return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
+        return_value=config_file,
     )
-    spy_log_debug = mocker.spy(logging, "debug")
 
-    config.get_configuration()
+    _config = config.get_configuration()
+    with open(config_file, "r") as f:
+        assert _config == json.loads(f.read())
     assert mock_get_project_config_file.called
-    spy_log_debug.assert_called_with(
-        "This gdk project configuration (gdk-1.0.0) is compatible with the existing gdk cli version"
-        f" (gdk-{utils.cli_version})."
-    )
 
 
 def test_get_project_config_file_not_exists(mocker):
