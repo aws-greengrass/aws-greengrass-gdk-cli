@@ -61,5 +61,5 @@ class GDKProject:
             raise Exception(error_messages.PROJECT_RECIPE_FILE_NOT_FOUND)
 
         recipe_file = (json_file + yaml_file)[0].resolve()
-        logging.info("Found component recipe file '{}' in the  project directory.".format(recipe_file.name))
+        logging.debug("Found component recipe file '{}' in the project directory.".format(recipe_file.name))
         return recipe_file
