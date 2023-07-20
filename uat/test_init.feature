@@ -1,8 +1,8 @@
-Feature: gdk test init works
+Feature: As a component builder, I can run `gdk test-e2e init` command to initialize an existing GDK project with the testing module that uses OTF.
 
     @version(min='1.3.0')
     @change_cwd
-    Scenario: init test in an existing gdk project
+    Scenario: test-e2e-init-1: Initialize a GDK project with an e2e testing module with default configuration and no commmand args
         Given we have cli installed
         When we run gdk component init -t HelloWorld -l python -n test-dir
         Then command was successful
@@ -22,9 +22,9 @@ Feature: gdk test init works
         And we change directory to test-dir
         And change component name to com.example.PythonHelloWorld
         And we verify gdk project files
-        When we run gdk test-e2e init --otf-version 1.2.0
+        When we run gdk test-e2e init --otf-version 1.0.0
         Then we verify gdk test files
-        Then we verify that the OTF version used is 1.2.0
+        Then we verify that the OTF version used is 1.0.0
 
     @version(min='1.3.0')
     @change_cwd
@@ -35,7 +35,21 @@ Feature: gdk test init works
         And we change directory to test-dir
         And change component name to com.example.PythonHelloWorld
         And we verify gdk project files
-        When we run gdk test-e2e init --otf-version 1.2.0
+        When we run gdk test-e2e init --otf-version 1.1.0
         Then we verify gdk test files
-        When we run gdk test-e2e init --otf-version 1.3.0
-        Then we verify that the OTF version used is 1.2.0
+        When we run gdk test-e2e init --otf-version 1.0.0
+        Then we verify that the OTF version used is 1.1.0
+
+
+    @version(min='1.3.0')
+    @change_cwd
+    Scenario: test-e2e-init-4: When I initialize a GDK project with an e2e testing module using a version of OTF that doesn't exist, the command exits with an error
+        Given we have cli installed
+        When we run gdk component init -t HelloWorld -l python -n test-dir
+        Then command was successful
+        And we change directory to test-dir
+        And change component name to com.example.PythonHelloWorld
+        And we verify gdk project files
+        When we run gdk test-e2e init --otf-version 10.0.0
+        Then command was unsuccessful
+        Then command output contains "'10.0.0' does not exist"

@@ -17,7 +17,7 @@ def verify_test_framework_version(context, version):
 
     with open(build_system_file, "r") as f:
         content = f.read()
-        assert f"<otf.version>{version}</otf.version>" in content, f"OTF version {version} is not used."
+        assert f"<otf.version>{version}-SNAPSHOT</otf.version>" in content, f"OTF version {version} is not used."
 
 
 @step("we verify the test build files")
