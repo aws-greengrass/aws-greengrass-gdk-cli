@@ -33,12 +33,3 @@ def configuration_base(options: dict) -> dict:
 )
 def test_valid_configuration_options(options):
     validate_configuration(configuration_base(options))
-
-
-@pytest.mark.parametrize(
-    "options",
-    [{"exclude": []}, {fake.color_name(): fake.color_name()}],
-)
-def test_invalid_configuration_options(options):
-    with pytest.raises(Exception):
-        validate_configuration(configuration_base(options))

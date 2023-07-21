@@ -27,8 +27,9 @@ def get_configuration():
     with open(project_config_file, "r") as config_file:
         config_data = json.loads(config_file.read())
     try:
-        validate_configuration(config_data)
         validate_cli_version(config_data)
+        validate_configuration(config_data)
+
         return config_data
     except jsonschema.exceptions.ValidationError as err:
         raise Exception(error_messages.PROJECT_CONFIG_FILE_INVALID.format(project_config_file.name, err.message))
@@ -59,7 +60,9 @@ def validate_configuration(data):
 
 def validate_cli_version(config_data):
     cli_version = utils.cli_version
-    config_version = config_data["gdk_version"]
+    config_version = config_data.get("gdk_version")
+    if not config_version:
+        return
     if Version(cli_version) < Version(config_version):
         update_command = f"pip3 install git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v{config_version}"
         raise Exception(

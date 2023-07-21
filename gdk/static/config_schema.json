@@ -88,8 +88,7 @@
                                                     "zip_name": {
                                                         "type": "string"
                                                     }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                             }
                                         }
                                     }

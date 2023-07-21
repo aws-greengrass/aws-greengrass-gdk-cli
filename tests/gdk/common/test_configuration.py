@@ -25,14 +25,9 @@ def test_get_configuration_valid_component_config_found(mocker):
         "gdk.common.configuration._get_project_config_file",
         return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json"),
     )
-    spy_log_debug = mocker.spy(logging, "debug")
 
     assert config.get_configuration() == expected_config
     assert mock_get_project_config_file.called
-    spy_log_debug.assert_called_with(
-        "This gdk project configuration (gdk-1.0.0) is compatible with the existing gdk cli version"
-        f" (gdk-{utils.cli_version})."
-    )
 
 
 @pytest.mark.parametrize(
@@ -68,12 +63,10 @@ def test_get_configuration_invalid_gdk_version(mocker, file_name):
         "gdk.common.configuration._get_project_config_file",
         return_value=Path(".").joinpath("tests/gdk/static").joinpath(file_name).resolve(),
     )
-    mock_validate_configuration = mocker.patch("gdk.common.configuration.validate_configuration", return_value=None)
     spy_log_debug = mocker.spy(logging, "debug")
     with pytest.raises(Exception) as err:
         config.get_configuration()
     assert mock_get_project_config_file.called
-    assert mock_validate_configuration.called
     assert (
         "This gdk project requires gdk cli version '1000.0.0' or above. Please update the cli using the command `pip3 install"
         " git+https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1000.0.0` before proceeding."
