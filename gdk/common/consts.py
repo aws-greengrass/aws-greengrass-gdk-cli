@@ -19,14 +19,16 @@ cli_model_file = "cli_model.json"
 cli_project_config_file = "gdk-config.json"
 greengrass_build_dir = "greengrass-build"
 E2E_TESTS_DIR_NAME = "gg-e2e-tests"
+user_input_recipe_json = "recipe.json"
+user_input_recipe_yaml = "recipe.yaml"
 
 # URLS
 templates_list_url = (
     "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/templates.json"
 )
 repository_list_url = (
-    "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/"
-    + "community-components.json"
+        "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/"
+        + "community-components.json"
 )
 
 # DEFAULT LOGGING
