@@ -25,8 +25,6 @@ def get_recipe():
     # validate the json recipe syntax
     recipe_data = validate_recipe_syntax(user_recipe_file)
 
-    # TODO: validate the user-input recipe file
-
     return recipe_data
 
 
@@ -36,7 +34,7 @@ def get_user_input_recipe_file():
 
     Looks for user input-recipe file in the current work directory of the command.
 
-    Raises an exception if the recipe file is not present.
+    Raises an exception if both JSON and YAML recipe files are present or if no recipe file is found.
 
     Parameters
     ----------
@@ -47,12 +45,15 @@ def get_user_input_recipe_file():
        recipe_file(pathlib.Path): Path of the recipe file.
     """
     recipe_file_json = Path(utils.get_current_directory()).joinpath(consts.user_input_recipe_json).resolve()
-    if not utils.file_exists(recipe_file_json):
-        recipe_file_yaml = Path(utils.get_current_directory()).joinpath(consts.user_input_recipe_yaml).resolve()
-        if not utils.file_exists(recipe_file_yaml):
-            raise Exception(error_messages.USER_INPUT_RECIPE_NOT_EXISTS)
-        return recipe_file_yaml
-    return recipe_file_json
+    recipe_file_yaml = Path(utils.get_current_directory()).joinpath(consts.user_input_recipe_yaml).resolve()
+
+    if utils.file_exists(recipe_file_json) and utils.file_exists(recipe_file_yaml):
+        raise Exception(error_messages.MULTIPLE_INPUT_RECIPES_EXIST)
+
+    if not utils.file_exists(recipe_file_json) and not utils.file_exists(recipe_file_yaml):
+        raise Exception(error_messages.USER_INPUT_RECIPE_NOT_EXISTS)
+
+    return recipe_file_json if utils.file_exists(recipe_file_json) else recipe_file_yaml
 
 
 def validate_recipe_syntax(recipe_file):
