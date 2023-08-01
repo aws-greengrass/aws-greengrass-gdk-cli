@@ -11,14 +11,6 @@ from PyInquirer import prompt
 class Wizard:
     """
     A class used to represent the GDK Startup Wizard
-
-    Methods:
-    -----------
-    prompt_required_fields()
-        prompts the user of all the required fields in the gdk config file
-    prompt_optional_fields()
-        prompts the user of all the optional fields in the gdk config file
-    check_input(input)
     """
 
     def __init__(self) -> None:
@@ -27,9 +19,11 @@ class Wizard:
 
         Attributes
         ----------
-        field_map : data(dict)
-            A dictionary object containing the configuration from greengrass project config file.
-
+            data: Wizard_data object
+            getter: Wizard_getter object
+            setter: Wizard_setter object
+            checker: Wizard_checker object
+            parser: argparse object
         """
 
         self.data = Wizard_data()
@@ -41,11 +35,14 @@ class Wizard:
 
     def prompter(self, field, value, required, max_attempts=3):
         """
+        Prompts the user for a value of a given field key
+
         Parameters
         ----------
             field (string): a field key of the gdk-config file to be changed
             value (string): the current value corresponding the field key to be changed
-            parser (ArgumentParser): parser for retriving command line arguments
+            required (boolean): if the field is a required field of the gdk config file
+            max_attempts (int): the maximum number of attempts to get a valid response from the user
 
         Returns
         -------
@@ -53,9 +50,6 @@ class Wizard:
         """
         require = "required " if required else "optional "
         for attempt in range(1, max_attempts + 1):
-            # args = self.parser.parse_args(
-            #     [f'--{field}', input(f"Current value of the {require}{field} is {value}: ")]
-            # )
             args = self.parser.parse_args(
                 [f"--{field}", self.interactive_prompt(field, value, require)]
             )
@@ -70,25 +64,17 @@ class Wizard:
         print("Exceeded maximum attempts. Assuming default response.")
         return value
 
-    def add_parsers_arguments(self):
-        for field in Fields:
-            self.parser.add_argument(f"--{field.value}")
-
     def change_build_or_publish(self, build_or_publish, max_attempts=3):
         """
-        Prompts the users to answer if they would like to change the field value
-        of a particular field in the gdk-config file
+        Prompts the users to answer if they would like to change the build or publish configurations
 
         Parameters
         ----------
-            field (string): a field key of the gdk-config file to be changed
-            value (string): the current value corresponding the field key to be changed
-            parser (ArgumentParser): parser for retriving command line arguments
+            build_or_publish(string): takes value "build" or "publish"
 
         Returns
         -------
-            boolean: True if the user answers 'y' they do want to change the value of field 'field'
-                    and False if the user answers 'n' they do not want to change the value of that field
+            boolean: True if user wants to change the 'build_or_publish' configuration and False otherwise
 
         """
         self.parser.add_argument(
@@ -125,12 +111,23 @@ class Wizard:
         -------
             None
         """
-        # with open(self.project_config_file, "w") as config_file:
-        #     json.dump(self.field_map, config_file, indent=2)
         with open(self.data.project_config_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(self.field_map, indent=4))
 
     def interactive_prompt(self, field, value, require):
+        """
+        Prompts the user for a value of a given key through an interactive prompt.
+
+        Parameters
+        ----------
+            field (string): a field key of the gdk-config file to be changed
+            value (string): the current value corresponding the field key to be changed
+            require (boolean): if the field is a required field of the gdk config file
+
+        Returns
+        -------
+            string: the value of field that the user has entered through the interactive prompt
+        """
         questions = [
             {
                 "type": "input",
@@ -143,6 +140,18 @@ class Wizard:
         return answer["user_input"]
 
     def prompt_build(self):
+        """
+        Asks user if they would like to change build configurations and prompts corresponding fields
+
+        Parameters
+        ----------
+            None
+
+        Returns
+        -------
+            None
+
+        """
         if self.change_build_or_publish("build"):
             response_custom_build_command = self.prompter(
                 "custom_build_command",
@@ -157,6 +166,18 @@ class Wizard:
             self.setter.set_build_system(response_build_system)
 
     def prompt_publish(self):
+        """
+        Asks user if they would like to change publish configurations and prompts corresponding fields
+
+        Parameters
+        ----------
+            None
+
+        Returns
+        -------
+            None
+
+        """
         if self.change_build_or_publish("publish"):
             response_bucket = self.prompter(
                 "bucket", self.getter.get_bucket(), required=True
@@ -187,7 +208,10 @@ class Wizard:
             None
         """
 
-        self.add_parsers_arguments()
+        # Add all the optional and required fields to the parser
+        for field in Fields:
+            self.parser.add_argument(f"--{field.value}")
+
         response_author = self.prompter(
             "author", self.getter.get_author(), required=True
         )

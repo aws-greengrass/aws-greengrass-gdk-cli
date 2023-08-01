@@ -13,30 +13,30 @@ class Wizard_checker:
 
         Parameters
         ----------
-            None
+            input_value(string): The value entered by the user for the field
+            field(string): The field name of the field in the gdk config file
 
         Returns
         -------
-            None
+            boolean: True if the input value is valid for the field, False otherwise.
         """
-        # if not input_value: return True
         schema_value = self.extract_field_value_from_schema(field)
         try:
             validate(input_value, schema_value)
-            # return input_value
             return True
         except exceptions.ValidationError:
-            # raise Exception(f"The supplied value {input_value} is not valid. Please try again.")
             return False
 
     def extract_field_value_from_schema(self, field_name):
         """
         Parameters
         ----------
-            field_name(string):
+            field_name(string): The field name of the field in the gdk config file
 
         Returns
         -------
+            schema_value(dict): The value of the field as per the schema of the gdk config file.
+            None if the field is not present in the schema.
 
         """
         field_value = None
