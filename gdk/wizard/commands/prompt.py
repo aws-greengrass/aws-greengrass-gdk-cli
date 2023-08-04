@@ -1,10 +1,8 @@
 from gdk.wizard.commands.data import Wizard_data
 from gdk.wizard.commons.fields import Fields
 from gdk.wizard.commons.checkers import Wizard_checker
-from gdk.wizard.commons.getters import Wizard_getter
-from gdk.wizard.commons.setters import Wizard_setter
+from gdk.wizard.commons.model import Wizard_model
 import argparse
-import json
 from PyInquirer import prompt
 
 
@@ -27,10 +25,8 @@ class Wizard:
         """
 
         self.data = Wizard_data()
-        self.getter = Wizard_getter(self.data)
-        self.setter = Wizard_setter(self.data)
+        self.model = Wizard_model(self.data)
         self.checker = Wizard_checker(self.data)
-
         self.parser = argparse.ArgumentParser()
 
     def prompter(self, field, value, required, max_attempts=3):
@@ -39,7 +35,7 @@ class Wizard:
 
         Parameters
         ----------
-            field (string): a field key of the gdk-config file to be changed
+            field (enum): a field key of the gdk_config file to be changed
             value (string): the current value corresponding the field key to be changed
             required (boolean): if the field is a required field of the gdk config file
             max_attempts (int): the maximum number of attempts to get a valid response from the user
@@ -48,18 +44,50 @@ class Wizard:
         -------
             string: the value for the field key "field"
         """
-        require = "required " if required else "optional "
+        require = "required " if required else "OPTIONAL "
+        link = "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
         for attempt in range(1, max_attempts + 1):
-            args = self.parser.parse_args(
-                [f"--{field}", self.interactive_prompt(field, value, require)]
-            )
+            parser_argument = field.value.key
+            if field == Fields.BUILD_OPTIONS:
+                parser_argument = "build_options"
+            elif field == Fields.PUBLISH_OPTIONS:
+                parser_argument = "publish_options"
 
-            response = getattr(args, field)
-            if self.checker.is_valid_input(response, field):
+            args = self.parser.parse_args(
+                [
+                    f"--{parser_argument}",
+                    self.interactive_prompt(field.value.key, value, require),
+                ]
+            )
+            response = getattr(args, parser_argument).strip()
+
+            # only way customer is asked about custom_build_command if they have custom build system
+            # in which case they must specify a custom build command that is not None
+            if field == Fields.CUSTOM_BUILD_COMMAND:
+                if response == "None":
+                    print(
+                        f"Attempt {attempt}/{max_attempts}: Must Specify a custum build command.\nPlease vist: {link}"
+                    )
+                    continue
+
+            # if customer input response is the default value or the customer input response is
+            # the same as the current value, return the current value, then return the same value
+            if (
+                response == field.value.default
+                or response == value
+                or self.checker.is_valid_input(response, field)
+            ):
                 return response
             print(
-                f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again."
+                f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again.\nPlease vist: {link}"
             )
+
+        if field == Fields.CUSTOM_BUILD_COMMAND:
+            print(
+                "You have failed to enter a valid custom build command. Exiting wizard..."
+            )
+            # write to all current values to the config file and exit the wizard
+            # self.write_to_config_file()
 
         print("Exceeded maximum attempts. Assuming default response.")
         return value
@@ -99,21 +127,6 @@ class Wizard:
             print("Your input was invalid response. Please respond again.")
         return False
 
-    def write_to_config_file(self):
-        """
-        Writes all the values in field_map to the gdk-config.json file
-
-        Parameters
-        ----------
-            None
-
-        Returns
-        -------
-            None
-        """
-        with open(self.data.project_config_file, "w", encoding="utf-8") as f:
-            f.write(json.dumps(self.field_map, indent=4))
-
     def interactive_prompt(self, field, value, require):
         """
         Prompts the user for a value of a given key through an interactive prompt.
@@ -139,7 +152,7 @@ class Wizard:
         answer = prompt(questions)
         return answer["user_input"]
 
-    def prompt_build(self):
+    def prompt_build_configs(self):
         """
         Asks user if they would like to change build configurations and prompts corresponding fields
 
@@ -152,20 +165,28 @@ class Wizard:
             None
 
         """
-        if self.change_build_or_publish("build"):
-            response_custom_build_command = self.prompter(
-                "custom_build_command",
-                self.getter.get_custom_build_command(),
-                required=False,
-            )
-            self.setter.set_custom_build_command(response_custom_build_command)
-
+        if self.change_build_or_publish(Fields.BUILD.value.key):
             response_build_system = self.prompter(
-                "build_system", self.getter.get_build_system(), required=True
+                Fields.BUILD_SYSTEM, self.model.get_build_system(), required=True
             )
-            self.setter.set_build_system(response_build_system)
+            self.model.set_build_system(response_build_system)
 
-    def prompt_publish(self):
+            # if user has custom build system, then they must supply custom build commands
+            if self.model.get_build_system() == "custom":
+                response_custom_build_command = self.prompter(
+                    Fields.CUSTOM_BUILD_COMMAND,
+                    self.model.get_custom_build_command(),
+                    required=True,
+                )
+                self.model.set_custom_build_command(response_custom_build_command)
+
+            elif self.model.get_build_system() == "zip":
+                response_build_options = self.prompter(
+                    Fields.BUILD_OPTIONS, self.model.get_build_options(), required=False
+                )
+                self.model.set_build_options(response_build_options)
+
+    def prompt_publish_configs(self):
         """
         Asks user if they would like to change publish configurations and prompts corresponding fields
 
@@ -178,21 +199,31 @@ class Wizard:
             None
 
         """
-        if self.change_build_or_publish("publish"):
+        if self.change_build_or_publish(Fields.PUBLISH.value.key):
             response_bucket = self.prompter(
-                "bucket", self.getter.get_bucket(), required=True
+                Fields.BUCKET, self.model.get_bucket(), required=True
             )
-            self.setter.set_bucket(response_bucket)
+            self.model.set_bucket(response_bucket)
 
             response_region = self.prompter(
-                "region", self.getter.get_region(), required=False
+                Fields.REGION, self.model.get_region(), required=False
             )
-            self.setter.set_region(response_region)
+            self.model.set_region(response_region)
 
-            response_options = self.prompter(
-                "options", self.getter.get_options(), required=False
+            response_publish_options = self.prompter(
+                Fields.PUBLISH_OPTIONS, self.model.get_publish_options(), required=False
             )
-            self.setter.set_options(response_options)
+            self.model.set_publish_options(response_publish_options)
+
+    def add_parser_arguments(self):
+        # Add all the optional and required fields to the parser
+        for field in Fields:
+            parser_argument = field.value.key
+            if field == Fields.BUILD_OPTIONS:
+                parser_argument = "build_options"
+            elif field == Fields.PUBLISH_OPTIONS:
+                parser_argument = "publish_options"
+            self.parser.add_argument(f"--{parser_argument}")
 
     def prompt_fields(self):
         """
@@ -208,24 +239,32 @@ class Wizard:
             None
         """
 
-        # Add all the optional and required fields to the parser
-        for field in Fields:
-            self.parser.add_argument(f"--{field.value}")
+        self.add_parser_arguments()
 
         response_author = self.prompter(
-            "author", self.getter.get_author(), required=True
+            Fields.AUTHOR, self.model.get_author(), required=True
         )
-        self.setter.set_author(response_author)
+        self.model.set_author(response_author)
 
         response_version = self.prompter(
-            "version", self.getter.get_version(), required=True
+            Fields.VERSION, self.model.get_version(), required=True
         )
-        self.setter.set_version(response_version)
+        self.model.set_version(response_version)
 
-        self.prompt_build()
-        self.prompt_publish()
+        self.prompt_build_configs()
+        self.prompt_publish_configs()
 
         response_gdk_version = self.prompter(
-            "gdk_version", self.getter.get_gdk_version(), required=True
+            Fields.GDK_VERSION, self.model.get_gdk_version(), required=True
         )
-        self.setter.set_gdk_version(response_gdk_version)
+        self.model.set_gdk_version(response_gdk_version)
+
+
+def main():
+    wizard = Wizard()
+    wizard.prompt_fields()
+    wizard.write_to_config_file()
+
+
+if __name__ == "__main__":
+    main()
