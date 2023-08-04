@@ -132,34 +132,35 @@ class Wizard_checker_test(TestCase):
         data = Wizard_data()
         checker = Wizard_checker(data)
 
-        # author 
+        # author
         self.assertEqual(checker.is_valid_input("author", "test"), True)
 
-        #version
+        # version
         self.assertEqual(checker.is_valid_input("version", "1.0.0"), True)
 
-        #custom_build_commands
+        # custom_build_commands
         self.assertEqual(checker.is_valid_input("custom_build_command", ["test"]), True)
 
-        #build_system
+        # build_system
         self.assertEqual(checker.is_valid_input("build_system", "zip"), True)
         self.assertEqual(checker.is_valid_input("build_system", "maven"), True)
         self.assertEqual(checker.is_valid_input("build_system", "gradle"), True)
         self.assertEqual(checker.is_valid_input("build_system", "gradlew"), True)
         self.assertEqual(checker.is_valid_input("build_system", "custom"), True)
 
-        #bucket 
+        # bucket
         self.assertEqual(checker.is_valid_input("bucket", "test"), True)
 
         self.assertEqual(checker.is_valid_input("region", "us-east-1"), True)
 
-        #options
-        self.assertEqual(checker.is_valid_input("options", {"file_upload_args": {"test": "test"}}), True)
+        # options
+        self.assertEqual(
+            checker.is_valid_input("options", {"file_upload_args": {"test": "test"}}),
+            True,
+        )
 
-        #gdk_version
+        # gdk_version
         self.assertEqual(checker.is_valid_input("gdk_version", "1.0.0"), True)
-
-
 
     def test_is_valid_input_on_invalid_inputs(self):
         data = Wizard_data()
@@ -167,26 +168,18 @@ class Wizard_checker_test(TestCase):
 
         self.assertEqual(checker.is_valid_input("author", 123), False)
 
+        self.assertEqual(checker.is_valid_input("version", "0000000"), False)
+        self.assertEqual(checker.is_valid_input("version", "....."), False)
 
+        self.assertEqual(checker.is_valid_input("custom_build_command", 123), False)
 
+        self.assertEqual(checker.is_valid_input("build_system", "test"), False)
 
+        self.assertEqual(checker.is_valid_input("bucket", 123), False)
 
-    
+        self.assertEqual(checker.is_valid_input("region", ["test"]), False)
 
-    # def test_check_for_empty_string(self):
-    #     self.assertEqual(Wizard_checker.check_for_empty_string(""), True)
+        self.assertEqual(checker.is_valid_input("options", 123), False)
+        self.assertEqual(checker.is_valid_input("options", "test"), False)
 
-    # def test_check_for_empty_string_false(self):
-    #     self.assertEqual(Wizard_checker.check_for_empty_string("test"), False)
-
-    # def test_check_for_empty_string_false_2(self):
-    #     self.assertEqual(Wizard_checker.check_for_empty_string(None), False)
-
-    # def test_check_for_empty_string_false_3(self):
-    #     self.assertEqual(Wizard_checker.check_for_empty_string(1), False)
-
-    # def test_check_for_empty_string_false_4(self):
-    #     self.assertEqual(Wizard_checker.check_for_empty_string([]), False)
-
-    # def test_check_for_empty_string_false_5(self):
-    #     self.assertEqual(Wizard_checker.check_for_empty_string({}), False)
+        self.assertEqual(checker.is_valid_input("gdk_version", "test"), False)
