@@ -8,6 +8,13 @@ PROJECT_RECIPE_FILE_NOT_FOUND = (
 )
 PROJECT_CONFIG_FILE_INVALID = "Project configuration file '{}' is invalid. Please correct its format and try again. Error: {} "
 CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
+USER_INPUT_RECIPE_NOT_EXISTS = (
+    "Recipe file not found. "
+    "Please ensure that the component's recipe file is initialized as either recipe.json or recipe.yaml."
+)
+MULTIPLE_INPUT_RECIPES_EXIST = (
+    "Both JSON and YAML recipe files found. Only one recipe file (JSON or YAML) should exist."
+)
 
 # CLI MODEL
 INVALID_CLI_MODEL = "CLI model is invalid. Please provide a valid model to create the CLI parser."

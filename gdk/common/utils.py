@@ -7,6 +7,7 @@ from packaging.version import Version
 
 import gdk
 import gdk._version as version
+from gdk.common.exceptions import syntax_error_message
 
 
 def get_static_file_path(file_name):
@@ -144,6 +145,32 @@ def get_next_patch_version(version_number: str) -> str:
 
 def get_current_directory() -> Path:
     return Path(".").resolve()
+
+
+def parse_json_error(err):
+    """
+    Log and display a JSON syntax error message.
+
+    Parameters
+    ----------
+    err : json.JSONDecodeError
+        The JSON syntax error.
+
+    """
+    lines = err.doc.split('\n')
+    logging.error(f"{err.args[0]}")
+    logging.info(f"The error occurs around line {err.lineno}: " + lines[err.lineno - 1].lstrip())
+
+    logging.info("This might be caused by one of the following reasons: ")
+    msg = err.msg
+
+    for err_msg, causes in syntax_error_message.JSON_LIBRARY_ERROR_MESSAGES.items():
+        if msg in err_msg:
+            for cause in causes:
+                logging.info("\t " + cause)
+            break
+
+    logging.info("If none of the above is the cause, please review the overall JSON syntax and resolve any issues.")
 
 
 error_line = "\n=============================== ERROR ===============================\n"

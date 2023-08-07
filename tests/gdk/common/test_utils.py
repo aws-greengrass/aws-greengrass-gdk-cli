@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 
@@ -181,3 +182,11 @@ def test_cli_version_check_latest_available(mocker):
 )
 def test_get_next_patch_version(version):
     assert utils.get_next_patch_version(version) == "1.0.1"
+
+
+def test_parse_json_error(caplog):
+    error_message = "Expecting property name enclosed in double quotes: line 1 column 3 (char 2)"
+    utils.parse_json_error(json.JSONDecodeError(error_message, "", 1))
+    assert "Expecting property name enclosed in double quotes" in caplog.text
+    assert "line 1" in caplog.text
+    assert "If none of the above is the cause, please review the overall JSON syntax and resolve any issues." in caplog.text

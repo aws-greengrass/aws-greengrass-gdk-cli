@@ -26,6 +26,15 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         assert "uri" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
         assert "URI" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
 
+    def test_read_invalid_json(self):
+        json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.json").resolve()
+
+        with pytest.raises(SystemExit) as e:
+            CaseInsensitiveRecipeFile().read(json_file)
+
+        assert e.type == SystemExit
+        assert e.value.code == 1
+
     def test_read_yaml(self):
         yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
         case_insensitive_recipe = CaseInsensitiveRecipeFile().read(yaml_file)
