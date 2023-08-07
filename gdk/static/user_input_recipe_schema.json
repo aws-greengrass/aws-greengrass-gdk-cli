@@ -1,0 +1,353 @@
+{
+    "$schema": "http://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "recipeformatversion": {
+            "type": "string",
+            "enum": ["2020-01-25"]
+        },
+        "componentname": {
+            "type": "string",
+            "oneOf": [
+                {"pattern": "^[a-zA-Z0-9-_.]+$"},
+                {"enum": ["{COMPONENT_NAME}"]}
+            ],
+            "maxLength": 128
+        },
+        "componentversion": {
+            "type": "string",
+            "maxLength": 64,
+            "oneOf": [
+                {
+                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+                },
+                {
+                    "enum": ["NEXT_PATCH", "{COMPONENT_VERSION}"]
+                }
+            ]
+        },
+        "componentdescription": {
+            "type": "string"
+        },
+        "componentpublisher": {
+            "type": "string"
+        },
+        "componentconfiguration": {
+            "type": "object",
+            "properties": {
+                "defaultconfiguration": {}
+            }
+        },
+        "componentdependencies": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "versionrequirement": {
+                        "type": "string"
+                    },
+                    "dependencytype": {
+                        "type": "string",
+                        "enum": ["SOFT", "HARD"]
+                    }
+                }
+            }
+        },
+        "componenttype": {
+            "type": "string"
+        },
+        "componentsource": {
+            "type": "string",
+            "pattern": "^arn:aws:lambda:.*$"
+        },
+        "manifests": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "platform": {
+                        "type": "object",
+                        "properties": {
+                            "os": {
+                                "type": "string"
+                            },
+                            "architecture": {
+                                "type": "string"
+                            },
+                            "architecture.detail": {
+                                "type": "string"
+                            },
+                            "key": {
+                                "type": "string"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "lifecycle": {
+                        "type": "object",
+                        "properties": {
+                            "setenv": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
+                            },
+                            "install": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "script": {
+                                                "type": "string"
+                                            },
+                                            "requiresprivilege": {
+                                                "type": "boolean"
+                                            },
+                                            "skipif": {
+                                                "type": "string"
+                                            },
+                                            "timeout": {
+                                                "type": "integer",
+                                                "minimum": 0
+                                            },
+                                            "setenv": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            },
+                            "run": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "script": {
+                                                "type": "string"
+                                            },
+                                            "requiresprivilege": {
+                                                "type": "boolean"
+                                            },
+                                            "skipif": {
+                                                "type": "string"
+                                            },
+                                            "timeout": {
+                                                "type": "integer",
+                                                "minimum": 0
+                                            },
+                                            "setenv": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            },
+                            "startup": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "script": {
+                                                "type": "string"
+                                            },
+                                            "requiresPrivilege": {
+                                                "type": "boolean"
+                                            },
+                                            "skipif": {
+                                                "type": "string"
+                                            },
+                                            "timeout": {
+                                                "type": "integer",
+                                                "minimum": 0
+                                            },
+                                            "setenv": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            },
+                            "shutdown": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "script": {
+                                                "type": "string"
+                                            },
+                                            "requiresprivilege": {
+                                                "type": "boolean"
+                                            },
+                                            "skipif": {
+                                                "type": "string"
+                                            },
+                                            "timeout": {
+                                                "type": "integer",
+                                                "minimum": 0
+                                            },
+                                            "setenv": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            },
+                            "recover": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "script": {
+                                                "type": "string"
+                                            },
+                                            "requiresprivilege": {
+                                                "type": "boolean"
+                                            },
+                                            "skipif": {
+                                                "type": "string"
+                                            },
+                                            "timeout": {
+                                                "type": "integer",
+                                                "minimum": 0
+                                            },
+                                            "setenv": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            },
+                            "bootstrap": {
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "script": {
+                                                "type": "string"
+                                            },
+                                            "requiresprivilege": {
+                                                "type": "boolean"
+                                            },
+                                            "timeout": {
+                                                "type": "integer",
+                                                "minimum": 0
+                                            },
+                                            "setenv": {
+                                                "type": "object",
+                                                "additionalProperties": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    }
+                                ]
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "selections": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "artifacts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "uri": {
+                                    "type": "string"
+                                },
+                                "unarchive": {
+                                    "type": "string",
+                                    "enum": [
+                                        "NONE",
+                                        "ZIP"
+                                    ]
+                                },
+                                "permission": {
+                                    "type": "object",
+                                    "properties": {
+                                        "read": {
+                                            "type": "string",
+                                            "enum": [
+                                                "NONE",
+                                                "OWNER",
+                                                "ALL"
+                                            ]
+                                        },
+                                        "execute": {
+                                            "type": "string",
+                                            "enum": [
+                                                "NONE",
+                                                "OWNER",
+                                                "ALL"
+                                            ]
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "digest": {
+                                    "type": "string"
+                                },
+                                "algorithm": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "lifecycle": {
+            "type": "object"
+        }
+    },
+    "required": ["recipeformatversion", "componentname"],
+    "additionalProperties": false
+}
