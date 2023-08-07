@@ -1,8 +1,12 @@
 import json
+import logging
+import sys
 from pathlib import Path
 
 import yaml
 from requests.structures import CaseInsensitiveDict as _CaseInsensitiveDict
+
+from gdk.common.utils import parse_json_error
 
 
 class CaseInsensitiveDict(_CaseInsensitiveDict):
@@ -84,7 +88,13 @@ class CaseInsensitiveRecipeFile:
 
     def _read_from_json(self, file_path: Path) -> dict:
         with open(file_path, "r", encoding="utf-8") as f:
-            return json.loads(f.read())
+            try:
+                recipe_data = json.loads(f.read())
+                return recipe_data
+            except json.JSONDecodeError as err:
+                logging.error(f"Syntax error when parsing the recipe file: {file_path}")
+                parse_json_error(err)
+                sys.exit(1)
 
     def _write_to_json(self, file_path: Path, content: dict) -> None:
         with open(file_path, "w", encoding="utf-8") as f:
