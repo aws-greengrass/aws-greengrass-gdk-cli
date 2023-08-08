@@ -1,0 +1,21 @@
+recipeFormatVersion: '2020-01-25'
+cOmPonentName: ggV2HelloWorld
+ComponentVersion: '{COMPONENT_VERSION}'
+ComponentDesCription: This is simple Hello World component written in Python.
+ComponentPubLISher: '{COMPONENT_AUTHOR}'
+ComponentConFIGuration:
+  DefaultCONfiguration:
+    MessaGe: World
+ManifestS:
+  - PLATFORM:
+      oS: all
+    ArtIfacts:
+      - uRi: 's3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/ggV2HelloWorld.zip'
+        uNarchive: ZIP
+        PermisSion:
+          rEad: OWNER
+          execuTe: ALL
+    LifeCycle:
+      ruN: >-
+        python3 -u {artifacts:decompressedPath}/ggV2HelloWorld/main.py
+        {configuration:/Message}
