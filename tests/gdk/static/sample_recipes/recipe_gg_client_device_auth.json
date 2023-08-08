@@ -1,0 +1,27 @@
+{
+  "RecipeFormatVersion": "2020-01-25",
+  "ComponentName": "{COMPONENT_NAME}",
+  "ComponentVersion": "{COMPONENT_VERSION}",
+  "ComponentType": "aws.greengrass.plugin",
+  "ComponentDescription": "The client device auth component authenticates client devices and authorizes client device actions, so client devices can connect to your Greengrass core device. This component creates the certificate vended by the local MQTT broker.",
+  "ComponentPublisher": "{COMPONENT_PUBLISHER}",
+  "ComponentDependencies": {
+    "aws.greengrass.Nucleus": {
+      "VersionRequirement": ">=2.2.0 <2.10.0",
+      "DependencyType": "SOFT"
+    }
+  },
+  "Manifests": [
+    {
+      "Platform": {
+        "os": "*"
+      },
+      "Lifecycle": {},
+      "Artifacts": [
+        {
+          "URI": "s3://aws.greengrass.clientdevices.Auth.jar"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "RecipeFormatVersion": "2020-01-25",
+  "ComponentName": "{COMPONENT_NAME}",
+  "ComponentVersion": "{COMPONENT_VERSION}",
+  "ComponentType": "aws.greengrass.plugin",
+  "ComponentDescription": "The Disk Spooler component stores MQTT messages destined for AWS IoT Core in a database, as opposed to in memory, when offline.",
+  "ComponentPublisher": "{COMPONENT_PUBLISHER}",
+  "ComponentDependencies": {
+    "aws.greengrass.Nucleus": {
+      "VersionRequirement": ">=2.2.0 <2.11.0",
+      "DependencyType": "SOFT"
+    }
+  },
+  "Manifests": [
+    {
+      "Platform": {
+        "os": "*"
+      },
+      "Lifecycle": {},
+      "Artifacts": [
+        {
+          "URI": "s3://aws.greengrass.DiskSpooler.jar"
+        }
+      ]
+    }
+  ]
+}
