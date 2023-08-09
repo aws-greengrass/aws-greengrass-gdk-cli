@@ -1,9 +1,10 @@
-from gdk.wizard.commands.data import Wizard_data
+from gdk.wizard.commands.data import WizardData
 from gdk.wizard.commons.fields import Fields
-from gdk.wizard.commons.checkers import Wizard_checker
-from gdk.wizard.commons.model import Wizard_model
-import argparse
+from gdk.wizard.commons.checkers import WizardChecker
+from gdk.wizard.commons.model import WizardModel
 from PyInquirer import prompt
+import argparse
+import sys
 
 
 class Wizard:
@@ -18,15 +19,14 @@ class Wizard:
         Attributes
         ----------
             data: Wizard_data object
-            getter: Wizard_getter object
-            setter: Wizard_setter object
+            model: Wizard getter and setter object
             checker: Wizard_checker object
             parser: argparse object
         """
 
-        self.data = Wizard_data()
-        self.model = Wizard_model(self.data)
-        self.checker = Wizard_checker(self.data)
+        self.data = WizardData()
+        self.model = WizardModel(self.data)
+        self.checker = WizardChecker(self.data)
         self.parser = argparse.ArgumentParser()
 
     def prompter(self, field, value, required, max_attempts=3):
@@ -44,7 +44,7 @@ class Wizard:
         -------
             string: the value for the field key "field"
         """
-        require = "required " if required else "OPTIONAL "
+        require = "REQUIRED " if required else "OPTIONAL "
         link = "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
         for attempt in range(1, max_attempts + 1):
             parser_argument = field.value.key
@@ -83,16 +83,15 @@ class Wizard:
             )
 
         if field == Fields.CUSTOM_BUILD_COMMAND:
-            print(
+            self.data.write_to_config_file()
+            sys.exit(
                 "You have failed to enter a valid custom build command. Exiting wizard..."
             )
-            # write to all current values to the config file and exit the wizard
-            # self.write_to_config_file()
 
         print("Exceeded maximum attempts. Assuming default response.")
         return value
 
-    def change_build_or_publish(self, build_or_publish, max_attempts=3):
+    def change_configuration(self, field_key, max_attempts=3):
         """
         Prompts the users to answer if they would like to change the build or publish configurations
 
@@ -106,20 +105,20 @@ class Wizard:
 
         """
         self.parser.add_argument(
-            f"--change_{build_or_publish}",
-            help=f"Change componenet {build_or_publish} configurations",
+            f"--change_{field_key}",
+            help=f"Change componenet {field_key} configurations",
         )
 
         for _ in range(max_attempts):
             args = self.parser.parse_args(
                 [
-                    f"--change_{build_or_publish}",
+                    f"--change_{field_key}",
                     input(
-                        f"Do you want to change the {build_or_publish} configurations? (y/n) "
+                        f"Do you want to change the {field_key} configurations? (y/n) "
                     ),
                 ]
             )
-            response = getattr(args, f"change_{build_or_publish}").strip().lower()
+            response = getattr(args, f"change_{field_key}").strip().lower()
             if response in {"y", "yes"}:
                 return True
             elif response in {"n", "no"}:
@@ -149,8 +148,12 @@ class Wizard:
                 "default": f"{value}",
             }
         ]
-        answer = prompt(questions)
-        return answer["user_input"]
+        try:
+            answer = prompt(questions)
+            return answer["user_input"]
+        except (KeyError, TypeError):
+            self.data.write_to_config_file()
+            sys.exit("Wizard interrupted. Exiting...")
 
     def prompt_build_configs(self):
         """
@@ -165,7 +168,7 @@ class Wizard:
             None
 
         """
-        if self.change_build_or_publish(Fields.BUILD.value.key):
+        if self.change_configuration(Fields.BUILD.value.key):
             response_build_system = self.prompter(
                 Fields.BUILD_SYSTEM, self.model.get_build_system(), required=True
             )
@@ -199,7 +202,7 @@ class Wizard:
             None
 
         """
-        if self.change_build_or_publish(Fields.PUBLISH.value.key):
+        if self.change_configuration(Fields.PUBLISH.value.key):
             response_bucket = self.prompter(
                 Fields.BUCKET, self.model.get_bucket(), required=True
             )
@@ -263,7 +266,8 @@ class Wizard:
 def main():
     wizard = Wizard()
     wizard.prompt_fields()
-    wizard.write_to_config_file()
+    wizard.data.write_to_config_file()
+    sys.exit("Wizard completed. Exiting...")
 
 
 if __name__ == "__main__":
