@@ -4,3 +4,4 @@ PyYAML
 requests
 packaging
 semver
+aenum
