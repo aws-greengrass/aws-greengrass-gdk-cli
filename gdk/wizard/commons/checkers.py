@@ -1,12 +1,12 @@
 from gdk.wizard.commons.fields import Fields
 import re
 import json
+import ast
 
 
-class Wizard_checker:
+class WizardChecker:
     def __init__(self, data):
         self.data = data
-        self.schema = self.data.schema
 
     def is_valid_input(self, input_value, field):
         """
@@ -42,8 +42,12 @@ class Wizard_checker:
 
     def check_version(self, input_value):
         # input must match the regex or be an allowed enum value
-        version_pattern = "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
-
+        version_pattern = (
+            "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
+            "(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\."
+            "(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
+            "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+        )
         allowed_enum_values = {"NEXT_PATCH"}
 
         if re.match(version_pattern, input_value) or input_value in allowed_enum_values:
@@ -66,19 +70,21 @@ class Wizard_checker:
         # required if build_system is custom, exit the wizard with error message
         # second approach revert to build_system to zip
         # or infinite loop
+
+        if not isinstance(input_value, str):
+            return False
+
         try:
-            command_list = json.loads(input_value)
-        except json.JSONDecodeError:
-            command_list = [input_value]
-
-        if (
-            len(command_list) >= 1
-            and isinstance(command_list, list)
-            and all(isinstance(item, str) and item.strip() for item in command_list)
-        ):
-            return True
-
-        return False
+            input_list = ast.literal_eval(input_value)
+            if isinstance(input_list, list):
+                return (
+                    all(isinstance(item, str) and item.strip() for item in input_list)
+                    and len(input_list) > 0
+                )
+            else:
+                return False
+        except (ValueError, SyntaxError):
+            return len(input_value) > 0
 
     def check_build_options(self, input_value):
         try:
@@ -97,12 +103,15 @@ class Wizard_checker:
             return False
 
         excludes = input_obj.get("excludes")
-        if not isinstance(excludes, list) or len(excludes) < 1:
+        if (
+            not isinstance(excludes, list)
+            or len(excludes) < 1
+            or not all(isinstance(item, str) for item in excludes)
+        ):
             return False
 
         zip_name = input_obj.get("zip_name")
         if not isinstance(zip_name, str):
-            print("here6")
             return False
 
         return True
@@ -134,7 +143,12 @@ class Wizard_checker:
         return False
 
     def check_gdk_version(self, input_value):
-        gdk_version_pattern = "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+        gdk_version_pattern = (
+            "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
+            "(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\."
+            "(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
+            "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+        )
         if re.match(gdk_version_pattern, input_value):
             return True
         return False

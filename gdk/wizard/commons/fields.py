@@ -9,15 +9,16 @@ class Field_data:
 
 class Fields(Enum):
     # using NoAlias to avoid hash collisions
-    _settings_ = NoAlias
 
+    _settings_ = NoAlias
     COMPONENT = Field_data("component")
+    COMPONENT_NAME = Field_data("component_name", default="gg-component")
     AUTHOR = Field_data("author", default="gg-customer")
     VERSION = Field_data("version", default="1.0.0")
 
     BUILD = Field_data("build")
-    CUSTOM_BUILD_COMMAND = Field_data("custom_build_command")
     BUILD_SYSTEM = Field_data("build_system", "zip")
+    CUSTOM_BUILD_COMMAND = Field_data("custom_build_command")
     BUILD_OPTIONS = Field_data("options", "{}")
 
     PUBLISH = Field_data("publish")

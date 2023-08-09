@@ -1,6 +1,6 @@
 from unittest import TestCase
 import pytest
-from gdk.wizard.commands.data import Wizard_data as data
+from gdk.wizard.commands.data import WizardData as data
 
 
 def Wizard_dataTest(TestCase):
