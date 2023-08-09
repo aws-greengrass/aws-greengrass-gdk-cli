@@ -195,7 +195,17 @@ def test_parse_json_error(caplog):
     assert "missing opening or closing quotes for key or value" in caplog.text
     assert "unexpected characters or tokens present" in caplog.text
     assert "trailing comma after the last key-value pair" in caplog.text
-    assert "If none of the above is the cause, please review the overall JSON syntax and resolve any issues." in caplog.text
+    assert "If none of the above is the cause," in caplog.text
+    assert "Please review the overall JSON syntax and resolve any issues." in caplog.text
+
+
+def test_parse_json_error_not_in_list(caplog):
+    error_message = "This is a new error message that not in maintained list: line 1 column 3 (char 2)"
+    utils.parse_json_error(json.JSONDecodeError(error_message, "", 1))
+    assert "The error occurs around line 1: " in caplog.text
+    assert "This might be caused by one of the following reasons: " not in caplog.text
+    assert "If none of the above is the cause," not in caplog.text
+    assert "Please review the overall JSON syntax and resolve any issues." in caplog.text
 
 
 def test_parse_yaml_error(caplog):
@@ -206,4 +216,14 @@ def test_parse_yaml_error(caplog):
     assert "This might be caused by one of the following reasons: " in caplog.text
     assert "missing colon in the line above" in caplog.text
     assert "missing mandatory space after the colon in the line above" in caplog.text
-    assert "If none of the above is the cause, please review the overall YAML syntax and resolve any issues." in caplog.text
+    assert "If none of the above is the cause," in caplog.text
+    assert "Please review the overall YAML syntax and resolve any issues." in caplog.text
+
+
+def test_parse_yaml_error_not_in_list(caplog):
+    error_message = "new error message"
+    err = yaml.scanner.ScannerError(None, None, error_message)
+    utils.parse_yaml_error(err)
+    assert "This might be caused by one of the following reasons: " not in caplog.text
+    assert "If none of the above is the cause," not in caplog.text
+    assert "Please review the overall YAML syntax and resolve any issues." in caplog.text

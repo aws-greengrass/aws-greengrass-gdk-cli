@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 from pathlib import Path
 
 import yaml
@@ -90,7 +89,7 @@ class CaseInsensitiveRecipeFile:
             except yaml.YAMLError as err:
                 logging.error(f"Syntax error when parsing the recipe file: {file_path}")
                 utils.parse_yaml_error(err)
-                sys.exit(1)
+                raise err
 
     def _read_from_json(self, file_path: Path) -> dict:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -100,7 +99,7 @@ class CaseInsensitiveRecipeFile:
             except json.JSONDecodeError as err:
                 logging.error(f"Syntax error when parsing the recipe file: {file_path}")
                 utils.parse_json_error(err)
-                sys.exit(1)
+                raise err
 
     def _write_to_json(self, file_path: Path, content: dict) -> None:
         with open(file_path, "w", encoding="utf-8") as f:

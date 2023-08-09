@@ -29,11 +29,10 @@ class CaseInsensitiveRecipeFileTest(TestCase):
     def test_read_invalid_json(self):
         json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.json").resolve()
 
-        with pytest.raises(SystemExit) as e:
+        with pytest.raises(json.JSONDecodeError) as e:
             CaseInsensitiveRecipeFile().read(json_file)
 
-        assert e.type == SystemExit
-        assert e.value.code == 1
+        assert isinstance(e.value, json.JSONDecodeError)
 
     def test_read_yaml(self):
         yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.yaml").resolve()
@@ -49,11 +48,10 @@ class CaseInsensitiveRecipeFileTest(TestCase):
     def test_read_invalid_yaml(self):
         yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.yaml").resolve()
 
-        with pytest.raises(SystemExit) as e:
+        with pytest.raises(yaml.YAMLError) as e:
             CaseInsensitiveRecipeFile().read(yaml_file)
 
-        assert e.type == SystemExit
-        assert e.value.code == 1
+        assert isinstance(e.value, yaml.YAMLError)
 
     def test_read_invalid_format(self):
         invalid_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("not_exists.txt").resolve()
