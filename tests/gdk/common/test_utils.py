@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import pytest
+import yaml
 from urllib3.exceptions import HTTPError
 
 import gdk.common.utils as utils
@@ -189,4 +190,20 @@ def test_parse_json_error(caplog):
     utils.parse_json_error(json.JSONDecodeError(error_message, "", 1))
     assert "Expecting property name enclosed in double quotes" in caplog.text
     assert "line 1" in caplog.text
+    assert "This might be caused by one of the following reasons: " in caplog.text
+    assert "the key is not enclosed in double quotes" in caplog.text
+    assert "missing opening or closing quotes for key or value" in caplog.text
+    assert "unexpected characters or tokens present" in caplog.text
+    assert "trailing comma after the last key-value pair" in caplog.text
     assert "If none of the above is the cause, please review the overall JSON syntax and resolve any issues." in caplog.text
+
+
+def test_parse_yaml_error(caplog):
+    error_message = "mapping values are not allowed here: line 3, column 1"
+    err = yaml.scanner.ScannerError(None, None, error_message)
+    utils.parse_yaml_error(err)
+    assert "mapping values are not allowed here" in caplog.text
+    assert "This might be caused by one of the following reasons: " in caplog.text
+    assert "missing colon in the line above" in caplog.text
+    assert "missing mandatory space after the colon in the line above" in caplog.text
+    assert "If none of the above is the cause, please review the overall YAML syntax and resolve any issues." in caplog.text

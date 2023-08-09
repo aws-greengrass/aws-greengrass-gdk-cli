@@ -165,12 +165,35 @@ def parse_json_error(err):
     msg = err.msg
 
     for err_msg, causes in syntax_error_message.JSON_LIBRARY_ERROR_MESSAGES.items():
-        if msg in err_msg:
+        if err_msg in msg:
             for cause in causes:
                 logging.info("\t " + cause)
             break
 
     logging.info("If none of the above is the cause, please review the overall JSON syntax and resolve any issues.")
+
+
+def parse_yaml_error(err):
+    """
+    Log and display a YAML syntax error message.
+
+    Parameters
+    ----------
+    err : yaml.YAMLError
+        The YAML syntax error.
+
+    """
+    logging.error(f"{err}")
+    logging.info("This might be caused by one of the following reasons: ")
+    msg = err.problem
+
+    for err_msg, causes in syntax_error_message.YAML_LIBRARY_ERROR_MESSAGES.items():
+        if err_msg in msg:
+            for cause in causes:
+                logging.info("\t " + cause)
+            break
+
+    logging.info("If none of the above is the cause, please review the overall YAML syntax and resolve any issues.")
 
 
 error_line = "\n=============================== ERROR ===============================\n"

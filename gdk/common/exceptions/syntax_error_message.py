@@ -28,3 +28,43 @@ JSON_LIBRARY_ERROR_MESSAGES = {
         "extra brackets present"
     ]
 }
+
+YAML_LIBRARY_ERROR_MESSAGES = {
+    "mapping values are not allowed here": [
+        "missing colon in the line above",
+        "missing mandatory space after the colon in the line above"
+    ],
+    "expected <block end>, but found": [
+        "unexpected characters or tokens at the end of the line",
+        "incorrect indentation",
+        "missing closing quotes on the line above",
+        "unmatched opening and closing quotes",
+        "missing mandatory space after the character '-' in the line above"
+    ],
+    "could not find expected ':'": [
+        "unexpected characters or tokens between the key and value",
+        "missing mandatory space after the colon in the line above"
+    ],
+    "found unexpected end of stream": [
+        "unmatched opening and closing quotes"
+    ],
+    "expected '<document start>', but found": [
+        "unexpected characters or tokens at the start of the document"
+    ],
+    "expected alphabetic or numeric character": [
+        "unexpected characters or tokens at the start of a string"
+    ],
+    "found undefined alias": [
+        "missing definition of the alias",
+        "misusing characters '*', or '&'"
+    ],
+    "expected chomping or indentation indicators, but found": [
+        "unexpected characters or tokens present"
+    ],
+    "expected the node content, but found": [
+        "unexpected characters or tokens present"
+    ],
+    "found character '@' that cannot start any token": [
+        "having a token that starts with the character '@'"
+    ]
+}

@@ -46,6 +46,15 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         assert "uri" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
         assert "URI" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
 
+    def test_read_invalid_yaml(self):
+        yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.yaml").resolve()
+
+        with pytest.raises(SystemExit) as e:
+            CaseInsensitiveRecipeFile().read(yaml_file)
+
+        assert e.type == SystemExit
+        assert e.value.code == 1
+
     def test_read_invalid_format(self):
         invalid_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("not_exists.txt").resolve()
         with pytest.raises(Exception) as e:
