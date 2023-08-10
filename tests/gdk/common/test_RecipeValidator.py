@@ -30,11 +30,32 @@ class RecipeValidatorTest(TestCase):
         json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath(
             "invalid_component_recipe.json").resolve()
         validator = RecipeValidator(json_file)
-        with pytest.raises(SystemExit) as e:
+        with pytest.raises(json.JSONDecodeError) as e:
             validator._load_recipe()
 
-        assert e.type == SystemExit
-        assert e.value.code == 1
+        assert isinstance(e.value, json.JSONDecodeError)
+
+    def test_load_from_yaml(self):
+        yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath(
+            "valid_component_recipe.yaml"
+        ).resolve()
+        validator = RecipeValidator(yaml_file)
+        recipe_data = validator._load_recipe()
+        assert isinstance(recipe_data, CaseInsensitiveDict)
+        assert "componentconfiguration" in recipe_data
+        print(recipe_data["componentconfiguration"])
+        assert "defaultconfiguration" in recipe_data["componentconfiguration"]
+        assert "message" in recipe_data["componentconfiguration"]["defaultconfiguration"]
+
+    def test_load_from_invalid_yaml(self):
+        yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath(
+            "invalid_component_recipe.yaml"
+        ).resolve()
+        validator = RecipeValidator(yaml_file)
+        with pytest.raises(yaml.YAMLError) as e:
+            validator._load_recipe()
+
+        assert isinstance(e.value, yaml.YAMLError)
 
     def test_load_from_file_invalid_format(self):
         invalid_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("not_exists.txt").resolve()
