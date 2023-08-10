@@ -52,7 +52,7 @@ def test_check_build_system_valid(valid_build_system):
     "invalid_build_system",
     ["Zip", "random", "123", "True", "None", "{}", "[]"],
 )
-def test_check_build_system_invalid(mocker, invalid_build_system):
+def test_check_build_system_invalid(invalid_build_system):
     checker = WizardChecker()
     assert (
         checker.is_valid_input(invalid_build_system, ConfigEnum.BUILD_SYSTEM) is False
@@ -69,7 +69,7 @@ def test_check_build_system_invalid(mocker, invalid_build_system):
         "x+y",
     ],
 )
-def test_check_custom_build_commands_valid(mocker, valid_custom_build_command):
+def test_check_custom_build_commands_valid(valid_custom_build_command):
     checker = WizardChecker()
     assert (
         checker.is_valid_input(
@@ -83,7 +83,7 @@ def test_check_custom_build_commands_valid(mocker, valid_custom_build_command):
     "invalid_custom_build_command",
     ["{'foo', 'bar'}", "[1,2,3]", "[]", "", "['string1', 'string2', {'ok': 'test'}]"],
 )
-def test_check_custom_build_commands_invalid(mocker, invalid_custom_build_command):
+def test_check_custom_build_commands_invalid(invalid_custom_build_command):
     checker = WizardChecker()
     assert (
         checker.is_valid_input(
