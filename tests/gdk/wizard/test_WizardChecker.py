@@ -104,7 +104,10 @@ def test_check_custom_build_commands_invalid(invalid_custom_build_command):
     "valid_build_options",
     [
         '{"excludes": [".gitignore", "temp/"], "zip_name": "my_component.zip"}',
-        '{"excludes": [".gitignore"], "zip_name": "my_component.zip"}',
+        '{"excludes": [".gitignore"], "zip_name": "my_component.zip", "extra": "foo"}',
+        '{"EXCLUDES": [".gitignore"], "ZIP_NAME": "my_component.zip"}',
+        '{"excludes": [], "zip_name": ""}',
+        "{}",
     ],
 )
 def test_check_build_options_valid(valid_build_options):
@@ -115,13 +118,15 @@ def test_check_build_options_valid(valid_build_options):
 @pytest.mark.parametrize(
     "invalid_build_options",
     [
-        "{'foo', 'bar'}",
+        '{"foo", "bar"}',
         "[1,2,3]",
         "[]",
         "",
-        "['string1', 'string2', {'ok': 'test'}]",
-        "{'excludes': ['.gitignore'], 'zip_name': 'my_component.zip', 'extra_property': 'extra'}",
-        "{'EXCLUDES': ['.gitignore'], 'ZIP_NAME': 'my_component.zip'}",
+        '["string1", "string2", {"ok": "test"}]',
+        '("string1", "string2", {"ok": "test"})',
+        '{"excludes": [], "zip_name": 7}',
+        '{"excludes": {}, "zip_name": ""}',
+        '{"excludes": ["ok", 2], "zip_name": ""}',
     ],
 )
 def test_check_build_options_invalid(invalid_build_options):

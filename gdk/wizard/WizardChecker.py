@@ -85,6 +85,10 @@ class WizardChecker:
             return len(input_value) > 0
 
     def check_build_options(self, input_value):
+        # empty dictionary is valid
+        if input_value == "{}":
+            return True
+
         try:
             # Convert the input string to a dictionary (object)
             input_obj = json.loads(input_value)
@@ -94,23 +98,17 @@ class WizardChecker:
         if not isinstance(input_obj, dict):
             return False
 
-        if len(input_obj) > 2:
-            return False
+        if "excludes" in input_obj:
+            excluded = input_obj.get("excludes")
+            if not isinstance(excluded, list) or not all(
+                isinstance(item, str) for item in excluded
+            ):
+                return False
 
-        if "excludes" not in input_obj or "zip_name" not in input_obj:
-            return False
-
-        excludes = input_obj.get("excludes")
-        if (
-            not isinstance(excludes, list)
-            or len(excludes) < 1
-            or not all(isinstance(item, str) for item in excludes)
-        ):
-            return False
-
-        zip_name = input_obj.get("zip_name")
-        if not isinstance(zip_name, str):
-            return False
+        if "zip_name" in input_obj:
+            zip_name = input_obj.get("zip_name")
+            if not isinstance(zip_name, str):
+                return False
 
         return True
 
