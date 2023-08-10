@@ -61,7 +61,13 @@ def test_check_build_system_invalid(mocker, invalid_build_system):
 
 @pytest.mark.parametrize(
     "valid_custom_build_command",
-    ["['one', 'two', 'three']", "['ok']", "test", "['{'foo', 'bar'}', 'test']"],
+    [
+        "['one', 'two', 'three']",
+        "['ok']",
+        "test",
+        "[\"{'foo', 'bar'}\", 'test']",
+        "x+y",
+    ],
 )
 def test_check_custom_build_commands_valid(mocker, valid_custom_build_command):
     checker = WizardChecker()
