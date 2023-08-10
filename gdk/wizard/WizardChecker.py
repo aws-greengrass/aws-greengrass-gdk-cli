@@ -1,4 +1,4 @@
-from gdk.wizard.commons.fields import Fields
+from gdk.wizard.ConfigEnum import ConfigEnum
 import re
 import ast
 
@@ -6,7 +6,7 @@ import ast
 class WizardChecker:
     def is_valid_input(self, input_value, field):
         """
-        Prompts the user of all the optional fields of the gdk config file and updates the
+        Prompts the user of all the optional ConfigEnum of the gdk config file and updates the
         field_map if their answer is valid  as the user answers the question to each prompt
 
         Parameters
@@ -20,15 +20,10 @@ class WizardChecker:
         """
 
         switch = {
-            Fields.AUTHOR: self.check_author,
-            Fields.VERSION: self.check_version,
-            Fields.CUSTOM_BUILD_COMMAND: self.check_custom_build_command,
-            Fields.BUILD_SYSTEM: self.check_build_system,
-            Fields.BUILD_OPTIONS: self.check_build_options,
-            Fields.BUCKET: self.check_bucket,
-            Fields.REGION: self.check_region,
-            Fields.PUBLISH_OPTIONS: self.check_publish_options,
-            Fields.GDK_VERSION: self.check_gdk_version,
+            ConfigEnum.AUTHOR: self.check_author,
+            ConfigEnum.VERSION: self.check_version,
+            ConfigEnum.CUSTOM_BUILD_COMMAND: self.check_custom_build_command,
+            ConfigEnum.BUILD_SYSTEM: self.check_build_system,
         }
         return switch.get(field)(input_value)
 
