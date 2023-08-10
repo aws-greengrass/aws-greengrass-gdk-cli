@@ -1,6 +1,7 @@
 from gdk.wizard.ConfigEnum import ConfigEnum
 import re
 import ast
+import json
 
 
 class WizardChecker:
@@ -10,6 +11,11 @@ class WizardChecker:
             ConfigEnum.VERSION: self.is_valid_version,
             ConfigEnum.CUSTOM_BUILD_COMMAND: self.is_valid_custom_build_command,
             ConfigEnum.BUILD_SYSTEM: self.is_valid_build_system,
+            ConfigEnum.BUILD_OPTIONS: self.check_build_options,
+            ConfigEnum.BUCKET: self.check_bucket,
+            ConfigEnum.REGION: self.check_region,
+            ConfigEnum.PUBLISH_OPTIONS: self.check_publish_options,
+            ConfigEnum.GDK_VERSION: self.check_gdk_version,
         }
 
     def is_valid_input(self, input_value, field):
@@ -77,3 +83,70 @@ class WizardChecker:
             return False
         except ValueError:
             return len(input_value) > 0
+
+    def check_build_options(self, input_value):
+        try:
+            # Convert the input string to a dictionary (object)
+            input_obj = json.loads(input_value)
+        except json.JSONDecodeError:
+            return False
+
+        if not isinstance(input_obj, dict):
+            return False
+
+        if len(input_obj) > 2:
+            return False
+
+        if "excludes" not in input_obj or "zip_name" not in input_obj:
+            return False
+
+        excludes = input_obj.get("excludes")
+        if (
+            not isinstance(excludes, list)
+            or len(excludes) < 1
+            or not all(isinstance(item, str) for item in excludes)
+        ):
+            return False
+
+        zip_name = input_obj.get("zip_name")
+        if not isinstance(zip_name, str):
+            return False
+
+        return True
+
+    def check_bucket(self, input_value):
+        # input must be a non-empty string
+        return isinstance(input_value, str) and len(input_value) > 0
+
+    def check_region(self, input_value):
+        # input must be a non-empty string
+        return isinstance(input_value, str) and len(input_value) > 0
+
+    def check_publish_options(self, input_value):
+        # input_value will always be a string so must try to convert it to a dict
+
+        try:
+            input_object = json.loads(input_value)
+        except json.JSONDecodeError:
+            return False
+
+        if not isinstance(input_object, dict):
+            return False
+
+        if "file_upload_args" in input_object and isinstance(
+            input_object["file_upload_args"], dict
+        ):
+            return True
+
+        return False
+
+    def check_gdk_version(self, input_value):
+        gdk_version_pattern = (
+            "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
+            "(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\."
+            "(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
+            "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
+        )
+        if re.match(gdk_version_pattern, input_value):
+            return True
+        return False
