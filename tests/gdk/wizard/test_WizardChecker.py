@@ -174,7 +174,12 @@ def test_check_region_invalid(invalid_region):
 
 @pytest.mark.parametrize(
     "valid_publish_options",
-    ['{"file_upload_args": {"bucket": "bucket1"}}', '{"file_upload_args": {}}'],
+    [
+        '{"file_upload_args": {"bucket": "bucket1"}}',
+        '{"file_upload_args": {}}',
+        "{}",
+        '{"ok": "bar"}',
+    ],
 )
 def test_check_publish_options_valid(valid_publish_options):
     checker = WizardChecker()

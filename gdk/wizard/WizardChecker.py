@@ -131,12 +131,11 @@ class WizardChecker:
         if not isinstance(input_object, dict):
             return False
 
-        if "file_upload_args" in input_object and isinstance(
-            input_object["file_upload_args"], dict
-        ):
-            return True
+        _file_upload_args = input_object.get("file_upload_args", {})
+        if not isinstance(_file_upload_args, dict):
+            return False
 
-        return False
+        return True
 
     def check_gdk_version(self, input_value):
         gdk_version_pattern = (
@@ -147,4 +146,5 @@ class WizardChecker:
         )
         if re.match(gdk_version_pattern, input_value):
             return True
+
         return False
