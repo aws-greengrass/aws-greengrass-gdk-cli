@@ -6,76 +6,72 @@ class WizardData:
         self.field_dict = field_dict
         self.project_config = self.field_dict[ConfigEnum.COMPONENT.value.key]
         self.component_name = next(iter(self.project_config))
+        self.component_name_fields = self.project_config.get(
+            self.component_name, ConfigEnum.COMPONENT_NAME.value.default
+        )
 
     def get_author(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.AUTHOR.value.key]
-        except KeyError:
-            return ConfigEnum.AUTHOR.value.default
+        return self.component_name_fields.get(
+            ConfigEnum.AUTHOR.value.key, ConfigEnum.AUTHOR.value.default
+        )
 
     def get_version(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.VERSION.value.key]
-        except KeyError:
-            return ConfigEnum.VERSION.value.default
-
-    def get_custom_build_command(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.BUILD.value.key][ConfigEnum.CUSTOM_BUILD_COMMAND.value.key]
-        except KeyError:
-            return ConfigEnum.CUSTOM_BUILD_COMMAND.value.default
+        return self.component_name_fields.get(
+            ConfigEnum.VERSION.value.key, ConfigEnum.VERSION.value.default
+        )
 
     def get_build_system(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.BUILD.value.key][ConfigEnum.BUILD_SYSTEM.value.key]
-        except KeyError:
-            return ConfigEnum.BUILD_SYSTEM.value.default
+        return self.component_name_fields.get(
+            ConfigEnum.BUILD.value.key, ConfigEnum.BUILD.value.default
+        ).get(
+            ConfigEnum.BUILD_SYSTEM.value.key,
+            ConfigEnum.BUILD_SYSTEM.value.default,
+        )
+
+    def get_custom_build_command(self):
+        return self.component_name_fields.get(
+            ConfigEnum.BUILD.value.key, ConfigEnum.BUILD.value.default
+        ).get(
+            ConfigEnum.CUSTOM_BUILD_COMMAND.value.key,
+            ConfigEnum.CUSTOM_BUILD_COMMAND.value.default,
+        )
 
     def get_build_options(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.BUILD.value.key][ConfigEnum.BUILD_OPTIONS.value.key]
-        except KeyError:
-            return ConfigEnum.PUBLISH_OPTIONS.value.default
+        return self.component_name_fields.get(
+            ConfigEnum.BUILD.value.key, ConfigEnum.BUILD.value.default
+        ).get(
+            ConfigEnum.BUILD_OPTIONS.value.key,
+            ConfigEnum.BUILD_OPTIONS.value.default,
+        )
 
     def get_bucket(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.PUBLISH.value.key][ConfigEnum.BUCKET.value.key]
-        except KeyError:
-            return ConfigEnum.BUCKET.value.default
+        return self.component_name_fields.get(
+            ConfigEnum.PUBLISH.value.key, ConfigEnum.PUBLISH.value.default
+        ).get(
+            ConfigEnum.BUCKET.value.key,
+            ConfigEnum.BUCKET.value.default,
+        )
 
     def get_region(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.PUBLISH.value.key][ConfigEnum.REGION.value.key]
-        except KeyError:
-            return ConfigEnum.REGION.value.default
+        return self.component_name_fields.get(
+            ConfigEnum.PUBLISH.value.key, ConfigEnum.PUBLISH.value.default
+        ).get(
+            ConfigEnum.REGION.value.key,
+            ConfigEnum.REGION.value.default,
+        )
 
     def get_publish_options(self):
-        try:
-            return self.project_config.get(
-                self.component_name, ConfigEnum.COMPONENT_NAME.value.default
-            )[ConfigEnum.PUBLISH.value.key][ConfigEnum.PUBLISH_OPTIONS.value.key]
-        except KeyError:
-            return ConfigEnum.PUBLISH_OPTIONS.value.default
+        return self.component_name_fields.get(
+            ConfigEnum.PUBLISH.value.key, ConfigEnum.PUBLISH.value.default
+        ).get(
+            ConfigEnum.PUBLISH_OPTIONS.value.key,
+            ConfigEnum.PUBLISH_OPTIONS.value.default,
+        )
 
     def get_gdk_version(self):
-        try:
-            return self.field_dict[ConfigEnum.GDK_VERSION.value.key]
-        except KeyError:
-            return ConfigEnum.GDK_VERSION.value.default
+        return self.field_dict.get(
+            ConfigEnum.GDK_VERSION.value.key, ConfigEnum.GDK_VERSION.value.default
+        )
 
     def set_author(self, value):
         if value:

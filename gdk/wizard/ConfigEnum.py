@@ -16,12 +16,12 @@ class ConfigEnum(Enum):
     AUTHOR = ConfigEnumDefault("author", default="gg-customer")
     VERSION = ConfigEnumDefault("version", default="1.0.0")
 
-    BUILD = ConfigEnumDefault("build")
+    BUILD = ConfigEnumDefault("build", default="build")
     BUILD_SYSTEM = ConfigEnumDefault("build_system", "zip")
     CUSTOM_BUILD_COMMAND = ConfigEnumDefault("custom_build_command")
     BUILD_OPTIONS = ConfigEnumDefault("options", "{}")
 
-    PUBLISH = ConfigEnumDefault("publish")
+    PUBLISH = ConfigEnumDefault("publish", default="publish")
     BUCKET = ConfigEnumDefault("bucket", default="gg-component-bucket")
     REGION = ConfigEnumDefault("region", default="us-east-1")
     PUBLISH_OPTIONS = ConfigEnumDefault("options", "{}")
