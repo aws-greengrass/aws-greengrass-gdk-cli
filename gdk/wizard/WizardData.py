@@ -6,22 +6,22 @@ class WizardData:
         self.field_dict = field_dict
         self.project_config = self.field_dict[ConfigEnum.COMPONENT.value.key]
         self.component_name = next(iter(self.project_config))
-        self.component_name_fields = self.project_config.get(
+        self.component_config = self.project_config.get(
             self.component_name, ConfigEnum.COMPONENT_NAME.value.default
         )
 
     def get_author(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.AUTHOR.value.key, ConfigEnum.AUTHOR.value.default
         )
 
     def get_version(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.VERSION.value.key, ConfigEnum.VERSION.value.default
         )
 
     def get_build_system(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.BUILD.value.key, ConfigEnum.BUILD.value.default
         ).get(
             ConfigEnum.BUILD_SYSTEM.value.key,
@@ -29,7 +29,7 @@ class WizardData:
         )
 
     def get_custom_build_command(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.BUILD.value.key, ConfigEnum.BUILD.value.default
         ).get(
             ConfigEnum.CUSTOM_BUILD_COMMAND.value.key,
@@ -37,7 +37,7 @@ class WizardData:
         )
 
     def get_build_options(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.BUILD.value.key, ConfigEnum.BUILD.value.default
         ).get(
             ConfigEnum.BUILD_OPTIONS.value.key,
@@ -45,7 +45,7 @@ class WizardData:
         )
 
     def get_bucket(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.PUBLISH.value.key, ConfigEnum.PUBLISH.value.default
         ).get(
             ConfigEnum.BUCKET.value.key,
@@ -53,7 +53,7 @@ class WizardData:
         )
 
     def get_region(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.PUBLISH.value.key, ConfigEnum.PUBLISH.value.default
         ).get(
             ConfigEnum.REGION.value.key,
@@ -61,7 +61,7 @@ class WizardData:
         )
 
     def get_publish_options(self):
-        return self.component_name_fields.get(
+        return self.component_config.get(
             ConfigEnum.PUBLISH.value.key, ConfigEnum.PUBLISH.value.default
         ).get(
             ConfigEnum.PUBLISH_OPTIONS.value.key,
@@ -75,21 +75,15 @@ class WizardData:
 
     def set_author(self, value):
         if value:
-            self.field_dict[ConfigEnum.COMPONENT.value.key][self.component_name][
-                ConfigEnum.AUTHOR.value.key
-            ] = value
+            self.component_config[ConfigEnum.AUTHOR.value.key] = value
 
     def set_version(self, value):
         if value:
-            self.field_dict[ConfigEnum.COMPONENT.value.key][self.component_name][
-                ConfigEnum.VERSION.value.key
-            ] = value
+            self.component_config[ConfigEnum.VERSION.value.key] = value
 
     def _set_build_config_values(self, field, value):
         if value:
-            self.field_dict[ConfigEnum.COMPONENT.value.key][self.component_name][
-                ConfigEnum.BUILD.value.key
-            ][field.key] = value
+            self.component_config[ConfigEnum.BUILD.value.key][field.key] = value
 
     def set_build_system(self, value):
         self._set_build_config_values(ConfigEnum.BUILD_SYSTEM.value, value)
@@ -102,9 +96,7 @@ class WizardData:
 
     def _set_publish_config_values(self, field, value):
         if value:
-            self.field_dict[ConfigEnum.COMPONENT.value.key][self.component_name][
-                ConfigEnum.PUBLISH.value.key
-            ][field.key] = value
+            self.component_config[ConfigEnum.PUBLISH.value.key][field.key] = value
 
     def set_bucket(self, value):
         self._set_publish_config_values(ConfigEnum.BUCKET.value, value)
