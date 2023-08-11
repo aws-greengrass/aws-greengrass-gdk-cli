@@ -32,7 +32,7 @@ class Wizard:
         self.checker = WizardChecker()
         self.parser = argparse.ArgumentParser()
 
-    def prompter(self, field, value, required, max_attempts=3):
+    def prompter(self, field, required, max_attempts=3):
         """
         Prompts the user for a value of a given field key
 
@@ -47,6 +47,7 @@ class Wizard:
         -------
             string: the value for the field key "field"
         """
+        current_field_value = self.data.get_field(field)
         require = "REQUIRED " if required else "OPTIONAL "
         link = "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
         for attempt in range(1, max_attempts + 1):
@@ -59,7 +60,9 @@ class Wizard:
             args = self.parser.parse_args(
                 [
                     f"--{parser_argument}",
-                    self.interactive_prompt(field.value.key, value, require),
+                    self.interactive_prompt(
+                        parser_argument, current_field_value, require
+                    ),
                 ]
             )
             response = getattr(args, parser_argument).strip()
@@ -77,7 +80,7 @@ class Wizard:
             # the same as the current value, return the current value, then return the same value
             if (
                 response == field.value.default
-                or response == value
+                or response == current_field_value
                 or self.checker.is_valid_input(response, field)
             ):
                 return response
@@ -91,8 +94,8 @@ class Wizard:
                 "You have failed to enter a valid custom build command. Exiting wizard..."
             )
 
-        print("Exceeded maximum attempts. Assuming default response.")
-        return value
+        print("Exceeded maximum attempts. Assuming current or default response.")
+        return current_field_value
 
     def change_configuration(self, field_key, max_attempts=3):
         """
@@ -172,17 +175,25 @@ class Wizard:
 
         """
         if self.change_configuration(ConfigEnum.BUILD.value.key):
-            response_build_system = self.prompt_build_system()
-            self.data.set_build_system(response_build_system)
+            response_build_system = self.prompter(
+                ConfigEnum.BUILD_SYSTEM, required=True
+            )
+            self.data.set_field(ConfigEnum.BUILD_SYSTEM, response_build_system)
 
             # if user has custom build system, then they must supply custom build commands
             if self.data.get_build_system() == "custom":
-                response_custom_build_command = self.prompt_custom_build_command()
-                self.data.set_custom_build_command(response_custom_build_command)
+                response_custom_build_command = self.prompter(
+                    ConfigEnum.CUSTOM_BUILD_COMMAND, required=True
+                )
+                self.data.set_field(
+                    ConfigEnum.CUSTOM_BUILD_COMMAND, response_custom_build_command
+                )
 
             elif self.data.get_build_system() == "zip":
-                response_build_options = self.prompt_build_options()
-                self.data.set_build_options(response_build_options)
+                response_build_options = self.prompter(
+                    ConfigEnum.BUILD_OPTIONS, required=False
+                )
+                self.data.set_field(ConfigEnum.BUILD_OPTIONS, response_build_options)
 
     def prompt_publish_configs(self):
         """
@@ -198,14 +209,16 @@ class Wizard:
 
         """
         if self.change_configuration(ConfigEnum.PUBLISH.value.key):
-            response_bucket = self.prompt_bucket()
-            self.data.set_bucket(response_bucket)
+            response_bucket = self.prompter(ConfigEnum.BUCKET, required=True)
+            self.data.set_field(ConfigEnum.BUCKET, response_bucket)
 
-            response_region = self.prompt_region()
-            self.data.set_region(response_region)
+            response_region = self.prompter(ConfigEnum.REGION, required=False)
+            self.data.set_field(ConfigEnum.REGION, response_region)
 
-            response_publish_options = self.prompt_publish_options()
-            self.data.set_publish_options(response_publish_options)
+            response_publish_options = self.prompter(
+                ConfigEnum.PUBLISH_OPTIONS, required=False
+            )
+            self.data.set_field(ConfigEnum.PUBLISH_OPTIONS, response_publish_options)
 
     def add_parser_arguments(self):
         # Add all the optional and required ConfigEnum to the parser
@@ -233,73 +246,14 @@ class Wizard:
 
         self.add_parser_arguments()
 
-        response_author = self.prompt_author()
-        self.data.set_author(response_author)
+        response_author = self.prompter(ConfigEnum.AUTHOR, required=True)
+        self.data.set_field(ConfigEnum.AUTHOR, response_author)
 
-        response_version = self.prompt_version()
-        self.data.set_version(response_version)
+        response_version = self.prompter(ConfigEnum.VERSION, required=True)
+        self.data.set_field(ConfigEnum.VERSION, response_version)
 
         self.prompt_build_configs()
         self.prompt_publish_configs()
 
-        response_gdk_version = self.prompt_gdk_version()
-        self.data.set_gdk_version(response_gdk_version)
-
-
-    def prompt_author(self):
-        return self.prompter(
-            ConfigEnum.AUTHOR, self.data.get_author(), required=True
-        )
-
-    def prompt_version(self):
-        return self.prompter(
-            ConfigEnum.VERSION, self.data.get_version(), required=True
-        )
-
-    def prompt_build_system(self):
-        return self.prompter(
-                ConfigEnum.BUILD_SYSTEM, self.data.get_build_system(), required=True
-            )
-
-    def prompt_custom_build_command(self):
-        return self.prompter(
-                    ConfigEnum.CUSTOM_BUILD_COMMAND,
-                    self.data.get_custom_build_command(),
-                    required=True,
-                )
-
-    def prompt_build_options(self):
-        return self.prompter(
-                    ConfigEnum.BUILD_OPTIONS, self.data.get_build_options(), required=False
-                )
-
-    def prompt_bucket(self):
-        return self.prompter(
-                ConfigEnum.BUCKET, self.data.get_bucket(), required=True
-            )
-
-    def prompt_region(self):
-        return self.prompter(
-                ConfigEnum.REGION, self.data.get_region(), required=False
-            )
-
-    def prompt_publish_options(self):
-        return self.prompter(
-                ConfigEnum.PUBLISH_OPTIONS, self.data.get_publish_options(), required=False
-            )
-
-    def prompt_gdk_version(self):
-        return self.prompter(
-            ConfigEnum.GDK_VERSION, self.data.get_gdk_version(), required=True
-        )
-    
-
-def main():
-    wizard = Wizard()
-    wizard.prompt_fields()
-    print(wizard.field_dict)
-    # sys.exit("Wizard completed. Exiting...")
-
-
-if __name__ == "__main__":
-    main()
+        response_gdk_version = self.prompter(ConfigEnum.GDK_VERSION, required=True)
+        self.data.set_field(ConfigEnum.GDK_VERSION, response_gdk_version)
