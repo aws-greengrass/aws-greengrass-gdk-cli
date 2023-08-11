@@ -49,7 +49,7 @@ class WizardChecker:
         allowed_enum_values = {"NEXT_PATCH"}
 
         return (
-            re.match(version_pattern, input_value) != None
+            re.match(version_pattern, input_value) is not None
             or input_value in allowed_enum_values
         )
 
@@ -144,4 +144,4 @@ class WizardChecker:
             "(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
             "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
         )
-        return re.match(gdk_version_pattern, input_value) != None
+        return re.match(gdk_version_pattern, input_value) is not None
