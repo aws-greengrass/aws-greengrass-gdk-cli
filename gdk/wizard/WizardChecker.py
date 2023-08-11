@@ -11,11 +11,11 @@ class WizardChecker:
             ConfigEnum.VERSION: self.is_valid_version,
             ConfigEnum.CUSTOM_BUILD_COMMAND: self.is_valid_custom_build_command,
             ConfigEnum.BUILD_SYSTEM: self.is_valid_build_system,
-            ConfigEnum.BUILD_OPTIONS: self.check_build_options,
-            ConfigEnum.BUCKET: self.check_bucket,
-            ConfigEnum.REGION: self.check_region,
-            ConfigEnum.PUBLISH_OPTIONS: self.check_publish_options,
-            ConfigEnum.GDK_VERSION: self.check_gdk_version,
+            ConfigEnum.BUILD_OPTIONS: self.is_valid_build_options,
+            ConfigEnum.BUCKET: self.is_valid_bucket,
+            ConfigEnum.REGION: self.is_valid_region,
+            ConfigEnum.PUBLISH_OPTIONS: self.is_valid_publish_options,
+            ConfigEnum.GDK_VERSION: self.is_valid_gdk_version,
         }
 
     def is_valid_input(self, input_value, field):
@@ -48,10 +48,10 @@ class WizardChecker:
         )
         allowed_enum_values = {"NEXT_PATCH"}
 
-        if re.match(version_pattern, input_value) or input_value in allowed_enum_values:
-            return True
-
-        return False
+        return (
+            re.match(version_pattern, input_value) != None
+            or input_value in allowed_enum_values
+        )
 
     def is_valid_build_system(self, input_value):
         # input must be a string and must be one of the allowed build systems
@@ -84,7 +84,7 @@ class WizardChecker:
         except ValueError:
             return len(input_value) > 0
 
-    def check_build_options(self, input_value):
+    def is_valid_build_options(self, input_value):
         # empty dictionary is valid
         if input_value == "{}":
             return True
@@ -112,15 +112,15 @@ class WizardChecker:
 
         return True
 
-    def check_bucket(self, input_value):
+    def is_valid_bucket(self, input_value):
         # input must be a non-empty string
         return isinstance(input_value, str) and len(input_value) > 0
 
-    def check_region(self, input_value):
+    def is_valid_region(self, input_value):
         # input must be a non-empty string
         return isinstance(input_value, str) and len(input_value) > 0
 
-    def check_publish_options(self, input_value):
+    def is_valid_publish_options(self, input_value):
         # input_value will always be a string so must try to convert it to a dict
 
         try:
@@ -137,14 +137,11 @@ class WizardChecker:
 
         return True
 
-    def check_gdk_version(self, input_value):
+    def is_valid_gdk_version(self, input_value):
         gdk_version_pattern = (
             "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
             "(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\."
             "(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
             "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?"
         )
-        if re.match(gdk_version_pattern, input_value):
-            return True
-
-        return False
+        return re.match(gdk_version_pattern, input_value) != None
