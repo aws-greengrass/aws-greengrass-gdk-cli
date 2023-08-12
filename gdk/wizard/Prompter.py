@@ -2,12 +2,13 @@ from gdk.wizard.WizardData import WizardData
 from gdk.wizard.ConfigEnum import ConfigEnum
 from gdk.wizard.WizardChecker import WizardChecker
 from gdk.wizard.WizardConfigUtils import WizardConfigUtils
+import logging
 from PyInquirer import prompt
 import argparse
 import sys
 
 
-class Wizard:
+class Prompter:
     """
     A class used to represent the GDK Startup Wizard
     """
@@ -49,7 +50,6 @@ class Wizard:
         """
         current_field_value = self.data.get_field(field)
         require = "REQUIRED " if required else "OPTIONAL "
-        link = "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
         for attempt in range(1, max_attempts + 1):
             parser_argument = field.value.key
             if field == ConfigEnum.BUILD_OPTIONS:
@@ -67,35 +67,35 @@ class Wizard:
             )
             response = getattr(args, parser_argument).strip()
 
-            # only way customer is asked about custom_build_command if they have custom build system
-            # in which case they must specify a custom build command that is not None
-            if field == ConfigEnum.CUSTOM_BUILD_COMMAND:
-                if response == "None":
-                    print(
-                        f"Attempt {attempt}/{max_attempts}: Must Specify a custum build command.\nPlease vist: {link}"
-                    )
-                    continue
-
-            # if customer input response is the default value or the customer input response is
-            # the same as the current value, return the current value, then return the same value
-            if (
-                response == field.value.default
-                or response == current_field_value
-                or self.checker.is_valid_input(response, field)
-            ):
+            """
+            only way customer is asked about custom_build_command if they have custom build system
+            in which case they must specify a custom build command that is not None or empty
+            """
+            if self.checker.is_valid_input(response, field):
                 return response
-            print(
-                f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again.\nPlease vist: {link}"
-            )
+
+            self.retry_messages(field, attempt, max_attempts)
 
         if field == ConfigEnum.CUSTOM_BUILD_COMMAND:
             self.utils.write_to_config_file(self.field_dict, self.project_config_file)
             sys.exit(
-                "You have failed to enter a valid custom build command. Exiting wizard..."
+                f"Attempt {attempt}/{max_attempts}: Failed to enter a valid custom build command. Exiting wizard..."
             )
 
-        print("Exceeded maximum attempts. Assuming current or default response.")
+        logging.info(
+            f"Attempt {attempt}/{max_attempts}: Exceeded maximum attempts. Assuming current or default response."
+        )
         return current_field_value
+
+    def retry_messages(self, field, attempt, max_attempts):
+        link = "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
+        default_message = f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again.\nPlease vist: {link}"
+        custom_message = f"Attempt {attempt}/{max_attempts}: Must Specify a custum build command.\nPlease vist: {link}"
+        if attempt < max_attempts:
+            if field == ConfigEnum.CUSTOM_BUILD_COMMAND:
+                logging.warning(custom_message)
+            else:
+                logging.warning(default_message)
 
     def change_configuration(self, field_key, max_attempts=3):
         """
@@ -129,7 +129,7 @@ class Wizard:
                 return True
             elif response in {"n", "no"}:
                 return False
-            print("Your input was invalid response. Please respond again.")
+            logging.warning("Your input was invalid response. Please respond again.")
         return False
 
     def interactive_prompt(self, field, value, require):
@@ -158,8 +158,7 @@ class Wizard:
             answer = prompt(questions)
             return answer["user_input"]
         except (KeyError, TypeError):
-            self.utils.write_to_config_file(self.field_dict, self.project_config_file)
-            sys.exit("Wizard interrupted. Exiting...")
+            raise Exception("Wizard interrupted. Exiting...")
 
     def prompt_build_configs(self):
         """
