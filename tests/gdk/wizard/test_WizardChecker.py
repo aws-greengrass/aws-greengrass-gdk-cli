@@ -86,8 +86,11 @@ def test_check_custom_build_commands_valid(valid_custom_build_command):
         "[1,2,3]",
         "[]",
         "",
+        "()",
+        "{}",
         "['string1', 'string2', {'ok': 'test'}]",
         "('one', 'two', 'three')",
+        "None",
     ],
 )
 def test_check_custom_build_commands_invalid(invalid_custom_build_command):

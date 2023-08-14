@@ -9,7 +9,7 @@ class WizardConfigUtils:
     def read_from_config_file(self):
         return config.get_configuration()
 
-    def write_to_config_file(self, config_file_path):
+    def write_to_config_file(self, field_dict, config_file_path):
         """
         Writes all the values in field_map to the gdk-config.json file
 
@@ -22,4 +22,4 @@ class WizardConfigUtils:
             None
         """
         with open(config_file_path, "w", encoding="utf-8") as f:
-            f.write(json.dumps(self.field_map, indent=4))
+            f.write(json.dumps(field_dict, indent=4))
