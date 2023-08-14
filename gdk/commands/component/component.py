@@ -20,3 +20,9 @@ def list(d_args):
     from gdk.commands.component.ListCommand import ListCommand
 
     ListCommand(d_args).run()
+
+
+def wizard(d_args):
+    from gdk.commands.component.WizardCommand import WizardCommand
+
+    WizardCommand(d_args).run()
