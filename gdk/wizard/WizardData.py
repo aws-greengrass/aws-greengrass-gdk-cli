@@ -1,6 +1,12 @@
 from gdk.wizard.ConfigEnum import ConfigEnum
 
 
+class Model:
+    def __init__(self, getter, setter):
+        self.getter = getter
+        self.setter = setter
+
+
 class WizardData:
     def __init__(self, field_dict):
         self.field_dict = field_dict
@@ -9,6 +15,32 @@ class WizardData:
         self.component_config = self.project_config.get(
             self.component_name, ConfigEnum.COMPONENT_NAME.value.default
         )
+
+        self.switch = {
+            ConfigEnum.AUTHOR: Model(self.get_author, self.set_author),
+            ConfigEnum.VERSION: Model(self.get_version, self.set_version),
+            ConfigEnum.BUILD_SYSTEM: Model(
+                self.get_build_system, self.set_build_system
+            ),
+            ConfigEnum.CUSTOM_BUILD_COMMAND: Model(
+                self.get_custom_build_command, self.set_custom_build_command
+            ),
+            ConfigEnum.BUILD_OPTIONS: Model(
+                self.get_build_options, self.set_build_options
+            ),
+            ConfigEnum.BUCKET: Model(self.get_bucket, self.set_bucket),
+            ConfigEnum.REGION: Model(self.get_region, self.set_region),
+            ConfigEnum.PUBLISH_OPTIONS: Model(
+                self.get_publish_options, self.set_publish_options
+            ),
+            ConfigEnum.GDK_VERSION: Model(self.get_gdk_version, self.set_gdk_version),
+        }
+
+    def get_field(self, field):
+        return self.switch.get(field).getter()
+
+    def set_field(self, field, value):
+        self.switch.get(field).setter(value)
 
     def get_author(self):
         return self.component_config.get(
