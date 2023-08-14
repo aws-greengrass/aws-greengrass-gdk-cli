@@ -1,6 +1,6 @@
 from gdk.wizard.Prompter import Prompter
 from gdk.commands.Command import Command
-import sys
+import logging
 
 
 class WizardCommand(Command):
@@ -10,7 +10,5 @@ class WizardCommand(Command):
     def run(self):
         wizard = Prompter()
         wizard.prompt_fields()
-        wizard.utils.write_to_config_file(
-            wizard.field_dict, wizard.project_config_file
-        )
-        sys.exit("Wizard completed. Exiting...")
+        wizard.utils.write_to_config_file(wizard.field_dict, wizard.project_config_file)
+        logging.info("Config file has been updated. Exiting wizard...")
