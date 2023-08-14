@@ -70,6 +70,9 @@
                     "build": {
                         "help": "Build GreengrassV2 component artifacts and recipes from its source code."
                     },
+                    "wizard": {
+                        "help": "Helps users populates the gdk-config.json file."
+                    },
                     "publish": {
                         "help": "Create a new version of a GreengrassV2 component from its built artifacts and recipes.",
                         "arguments": {
