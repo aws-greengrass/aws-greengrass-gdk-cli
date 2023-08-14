@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import pytest
 import yaml
@@ -16,6 +16,77 @@ class RecipeValidatorTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
+
+    def test_validate_semantics_valid_recipe(self):
+        valid_recipe = CaseInsensitiveDict({
+            "manifests": [{"artifacts": [{"uri": "example"}]}],
+            "componentconfiguration": {"defaultconfiguration": {"message": "Hello"}}
+        })
+        validator = RecipeValidator(valid_recipe)
+        with mock.patch('gdk.common.RecipeValidator.jsonschema.validate') as mock_validate:
+            validator.validate_semantics()
+        mock_validate.assert_called_once()
+
+    def test_validate_semantics_invalid_recipe(self):
+        invalid_recipe = CaseInsensitiveDict({
+            "manifests": [{"artifacts": [{"uri": "example"}]}],
+            "componentconfiguration": {"defaultconfiguration": {"message": 123}}
+        })
+        validator = RecipeValidator(invalid_recipe)
+        with pytest.raises(exceptions.ValidationError):
+            validator.validate_semantics()
+
+    def test_convert_keys_to_lowercase_dict(self):
+        input_dict = CaseInsensitiveDict({
+            "Key1": "Value1",
+            "Key2": {
+                "SubKey1": "SubValue1",
+                "SubKey2": "SubValue2"
+            }
+        })
+        expected_output = {
+            "key1": "Value1",
+            "key2": {
+                "subkey1": "SubValue1",
+                "subkey2": "SubValue2"
+            }
+        }
+        validator = RecipeValidator(None)
+        output = validator._convert_keys_to_lowercase(input_dict)
+        assert output == expected_output
+
+    def test_convert_keys_to_lowercase_list(self):
+        input_list = [
+            CaseInsensitiveDict({"Key1": "Value1"}),
+            CaseInsensitiveDict({"Key2": "Value2"})
+        ]
+        expected_output = [
+            {"key1": "Value1"},
+            {"key2": "Value2"}
+        ]
+        validator = RecipeValidator(None)
+        output = validator._convert_keys_to_lowercase(input_list)
+        print(output)
+        assert output == expected_output
+
+    def test_convert_keys_to_lowercase_mixed(self):
+        input_mixed = CaseInsensitiveDict({
+            "Key1": [
+                {"SubKey1": "SubValue1"},
+                {"SubKey2": "SubValue2"}
+            ],
+            "Key2": "Value2"
+        })
+        expected_output = {
+            "key1": [
+                {"subkey1": "SubValue1"},
+                {"subkey2": "SubValue2"}
+            ],
+            "key2": "Value2"
+        }
+        validator = RecipeValidator(None)
+        output = validator._convert_keys_to_lowercase(input_mixed)
+        assert output == expected_output
 
     def test_load_from_file_json(self):
         json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath(
@@ -65,9 +136,9 @@ class RecipeValidatorTest(TestCase):
         assert "Recipe file must be in json or yaml format" in e.value.args[0]
 
     def test_load_from_dict(self):
-        recipe_data = {
+        recipe_data = CaseInsensitiveDict({
             "manifests": [{"artifacts": [{"uri": "example"}]}]
-        }
+        })
         validator = RecipeValidator(recipe_data)
         loaded_data = validator._load_recipe()
         assert loaded_data == recipe_data

@@ -1,12 +1,17 @@
 import logging
 import shutil
 from pathlib import Path
+
+import jsonschema
+
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
 
 import gdk.common.consts as consts
 import gdk.common.utils as utils
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 from gdk.aws_clients.S3Client import S3Client
+from gdk.common.RecipeValidator import RecipeValidator
+from gdk.common.exceptions import error_messages
 
 
 class BuildRecipeTransformer:
@@ -23,6 +28,11 @@ class BuildRecipeTransformer:
 
     def transform(self, build_folders):
         component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)
+        try:
+            validator = RecipeValidator(component_recipe)
+            validator.validate_semantics()
+        except jsonschema.exceptions.ValidationError as err:
+            raise Exception(error_messages.RECIPE_FILE_INVALID.format(self.project_config.recipe_file, err.message))
         self.update_component_recipe_file(component_recipe, build_folders)
         self.create_build_recipe_file(component_recipe)
 

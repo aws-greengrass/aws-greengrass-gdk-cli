@@ -198,6 +198,34 @@ def parse_yaml_error(err):
     logging.info("Please review the overall YAML syntax and resolve any issues.")
 
 
+def parse_json_schema_errors(error):
+    """
+    Log and display a JSON Schema Validation error message.
+
+    Parameters
+    ----------
+    error : jsonschema.exceptions.ValidationError
+        The JSON Schema validation error.
+
+    """
+    logging.error(f"Error when validating recipe file: {error.message}")
+    logging.error(f"Validation failed for '{error.validator}: {error.validator_value}'")
+    if len(error.absolute_path) > 0 and error.absolute_path[-1]:
+        logging.info(f"On instance: '{error.absolute_path[-1]}: {error.instance}'")
+    else:
+        logging.info(f"On instance: '{error.instance}'")
+    keywords = syntax_error_message.JSON_SCHEMA_VALIDATION_KEYWORDS
+    if error.validator in keywords:
+        logging.info("This validation error may be due to: ")
+        causes = keywords[error.validator]["causes"]
+        fixes = keywords[error.validator]["fixes"]
+        for cause in causes:
+            logging.info(f"\t {cause}")
+        logging.info("To address this issue, consider the following steps: ")
+        for fix in fixes:
+            logging.info(f"\t {fix}")
+
+
 error_line = "\n=============================== ERROR ===============================\n"
 help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()

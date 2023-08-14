@@ -7,6 +7,7 @@ PROJECT_RECIPE_FILE_NOT_FOUND = (
     "No valid component recipe is found. Please include a valid recipe file of the component to build with default."
 )
 PROJECT_CONFIG_FILE_INVALID = "Project configuration file '{}' is invalid. Please correct its format and try again. Error: {} "
+RECIPE_FILE_INVALID = "The input recipe file '{}' is invalid. Please correct its format and try again. Error: {} "
 CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
 USER_INPUT_RECIPE_NOT_EXISTS = (
     "Recipe file not found. "
