@@ -68,8 +68,8 @@ class TestWizardModel(TestCase):  # Inherit from unittest.TestCase
 
     def test_set_build_system(self):
         data = WizardData(self.field_dict)
-        data.set_version("random-build-system")
-        self.assertEqual(data.get_version(), "random-build-system")
+        data.set_build_system("random-build-system")
+        self.assertEqual(data.get_build_system(), "random-build-system")
 
     def test_set_custom_build_command(self):
         data = WizardData(self.field_dict)
