@@ -19,10 +19,10 @@ class ConfigEnum(Enum):
     BUILD = ConfigEnumDefault("build", default={})
     BUILD_SYSTEM = ConfigEnumDefault("build_system", "zip")
     CUSTOM_BUILD_COMMAND = ConfigEnumDefault("custom_build_command")
-    BUILD_OPTIONS = ConfigEnumDefault("options", "{}")
+    BUILD_OPTIONS = ConfigEnumDefault("options", default={})
 
     PUBLISH = ConfigEnumDefault("publish", default={})
     BUCKET = ConfigEnumDefault("bucket", default="gg-component-bucket")
     REGION = ConfigEnumDefault("region", default="us-east-1")
-    PUBLISH_OPTIONS = ConfigEnumDefault("options", "{}")
+    PUBLISH_OPTIONS = ConfigEnumDefault("options", default={})
     GDK_VERSION = ConfigEnumDefault("gdk_version", default="1.0.0")

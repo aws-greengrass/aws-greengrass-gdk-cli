@@ -85,13 +85,11 @@ class WizardChecker:
             return len(input_value) > 0
 
     def is_valid_build_options(self, input_value):
-        # empty dictionary is valid
-        if input_value == "{}":
-            return True
-
+        # empty dictionaries are valid
         try:
             # Convert the input string to a dictionary (object)
-            input_obj = json.loads(input_value)
+            formatted_input = input_value.replace("'", '"')
+            input_obj = json.loads(formatted_input)
         except json.JSONDecodeError:
             return False
 
@@ -124,7 +122,8 @@ class WizardChecker:
         # input_value will always be a string so must try to convert it to a dict
 
         try:
-            input_object = json.loads(input_value)
+            formatted_input = input_value.replace("'", '"')
+            input_object = json.loads(formatted_input)
         except json.JSONDecodeError:
             return False
 
