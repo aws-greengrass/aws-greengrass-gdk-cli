@@ -1,4 +1,6 @@
 from gdk.wizard.ConfigEnum import ConfigEnum
+import json
+import ast
 
 
 class Model:
@@ -106,28 +108,38 @@ class WizardData:
         )
 
     def set_author(self, value):
-        if value:
+        if value is not None:
             self.component_config[ConfigEnum.AUTHOR.value.key] = value
 
     def set_version(self, value):
-        if value:
+        if value is not None:
             self.component_config[ConfigEnum.VERSION.value.key] = value
 
     def _set_build_config_values(self, field, value):
-        if value:
+        if value is not None:
             self.component_config[ConfigEnum.BUILD.value.key][field.key] = value
 
     def set_build_system(self, value):
         self._set_build_config_values(ConfigEnum.BUILD_SYSTEM.value, value)
 
     def set_custom_build_command(self, value):
-        self._set_build_config_values(ConfigEnum.CUSTOM_BUILD_COMMAND.value, value)
+        # value can be a list in string form or a string
+        new_value = value
+        try:
+            input_list = ast.literal_eval(value)
+            if isinstance(input_list, list):
+                new_value = input_list
+        except Exception:
+            pass
+        self._set_build_config_values(ConfigEnum.CUSTOM_BUILD_COMMAND.value, new_value)
 
     def set_build_options(self, value):
-        self._set_build_config_values(ConfigEnum.BUILD_OPTIONS.value, value)
+        formatted_input = value.replace("'", '"')
+        new_value = json.loads(formatted_input) if isinstance(value, str) else value
+        self._set_build_config_values(ConfigEnum.BUILD_OPTIONS.value, new_value)
 
     def _set_publish_config_values(self, field, value):
-        if value:
+        if value is not None:
             self.component_config[ConfigEnum.PUBLISH.value.key][field.key] = value
 
     def set_bucket(self, value):
@@ -137,8 +149,11 @@ class WizardData:
         self._set_publish_config_values(ConfigEnum.REGION.value, value)
 
     def set_publish_options(self, value):
-        self._set_publish_config_values(ConfigEnum.PUBLISH_OPTIONS.value, value)
+        # value can be a dict object or a string
+        formatted_input = value.replace("'", '"')
+        new_value = json.loads(formatted_input) if isinstance(value, str) else value
+        self._set_publish_config_values(ConfigEnum.PUBLISH_OPTIONS.value, new_value)
 
     def set_gdk_version(self, value):
-        if value:
+        if value is not None:
             self.field_dict[ConfigEnum.GDK_VERSION.value.key] = value
