@@ -78,7 +78,7 @@ class TestWizardModel(TestCase):  # Inherit from unittest.TestCase
 
     def test_set_build_options(self):
         data = WizardData(self.field_dict)
-        data.set_build_options({"bar": "foo"})
+        data.set_build_options('{"bar": "foo"}')
         self.assertEqual(data.get_build_options(), {"bar": "foo"})
 
     def test_set_bucket(self):
@@ -93,7 +93,7 @@ class TestWizardModel(TestCase):  # Inherit from unittest.TestCase
 
     def test_set_publish_options(self):
         data = WizardData(self.field_dict)
-        data.set_publish_options({"bar": "foo"})
+        data.set_publish_options('{"bar": "foo"}')
         self.assertEqual(data.get_publish_options(), {"bar": "foo"})
 
     def test_set_gdk_version(self):
