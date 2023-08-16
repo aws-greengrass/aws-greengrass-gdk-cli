@@ -2,11 +2,13 @@ import json
 import logging
 from pathlib import Path
 
+import jsonschema
 import pytest
 import yaml
 from urllib3.exceptions import HTTPError
 
 import gdk.common.utils as utils
+from gdk.common.exceptions import syntax_error_message
 
 
 def test_get_static_file_path_exists(mocker):
@@ -227,3 +229,49 @@ def test_parse_yaml_error_not_in_list(caplog):
     assert "This might be caused by one of the following reasons: " not in caplog.text
     assert "If none of the above is the cause," not in caplog.text
     assert "Please review the overall YAML syntax and resolve any issues." in caplog.text
+
+
+def test_parse_json_schema_errors(caplog):
+    error_message = "Error message"
+    error = jsonschema.exceptions.ValidationError(error_message)
+    utils.parse_json_schema_errors(error)
+    assert error_message in caplog.text
+
+
+def test_parse_json_schema_errors_with_validator_value(caplog):
+    error_message = "Error message"
+    validator = "required"
+    validator_value = "property_name"
+    error = jsonschema.exceptions.ValidationError(error_message, validator=validator, validator_value=validator_value)
+    utils.parse_json_schema_errors(error)
+    assert error_message in caplog.text
+    assert f"Validation failed for '{validator}: {validator_value}'" in caplog.text
+
+
+def test_parse_json_schema_errors_with_instance(caplog):
+    error_message = "Error message"
+    instance = {'property_name': 'property_value'}
+    error = jsonschema.exceptions.ValidationError(error_message, instance=instance)
+    utils.parse_json_schema_errors(error)
+    assert error_message in caplog.text
+    assert f"On instance: '{instance}'" in caplog.text
+
+
+def test_parse_json_schema_errors_with_known_validator(caplog):
+    validator = "type"
+    error = jsonschema.exceptions.ValidationError("", validator=validator)
+    utils.parse_json_schema_errors(error)
+    assert "This validation error may be due to: " in caplog.text
+    for cause in syntax_error_message.JSON_SCHEMA_VALIDATION_KEYWORDS[validator]["causes"]:
+        assert f"\t {cause}" in caplog.text
+    assert "To address this issue, consider the following steps: " in caplog.text
+    for fix in syntax_error_message.JSON_SCHEMA_VALIDATION_KEYWORDS[validator]["fixes"]:
+        assert f"\t {fix}" in caplog.text
+
+
+def test_parse_json_schema_errors_with_unknown_validator(caplog):
+    validator = "unknown_validator"
+    error = jsonschema.exceptions.ValidationError("", validator=validator)
+    utils.parse_json_schema_errors(error)
+    assert "This validation error may be due to: " not in caplog.text
+    assert "To address this issue, consider the following steps: " not in caplog.text

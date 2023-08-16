@@ -1,6 +1,6 @@
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import call
+from unittest.mock import call, Mock
 
 import pytest
 
@@ -9,6 +9,7 @@ from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiv
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 from gdk.common.config.GDKProject import GDKProject
 from gdk.aws_clients.S3Client import S3Client
+from gdk.common.exceptions import error_messages
 
 
 class BuildRecipeTransformerTest(TestCase):
@@ -43,6 +44,45 @@ class BuildRecipeTransformerTest(TestCase):
 
         assert mock_update.call_args_list == [call(self.mock_component_recipe.return_value, build_folders)]
         assert mock_create.call_args_list == [call(self.mock_component_recipe.return_value)]
+
+    def test_transform_validation_successful(self):
+        mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
+                                             return_value=CaseInsensitiveDict(fake_recipe()))
+        mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
+                                               return_value=None)
+        mock_create = self.mocker.patch.object(BuildRecipeTransformer, "create_build_recipe_file", return_value=None)
+
+        build_folders = [Path("build-folder")]
+        config = ComponentBuildConfiguration({})
+        transformer = BuildRecipeTransformer(config)
+        mock_validator = Mock()
+        transformer.validator = mock_validator
+
+        transformer.transform(build_folders)
+
+        mock_read.assert_called_once_with(config.recipe_file)
+        mock_update.assert_called_once_with(mock_read.return_value, build_folders)
+        mock_create.assert_called_once_with(mock_read.return_value)
+
+    def test_transform_validation_error(self):
+        mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
+                                             return_value=CaseInsensitiveDict({"dummy": "recipe"}))
+        mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
+                                               return_value=None)
+        mock_create = self.mocker.patch.object(BuildRecipeTransformer, "create_build_recipe_file", return_value=None)
+        build_folders = [Path("build-folder")]
+        config = ComponentBuildConfiguration({})
+        transformer = BuildRecipeTransformer(config)
+
+        try:
+            transformer.transform(build_folders)
+        except Exception as e:
+            assert str(e) == error_messages.RECIPE_FILE_INVALID.format(config.recipe_file,
+                                                                       "'recipeformatversion' is a required property")
+
+        mock_read.assert_called_once_with(config.recipe_file)
+        mock_update.assert_not_called()
+        mock_create.assert_not_called()
 
     def test_update_component_recipe_file_in_build(self):
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))

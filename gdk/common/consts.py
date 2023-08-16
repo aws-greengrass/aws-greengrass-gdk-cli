@@ -15,6 +15,7 @@ arg_parameters = [
 ]
 # FILES
 config_schema_file = "config_schema.json"
+user_input_recipe_schema_file = "user_input_recipe_schema.json"
 cli_model_file = "cli_model.json"
 cli_project_config_file = "gdk-config.json"
 greengrass_build_dir = "greengrass-build"
