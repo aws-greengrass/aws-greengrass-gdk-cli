@@ -10,11 +10,10 @@ from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiv
 
 class RecipeValidator:
     """
-    Validates the syntax and structure of a component recipe.
+    Validates the semantics and specific input values of a Greengrass component recipe.
 
-    This class provides functionality to validate the syntax and semantics of a component recipe either by
-    loading the recipe from a file path or by validating the provided recipe data directly against the
-    Greengrass component recipe schema.
+    This class provides functionality to validate a component recipe by either loading the recipe from a file path
+    or by validating the provided recipe data directly.
 
     Parameters
     ----------
@@ -32,6 +31,9 @@ class RecipeValidator:
     validate_semantics()
         Validates the semantics of the component recipe against the Greengrass component recipe schema.
 
+    validate_input()
+        Validates specific input fields within the component recipe for correctness and adherence to best practices.
+
     """
 
     def __init__(self, recipe_source):
@@ -45,7 +47,7 @@ class RecipeValidator:
 
         """
         self.recipe_source = recipe_source
-        self.recipe_data = None
+        self.recipe_data = self._convert_keys_to_lowercase(self._load_recipe())
 
     def validate_semantics(self):
         """
@@ -61,17 +63,129 @@ class RecipeValidator:
             If the component recipe data does not conform to the Greengrass component recipe schema.
 
         """
-        self.recipe_data = self._load_recipe()
         recipe_schema = utils.get_static_file_path(consts.user_input_recipe_schema_file)
         with open(recipe_schema, 'r') as schema_file:
             schema = json.load(schema_file)
         logging.debug("Validating the recipe file.")
-        data = self._convert_keys_to_lowercase(self.recipe_data)
         try:
-            jsonschema.validate(data, schema)
+            jsonschema.validate(self.recipe_data, schema)
         except jsonschema.exceptions.ValidationError as err:
             utils.parse_json_schema_errors(err)
             raise err
+
+    def validate_input(self):
+        """
+        Validates specific input fields within the component recipe for correctness and adherence to best practices.
+
+        This function performs input validation on the component recipe. It checks for recommended practices, potential
+        issues, and ensures that the input data aligns with Greengrass specifications. Instead of raising errors and
+        interrupting the process, it displays warnings to draw attention to non-compliant input.
+
+        """
+
+        self._validate_component_type_and_source()
+        self._validate_lifecycle_overlap()
+        self._validate_manifests()
+
+    def _validate_component_type_and_source(self):
+        """
+        Warns if the user specifies the component type or source in the recipe, which is not recommended,
+        but does not break the process.
+
+        """
+        if "componenttype" in self.recipe_data:
+            logging.warning("It's not recommended to specify the component type in a recipe. "
+                            "AWS IoT Greengrass sets the type for you when you create a component.")
+
+        if "componentsource" in self.recipe_data:
+            logging.warning("It's not recommended to specify the component source in a recipe. "
+                            "AWS IoT Greengrass sets this parameter for you when you create a "
+                            "component from a Lambda function.")
+
+    def _validate_lifecycle_overlap(self):
+        """
+        Warns if both "startup" and "run" lifecycles are defined, which may lead to unexpected behavior.
+
+        """
+        # The "run" lifecycle defines the script to run when the component starts, while the "startup" lifecycle defines
+        # the background process to run when the component starts. Defining both may lead to unexpected behavior.
+        if "lifecycle" in self.recipe_data:
+            lifecycle = self.recipe_data["lifecycle"]
+            if "startup" in lifecycle and "run" in lifecycle:
+                logging.warning(
+                    "You can define only one startup or run lifecycle. Defining both may lead to unexpected behavior.")
+
+    def _validate_manifests(self):
+        """
+        Validates artifacts, platform, and lifecycle within the manifests section of the component recipe.
+
+        """
+        if "manifests" in self.recipe_data:
+            manifests = self.recipe_data.get("manifests")  # 'manifests' is a list of object
+            for manifest in manifests:
+                self._validate_artifacts(manifest)
+                self._validate_platform(manifest)
+
+                # Similar to the lifecycle check above, but this check is specific to the manifests section.
+                if "lifecycle" in manifest and "startup" in manifest["lifecycle"] and "run" in manifest["lifecycle"]:
+                    logging.warning(
+                        "You can define only one startup or run lifecycle in manifest. "
+                        "Defining both may lead to unexpected behavior.")
+
+    def _validate_artifacts(self, manifest):
+        """
+        Validates artifact URIs and script alignment within an artifact.
+
+        """
+        if "artifacts" in manifest:
+            artifacts = manifest["artifacts"]  # 'artifacts' is a list of object
+            uris = []
+            for artifact in artifacts:
+                if "uri" in artifact:
+                    uri = artifact["uri"]
+                    uris.append(uri)
+                    # check if the URI of an artifact is an S3 bucket
+                    if not uri.startswith(utils.s3_prefix):
+                        logging.warning(f"Provided URI '{uri}' is not an S3 bucket.")
+
+            # One potential scenario is when a user specifies an artifact URI, but the script to run
+            # references a different artifact. Displaying a warning here can help identify such issues early
+            # in the validation process.
+            if "lifecycle" in manifest and "run" in manifest["lifecycle"]:
+                run = manifest["lifecycle"]["run"]
+                if isinstance(run, str):
+                    script = run
+                else:
+                    script = run.get("script", None)
+                if script and uris:
+                    artifact_names = [uri.split("/")[-1] for uri in uris]
+                    if not any(artifact in script for artifact in artifact_names):
+                        logging.warning("The file name in the script does not match the artifact names in the "
+                                        "URI. If this is incorrect, please exit and ensure the artifacts and "
+                                        "the script are correct.")
+
+    def _validate_platform(self, manifest):
+        """
+        Validates platform architecture against the given OS.
+
+        """
+        if "platform" in manifest:
+            os = manifest["platform"].get("os")
+            architecture = manifest["platform"].get("architecture")
+
+            if os and architecture:
+                if os not in ["any", "all", "*"] and architecture not in ["any", "all", "*"]:
+                    os_architecture_dict = {
+                        "windows": ["x86", "amd64", "arm", "aarch64"],
+                        "linux": ["x86", "amd64", "arm", "aarch64", "powerpc", "mips", "sparc"],
+                        "darwin": ["x86", "amd64", "arm", "aarch64"],
+                        "macos": ["amd64", "aarch64"],
+                        "ubuntu": ["x86", "amd64", "arm", "aarch64", "powerpc", "sparc"],
+                        "android": ["arm", "aarch64", "x86", "amd64"]
+                    }
+                    if os in os_architecture_dict and architecture not in os_architecture_dict[os]:
+                        logging.warning(
+                            f"The specified architecture '{architecture}' may not be supported by the os '{os}'.")
 
     def _load_recipe(self):
         """
