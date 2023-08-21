@@ -102,9 +102,10 @@ class BuildRecipeTransformerTest(TestCase):
         expected_warnings = [
             "It's not recommended to specify the component type in a recipe.",
             "It's not recommended to specify the component source in a recipe.",
-            "You can define only one startup or run lifecycle. Defining both may lead to unexpected behavior.",
-            "The file name in the script does not match the artifact names in the URI.",
-            "The specified architecture 'x86' may not be supported by the os 'macos'."
+            "You can define only one startup or run lifecycle in a recipe. Defining both may lead to unexpected "
+            "behavior.",
+            "The filename in the script does not match the artifact names in the URI provided in the recipe.",
+            "The specified architecture 'x86' may not be supported by the os 'macos' as provided in the recipe."
         ]
         for expected_warning in expected_warnings:
             assert any(expected_warning in str(arg) for arg in warning_args_list)

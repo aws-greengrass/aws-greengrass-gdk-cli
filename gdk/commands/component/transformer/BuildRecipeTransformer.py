@@ -28,6 +28,7 @@ class BuildRecipeTransformer:
 
     def transform(self, build_folders):
         component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)
+        logging.info(f"Validating the recipe file {self.project_config.recipe_file}")
         try:
             validator = RecipeValidator(component_recipe)
             validator.validate_semantics()

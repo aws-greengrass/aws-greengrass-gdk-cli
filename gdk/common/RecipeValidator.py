@@ -113,7 +113,8 @@ class RecipeValidator:
             lifecycle = self.recipe_data["lifecycle"]
             if "startup" in lifecycle and "run" in lifecycle:
                 logging.warning(
-                    "You can define only one startup or run lifecycle. Defining both may lead to unexpected behavior.")
+                    "You can define only one startup or run lifecycle in a recipe. Defining both may lead to "
+                    "unexpected behavior.")
 
     def _validate_manifests(self):
         """
@@ -129,8 +130,8 @@ class RecipeValidator:
                 # Similar to the lifecycle check above, but this check is specific to the manifests section.
                 if "lifecycle" in manifest and "startup" in manifest["lifecycle"] and "run" in manifest["lifecycle"]:
                     logging.warning(
-                        "You can define only one startup or run lifecycle in manifest. "
-                        "Defining both may lead to unexpected behavior.")
+                        "You can define only one startup or run lifecycle in the recipe manifest. Defining both may "
+                        "result in unexpected behavior.")
 
     def _validate_artifacts(self, manifest):
         """
@@ -146,7 +147,7 @@ class RecipeValidator:
                     uris.append(uri)
                     # check if the URI of an artifact is an S3 bucket
                     if not uri.startswith(utils.s3_prefix):
-                        logging.warning(f"Provided URI '{uri}' is not an S3 bucket.")
+                        logging.warning(f"The provided URI '{uri}' in the recipe is not an S3 bucket.")
 
             # One potential scenario is when a user specifies an artifact URI, but the script to run
             # references a different artifact. Displaying a warning here can help identify such issues early
@@ -160,9 +161,9 @@ class RecipeValidator:
                 if script and uris:
                     artifact_names = [uri.split("/")[-1] for uri in uris]
                     if not any(artifact in script for artifact in artifact_names):
-                        logging.warning("The file name in the script does not match the artifact names in the "
-                                        "URI. If this is incorrect, please exit and ensure the artifacts and "
-                                        "the script are correct.")
+                        logging.warning("The filename in the script does not match the artifact names in the URI "
+                                        "provided in the recipe. If this is inaccurate, please exit and verify that "
+                                        "both the artifacts and the script are correct.")
 
     def _validate_platform(self, manifest):
         """
@@ -185,7 +186,8 @@ class RecipeValidator:
                     }
                     if os in os_architecture_dict and architecture not in os_architecture_dict[os]:
                         logging.warning(
-                            f"The specified architecture '{architecture}' may not be supported by the os '{os}'.")
+                            f"The specified architecture '{architecture}' may not be supported by the os '{os}' as "
+                            f"provided in the recipe.")
 
     def _load_recipe(self):
         """

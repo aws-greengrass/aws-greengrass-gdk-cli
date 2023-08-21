@@ -81,7 +81,7 @@ class RecipeValidatorTest(TestCase):
             validator.validate_input()
         assert mock_logging.warning.call_count == 1
         warnings = mock_logging.warning.call_args[0]
-        expected_warnings = "You can define only one startup or run lifecycle. " \
+        expected_warnings = "You can define only one startup or run lifecycle in a recipe. " \
                             "Defining both may lead to unexpected behavior."
         assert any(expected_warnings in arg for arg in warnings)
 
@@ -102,7 +102,7 @@ class RecipeValidatorTest(TestCase):
             validator.validate_input()
         assert mock_logging.warning.call_count == 1
         warnings = mock_logging.warning.call_args[0]
-        expected_warnings = "Provided URI 'https://example.com/file.txt' is not an S3 bucket."
+        expected_warnings = "The provided URI 'https://example.com/file.txt' in the recipe is not an S3 bucket."
         assert any(expected_warnings in arg for arg in warnings)
 
     def test_validate_input_script_does_not_match_artifact_uri_expect_warning(self):
@@ -125,8 +125,9 @@ class RecipeValidatorTest(TestCase):
             validator.validate_input()
         assert mock_logging.warning.call_count == 1
         warnings = mock_logging.warning.call_args[0]
-        expected_warnings = "The file name in the script does not match the artifact names in the URI. If this is " \
-                            "incorrect, please exit and ensure the artifacts and the script are correct."
+        expected_warnings = "The filename in the script does not match the artifact names in the URI provided in the " \
+                            "recipe. If this is inaccurate, please exit and verify that both the artifacts and the " \
+                            "script are correct."
         assert any(expected_warnings in arg for arg in warnings)
 
     def test_validate_input_script_in_run_does_not_match_artifact_uri_expect_warning(self):
@@ -151,8 +152,9 @@ class RecipeValidatorTest(TestCase):
             validator.validate_input()
         assert mock_logging.warning.call_count == 1
         warnings = mock_logging.warning.call_args[0]
-        expected_warnings = "The file name in the script does not match the artifact names in the URI. If this is " \
-                            "incorrect, please exit and ensure the artifacts and the script are correct."
+        expected_warnings = "The filename in the script does not match the artifact names in the URI provided in the " \
+                            "recipe. If this is inaccurate, please exit and verify that both the artifacts and the " \
+                            "script are correct."
         assert any(expected_warnings in arg for arg in warnings)
 
     def test_validate_input_mismatched_platform_architecture_expect_warning(self):
@@ -171,7 +173,8 @@ class RecipeValidatorTest(TestCase):
             validator.validate_input()
         assert mock_logging.warning.call_count == 1
         warnings = mock_logging.warning.call_args[0]
-        expected_warnings = "The specified architecture 'unknown_architecture' may not be supported by the os 'linux'."
+        expected_warnings = "The specified architecture 'unknown_architecture' may not be supported by the os " \
+                            "'linux' as provided in the recipe."
         assert any(expected_warnings in arg for arg in warnings)
 
     def test_validate_input_specify_both_startup_and_run_in_manifests_lifecycle_expect_warning(self):
@@ -194,8 +197,8 @@ class RecipeValidatorTest(TestCase):
             validator.validate_input()
         assert mock_logging.warning.call_count == 1
         warnings = mock_logging.warning.call_args[0]
-        expected_warnings = "You can define only one startup or run lifecycle in manifest. " \
-                            "Defining both may lead to unexpected behavior."
+        expected_warnings = "You can define only one startup or run lifecycle in the recipe manifest. " \
+                            "Defining both may result in unexpected behavior."
         assert any(expected_warnings in arg for arg in warnings)
 
     def test_validate_input_expect_multiple_warnings(self):
@@ -237,11 +240,11 @@ class RecipeValidatorTest(TestCase):
         expected_warnings = [
             "It's not recommended to specify the component type in a recipe.",
             "It's not recommended to specify the component source in a recipe.",
-            "You can define only one startup or run lifecycle. Defining both may lead to unexpected behavior.",
-            "Provided URI 's4://example-bucket/file.txt' is not an S3 bucket.",
-            "The file name in the script does not match the artifact names in the URI.",
-            "The specified architecture 'x86' may not be supported by the os 'macos'.",
-            "The specified architecture 'unknown' may not be supported by the os 'linux'."
+            "You can define only one startup or run lifecycle in a recipe.",
+            "The provided URI 's4://example-bucket/file.txt' in the recipe is not an S3 bucket.",
+            "The filename in the script does not match the artifact names in the URI provided in the recipe.",
+            "The specified architecture 'x86' may not be supported by the os 'macos' as provided in the recipe.",
+            "The specified architecture 'unknown' may not be supported by the os 'linux' as provided in the recipe."
         ]
         for expected_warning in expected_warnings:
             assert any(expected_warning in str(arg) for arg in warning_list)
@@ -303,7 +306,6 @@ class RecipeValidatorTest(TestCase):
         ]
         validator = RecipeValidator(CaseInsensitiveDict())
         output = validator._convert_keys_to_lowercase(input_list)
-        print(output)
         assert output == expected_output
 
     def test_convert_keys_to_lowercase_mixed(self):
@@ -351,7 +353,6 @@ class RecipeValidatorTest(TestCase):
         recipe_data = validator._load_recipe()
         assert isinstance(recipe_data, CaseInsensitiveDict)
         assert "componentconfiguration" in recipe_data
-        print(recipe_data["componentconfiguration"])
         assert "defaultconfiguration" in recipe_data["componentconfiguration"]
         assert "message" in recipe_data["componentconfiguration"]["defaultconfiguration"]
 
