@@ -170,7 +170,7 @@
                                             "script": {
                                                 "type": "string"
                                             },
-                                            "requiresPrivilege": {
+                                            "requiresprivilege": {
                                                 "type": "boolean"
                                             },
                                             "skipif": {

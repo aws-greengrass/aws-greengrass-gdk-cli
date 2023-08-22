@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, mock
 from unittest.mock import call, Mock
 
 import pytest
@@ -83,6 +83,35 @@ class BuildRecipeTransformerTest(TestCase):
         mock_read.assert_called_once_with(config.recipe_file)
         mock_update.assert_not_called()
         mock_create.assert_not_called()
+
+    def test_transform_expect_input_validation_warning(self):
+        mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
+                                             return_value=CaseInsensitiveDict(fake_recipe_with_input_issues()))
+        mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
+                                               return_value=None)
+        mock_create = self.mocker.patch.object(BuildRecipeTransformer, "create_build_recipe_file", return_value=None)
+        build_folders = [Path("build-folder")]
+        config = ComponentBuildConfiguration({})
+        transformer = BuildRecipeTransformer(config)
+
+        with mock.patch('gdk.common.RecipeValidator.logging') as mock_logging:
+            transformer.transform(build_folders)
+
+        assert mock_logging.warning.call_count == 5
+        warning_args_list = mock_logging.warning.call_args_list
+        expected_warnings = [
+            "It's not recommended to specify the component type in a recipe.",
+            "It's not recommended to specify the component source in a recipe.",
+            "You can define only one startup or run lifecycle in a recipe. Defining both may lead to unexpected "
+            "behavior.",
+            "The filename in the script does not match the artifact names in the URI provided in the recipe.",
+            "The specified architecture 'x86' may not be supported by the os 'macos' as provided in the recipe."
+        ]
+        for expected_warning in expected_warnings:
+            assert any(expected_warning in str(arg) for arg in warning_args_list)
+        mock_read.assert_called_once_with(config.recipe_file)
+        mock_update.assert_called_once_with(mock_read.return_value, build_folders)
+        mock_create.assert_called_once_with(mock_read.return_value)
 
     def test_update_component_recipe_file_in_build(self):
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
@@ -323,4 +352,33 @@ def fake_recipe():
                 "Artifacts": [{"URI": "s3://DOC-EXAMPLE-BUCKET/artifacts/com.example.HelloWorld/1.0.0/hello_world.py"}],
             }
         ],
+    }
+
+
+def fake_recipe_with_input_issues():
+    return {
+        "RecipeFormatVersion": "2020-01-25",
+        "ComponentName": "com.example.HelloWorld",
+        "ComponentVersion": "1.0.0",
+        "ComponentDescription": "My first Greengrass component.",
+        "ComponentPublisher": "Amazon",
+        "ComponentConfiguration": {"DefaultConfiguration": {"Message": "world"}},
+        "ComponentType": "aws.greengrass.generic",
+        "ComponentSource": "arn:aws:lambda:us-east-1:123456789012:function:example-function",
+        "LifeCycle": {
+            "startup": {},
+            "run": {}
+        },
+        "Manifests": [{
+            "Artifacts": [{"uri": "s3://example-bucket/file.txt"}],
+            "Platform": {
+                "os": "macos",
+                "architecture": "x86"
+            },
+            "LifeCycle": {
+                "Run": {
+                    "Script": "python3 -u {artifacts:decompressedPath}/HelloWorld/hello_world.py"
+                }
+            }
+        }]
     }
