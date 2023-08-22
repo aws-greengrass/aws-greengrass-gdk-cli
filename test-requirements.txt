@@ -16,3 +16,4 @@ behave-html-formatter
 Faker
 semver
 aenum
+PyInquirer
