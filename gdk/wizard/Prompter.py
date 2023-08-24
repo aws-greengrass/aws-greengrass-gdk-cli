@@ -158,7 +158,7 @@ class Prompter:
         try:
             answer = prompt(questions)
             return answer["user_input"]
-        except (KeyError, TypeError):
+        except KeyboardInterrupt:
             raise Exception("Wizard interrupted. Exiting...")
 
     def prompt_build_configs(self):
