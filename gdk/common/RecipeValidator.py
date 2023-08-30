@@ -28,6 +28,9 @@ class RecipeValidator:
 
     Methods
     -------
+    validate_recipe_format_version()
+        Validates that the provided RecipeFormatVersion in the recipe is valid and compatible with the gdk.
+
     validate_semantics()
         Validates the semantics of the component recipe against the Greengrass component recipe schema.
 
@@ -48,6 +51,33 @@ class RecipeValidator:
         """
         self.recipe_source = recipe_source
         self.recipe_data = self._convert_keys_to_lowercase(self._load_recipe())
+
+    def validate_recipe_format_version(self):
+        """
+        Validate the Recipe Format Version in the recipe data.
+
+        This method checks whether the provided Recipe Format Version is valid and supported.
+
+        Raises
+        ------
+        Exception
+            If the RecipeFormatVersion field is missing or unsupported.
+
+        """
+        recipe_format_version = self.recipe_data.get("recipeformatversion")
+        if not recipe_format_version:
+            logging.error("Recipe validation failed for 'RecipeFormatVersion'. This field is required but missing "
+                          "from the recipe. Please correct it and try again.")
+            raise Exception("The recipe file is invalid. The 'RecipeFormatVersion' field is mandatory in the recipe.")
+
+        supported_recipe_version = ["2020-01-25"]
+        if recipe_format_version not in supported_recipe_version:
+            logging.error(f"Recipe validation failed for: 'RecipeFormatVersion: {recipe_format_version}'.")
+            logging.error(f"The provided RecipeFormatVersion '{recipe_format_version}' is not supported in this gdk "
+                          f"version. Please ensure that it is a valid RecipeFormatVersion compatible with the gdk, "
+                          f"and refer to the list of supported RecipeFormatVersion: {supported_recipe_version}.")
+            raise Exception("The provided RecipeFormatVersion in the recipe is invalid. Please ensure that it follows "
+                            "the correct format and matches one of the supported versions.")
 
     def validate_semantics(self):
         """

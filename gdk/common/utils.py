@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 from pathlib import Path
 
@@ -224,6 +225,11 @@ def parse_json_schema_errors(error):
         logging.info("To address this issue, consider the following steps: ")
         for fix in fixes:
             logging.info(f"\t {fix}")
+
+
+def valid_recipe_file_size(file_path):
+    file_size = os.path.getsize(file_path)
+    return file_size < 16234    # max allowed byte
 
 
 error_line = "\n=============================== ERROR ===============================\n"

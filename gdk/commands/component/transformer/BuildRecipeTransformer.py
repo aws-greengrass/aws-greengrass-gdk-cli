@@ -27,14 +27,23 @@ class BuildRecipeTransformer:
         return self._s3_client
 
     def transform(self, build_folders):
-        component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)
         logging.info(f"Validating the recipe file {self.project_config.recipe_file}")
+
+        # Validate the size of the recipe file before processing its content.
+        if not utils.valid_recipe_file_size(self.project_config.recipe_file):
+            logging.error("The size of the recipe exceeds the maximum allowed size. Please ensure the recipe size "
+                          "does not exceed 16 KB.")
+            raise Exception(error_messages.RECIPE_SIZE_INVALID.format(self.project_config.recipe_file))
+
+        component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)
         try:
             validator = RecipeValidator(component_recipe)
+            validator.validate_recipe_format_version()
             validator.validate_semantics()
             validator.validate_input()
         except jsonschema.exceptions.ValidationError as err:
             raise Exception(error_messages.RECIPE_FILE_INVALID.format(self.project_config.recipe_file, err.message))
+
         self.update_component_recipe_file(component_recipe, build_folders)
         self.create_build_recipe_file(component_recipe)
 

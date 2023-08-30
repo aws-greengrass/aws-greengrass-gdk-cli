@@ -17,6 +17,30 @@ class RecipeValidatorTest(TestCase):
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
 
+    def test_validate_missing_recipe_format_version_expect_exception(self):
+        mock_logging_error = self.mocker.patch('logging.error')
+        invalid_recipe = CaseInsensitiveDict({})
+        validator = RecipeValidator(invalid_recipe)
+        with pytest.raises(Exception) as e:
+            validator.validate_recipe_format_version()
+        self.assertEqual(str(e.value), "The recipe file is invalid. The 'RecipeFormatVersion' field is mandatory in "
+                                       "the recipe.")
+        mock_logging_error.assert_called_with("Recipe validation failed for 'RecipeFormatVersion'. This field is "
+                                              "required but missing from the recipe. Please correct it and try again.")
+
+    def test_validate_invalid_recipe_format_version_expect_exception(self):
+        mock_logging_error = self.mocker.patch('logging.error')
+        invalid_recipe = CaseInsensitiveDict({"RecipeFormatVersion": "99999"})
+        validator = RecipeValidator(invalid_recipe)
+        with pytest.raises(Exception) as e:
+            validator.validate_recipe_format_version()
+        self.assertEqual(str(e.value), "The provided RecipeFormatVersion in the recipe is invalid. Please ensure that "
+                                       "it follows the correct format and matches one of the supported versions.")
+        mock_logging_error.assert_called_with("The provided RecipeFormatVersion '99999' is not supported in this gdk "
+                                              "version. Please ensure that it is a valid RecipeFormatVersion "
+                                              "compatible with the gdk, and refer to the list of supported "
+                                              "RecipeFormatVersion: ['2020-01-25'].")
+
     def test_validate_semantics_valid_recipe(self):
         valid_recipe = CaseInsensitiveDict({
             "manifests": [{"artifacts": [{"uri": "example"}]}],

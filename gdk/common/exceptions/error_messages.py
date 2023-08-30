@@ -8,6 +8,7 @@ PROJECT_RECIPE_FILE_NOT_FOUND = (
 )
 PROJECT_CONFIG_FILE_INVALID = "Project configuration file '{}' is invalid. Please correct its format and try again. Error: {} "
 RECIPE_FILE_INVALID = "The input recipe file '{}' is invalid. Please correct its format and try again. Error: {} "
+RECIPE_SIZE_INVALID = "The input recipe file '{}' has an invalid size. Please make sure it does not exceed 16KB and try again."
 CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
 USER_INPUT_RECIPE_NOT_EXISTS = (
     "Recipe file not found. "
