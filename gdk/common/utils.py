@@ -8,6 +8,7 @@ from packaging.version import Version
 
 import gdk
 import gdk._version as version
+from gdk.common import consts
 from gdk.common.exceptions import syntax_error_message
 
 
@@ -229,7 +230,7 @@ def parse_json_schema_errors(error):
 
 def valid_recipe_file_size(file_path):
     file_size = os.path.getsize(file_path)
-    return file_size < 16234    # max allowed byte
+    return file_size <= consts.MAX_RECIPE_FILE_SIZE_BYTES
 
 
 error_line = "\n=============================== ERROR ===============================\n"

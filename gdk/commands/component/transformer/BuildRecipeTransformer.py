@@ -31,8 +31,7 @@ class BuildRecipeTransformer:
 
         # Validate the size of the recipe file before processing its content.
         if not utils.valid_recipe_file_size(self.project_config.recipe_file):
-            logging.error("The size of the recipe exceeds the maximum allowed size. Please ensure the recipe size "
-                          "does not exceed 16 KB.")
+            logging.error(error_messages.RECIPE_SIZE_INVALID.format(self.project_config.recipe_file))
             raise Exception(error_messages.RECIPE_SIZE_INVALID.format(self.project_config.recipe_file))
 
         component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)

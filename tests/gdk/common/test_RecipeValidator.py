@@ -23,23 +23,23 @@ class RecipeValidatorTest(TestCase):
         validator = RecipeValidator(invalid_recipe)
         with pytest.raises(Exception) as e:
             validator.validate_recipe_format_version()
-        self.assertEqual(str(e.value), "The recipe file is invalid. The 'RecipeFormatVersion' field is mandatory in "
-                                       "the recipe.")
+        self.assertEqual(str(e.value), "Recipe validation failed for 'RecipeFormatVersion'. This field is required "
+                                       "but missing from the recipe. Please correct it and try again.")
         mock_logging_error.assert_called_with("Recipe validation failed for 'RecipeFormatVersion'. This field is "
                                               "required but missing from the recipe. Please correct it and try again.")
 
-    def test_validate_invalid_recipe_format_version_expect_exception(self):
-        mock_logging_error = self.mocker.patch('logging.error')
-        invalid_recipe = CaseInsensitiveDict({"RecipeFormatVersion": "99999"})
-        validator = RecipeValidator(invalid_recipe)
-        with pytest.raises(Exception) as e:
+    def test_validate_incompatible_recipe_format_version_expect_warning(self):
+        recipe_data = CaseInsensitiveDict({"RecipeFormatVersion": "2023-01-25"})
+        validator = RecipeValidator(recipe_data)
+        with mock.patch('gdk.common.RecipeValidator.logging') as mock_logging:
             validator.validate_recipe_format_version()
-        self.assertEqual(str(e.value), "The provided RecipeFormatVersion in the recipe is invalid. Please ensure that "
-                                       "it follows the correct format and matches one of the supported versions.")
-        mock_logging_error.assert_called_with("The provided RecipeFormatVersion '99999' is not supported in this gdk "
-                                              "version. Please ensure that it is a valid RecipeFormatVersion "
-                                              "compatible with the gdk, and refer to the list of supported "
-                                              "RecipeFormatVersion: ['2020-01-25'].")
+        assert mock_logging.warning.call_count == 1
+        warnings = mock_logging.warning.call_args[0]
+        expected_warnings = "The provided RecipeFormatVersion '2023-01-25' is not supported in this " \
+                            "gdk version. Please ensure that it is a valid RecipeFormatVersion " \
+                            "compatible with the gdk, and refer to the list of supported " \
+                            "RecipeFormatVersion: ['2020-01-25']."
+        assert any(expected_warnings in arg for arg in warnings)
 
     def test_validate_semantics_valid_recipe(self):
         valid_recipe = CaseInsensitiveDict({

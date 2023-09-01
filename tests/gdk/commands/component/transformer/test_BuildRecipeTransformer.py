@@ -94,17 +94,21 @@ class BuildRecipeTransformerTest(TestCase):
         try:
             transformer.transform(build_folders)
         except Exception as e:
-            assert str(e) == "The recipe file is invalid. The 'RecipeFormatVersion' field is mandatory in the recipe."
+            assert str(e) == "Recipe validation failed for 'RecipeFormatVersion'. This field is required " \
+                             "but missing from the recipe. Please correct it and try again."
 
         mock_size.assert_called_once_with(config.recipe_file)
         mock_read.assert_called_once_with(config.recipe_file)
         mock_update.assert_not_called()
         mock_create.assert_not_called()
 
-    def test_transform_invalid_recipe_format_version_expect_exception(self):
+    def test_transform_invalid_recipe_format_version_expect_early_warning(self):
         mock_size = self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=True)
         mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
-                                             return_value=CaseInsensitiveDict({"RecipeFormatVersion": "77777"}))
+                                             return_value=CaseInsensitiveDict({
+                                                 "RecipeFormatVersion": "2023-01-25",
+                                                 "ComponentName": "com.example.HelloWorld"
+                                             }))
         mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
                                                return_value=None)
         mock_create = self.mocker.patch.object(BuildRecipeTransformer, "create_build_recipe_file", return_value=None)
@@ -112,11 +116,16 @@ class BuildRecipeTransformerTest(TestCase):
         config = ComponentBuildConfiguration({})
         transformer = BuildRecipeTransformer(config)
 
-        try:
-            transformer.transform(build_folders)
-        except Exception as e:
-            assert str(e) == "The provided RecipeFormatVersion in the recipe is invalid. Please ensure that it " \
-                             "follows the correct format and matches one of the supported versions."
+        with mock.patch('gdk.common.RecipeValidator.logging') as mock_logging:
+            with pytest.raises(Exception):
+                transformer.transform(build_folders)
+
+        assert mock_logging.warning.call_count == 1
+        warnings = mock_logging.warning.call_args[0]
+        expected_warnings = "The provided RecipeFormatVersion '2023-01-25' is not supported in this gdk version. " \
+                            "Please ensure that it is a valid RecipeFormatVersion compatible with the gdk, " \
+                            "and refer to the list of supported RecipeFormatVersion: ['2020-01-25']."
+        assert any(expected_warnings in arg for arg in warnings)
 
         mock_size.assert_called_once_with(config.recipe_file)
         mock_read.assert_called_once_with(config.recipe_file)

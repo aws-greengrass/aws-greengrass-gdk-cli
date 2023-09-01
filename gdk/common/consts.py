@@ -13,6 +13,10 @@ arg_parameters = [
     "metavar",
     "dest",
 ]
+
+# FILE SIZE
+MAX_RECIPE_FILE_SIZE_BYTES = 16000
+
 # FILES
 config_schema_file = "config_schema.json"
 user_input_recipe_schema_file = "user_input_recipe_schema.json"
