@@ -36,6 +36,7 @@ class BuildRecipeTransformerTest(TestCase):
         assert brg.project_config == pc
 
     def test_transform(self):
+        self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=True)
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
         build_folders = [Path("zip-build").resolve()]
         mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file", return_value=None)
@@ -46,6 +47,7 @@ class BuildRecipeTransformerTest(TestCase):
         assert mock_create.call_args_list == [call(self.mock_component_recipe.return_value)]
 
     def test_transform_validation_successful(self):
+        mock_size = self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=True)
         mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
                                              return_value=CaseInsensitiveDict(fake_recipe()))
         mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
@@ -60,13 +62,83 @@ class BuildRecipeTransformerTest(TestCase):
 
         transformer.transform(build_folders)
 
+        mock_size.assert_called_once_with(config.recipe_file)
         mock_read.assert_called_once_with(config.recipe_file)
         mock_update.assert_called_once_with(mock_read.return_value, build_folders)
         mock_create.assert_called_once_with(mock_read.return_value)
 
-    def test_transform_validation_error(self):
+    def test_transform_invalid_recipe_size_expect_error(self):
+        mock_size = self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=False)
+        build_folders = [Path("build-folder")]
+        config = ComponentBuildConfiguration({})
+        transformer = BuildRecipeTransformer(config)
+
+        try:
+            transformer.transform(build_folders)
+        except Exception as e:
+            assert str(e) == error_messages.RECIPE_SIZE_INVALID.format(config.recipe_file)
+
+        mock_size.assert_called_once_with(config.recipe_file)
+
+    def test_transform_missing_recipe_format_version_expect_exception(self):
+        mock_size = self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=True)
         mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
-                                             return_value=CaseInsensitiveDict({"dummy": "recipe"}))
+                                             return_value=CaseInsensitiveDict({}))
+        mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
+                                               return_value=None)
+        mock_create = self.mocker.patch.object(BuildRecipeTransformer, "create_build_recipe_file", return_value=None)
+        build_folders = [Path("build-folder")]
+        config = ComponentBuildConfiguration({})
+        transformer = BuildRecipeTransformer(config)
+
+        try:
+            transformer.transform(build_folders)
+        except Exception as e:
+            assert str(e) == "Recipe validation failed for 'RecipeFormatVersion'. This field is required " \
+                             "but missing from the recipe. Please correct it and try again."
+
+        mock_size.assert_called_once_with(config.recipe_file)
+        mock_read.assert_called_once_with(config.recipe_file)
+        mock_update.assert_not_called()
+        mock_create.assert_not_called()
+
+    def test_transform_invalid_recipe_format_version_expect_early_warning(self):
+        mock_size = self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=True)
+        mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
+                                             return_value=CaseInsensitiveDict({
+                                                 "RecipeFormatVersion": "2023-01-25",
+                                                 "ComponentName": "com.example.HelloWorld"
+                                             }))
+        mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
+                                               return_value=None)
+        mock_create = self.mocker.patch.object(BuildRecipeTransformer, "create_build_recipe_file", return_value=None)
+        build_folders = [Path("build-folder")]
+        config = ComponentBuildConfiguration({})
+        transformer = BuildRecipeTransformer(config)
+
+        with mock.patch('gdk.common.RecipeValidator.logging') as mock_logging:
+            with pytest.raises(Exception):
+                transformer.transform(build_folders)
+
+        assert mock_logging.warning.call_count == 1
+        warnings = mock_logging.warning.call_args[0]
+        expected_warnings = "The provided RecipeFormatVersion '2023-01-25' is not supported in this gdk version. " \
+                            "Please ensure that it is a valid RecipeFormatVersion compatible with the gdk, " \
+                            "and refer to the list of supported RecipeFormatVersion: ['2020-01-25']."
+        assert any(expected_warnings in arg for arg in warnings)
+
+        mock_size.assert_called_once_with(config.recipe_file)
+        mock_read.assert_called_once_with(config.recipe_file)
+        mock_update.assert_not_called()
+        mock_create.assert_not_called()
+
+    def test_transform_invalid_recipe_semantic_expect_exception(self):
+        mock_size = self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=True)
+        mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
+                                             return_value=CaseInsensitiveDict({
+                                                 "RecipeFormatVersion": "2020-01-25",
+                                                 "dummy": "recipe"
+                                             }))
         mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
                                                return_value=None)
         mock_create = self.mocker.patch.object(BuildRecipeTransformer, "create_build_recipe_file", return_value=None)
@@ -78,13 +150,15 @@ class BuildRecipeTransformerTest(TestCase):
             transformer.transform(build_folders)
         except Exception as e:
             assert str(e) == error_messages.RECIPE_FILE_INVALID.format(config.recipe_file,
-                                                                       "'recipeformatversion' is a required property")
+                                                                       "'componentname' is a required property")
 
+        mock_size.assert_called_once_with(config.recipe_file)
         mock_read.assert_called_once_with(config.recipe_file)
         mock_update.assert_not_called()
         mock_create.assert_not_called()
 
     def test_transform_expect_input_validation_warning(self):
+        mock_size = self.mocker.patch("gdk.common.utils.valid_recipe_file_size", return_value=True)
         mock_read = self.mocker.patch.object(CaseInsensitiveRecipeFile, "read",
                                              return_value=CaseInsensitiveDict(fake_recipe_with_input_issues()))
         mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file",
@@ -109,6 +183,7 @@ class BuildRecipeTransformerTest(TestCase):
         ]
         for expected_warning in expected_warnings:
             assert any(expected_warning in str(arg) for arg in warning_args_list)
+        mock_size.assert_called_once_with(config.recipe_file)
         mock_read.assert_called_once_with(config.recipe_file)
         mock_update.assert_called_once_with(mock_read.return_value, build_folders)
         mock_create.assert_called_once_with(mock_read.return_value)

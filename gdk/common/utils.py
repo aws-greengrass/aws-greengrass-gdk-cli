@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from packaging.version import Version
 
 import gdk
 import gdk._version as version
+from gdk.common import consts
 from gdk.common.exceptions import syntax_error_message
 
 
@@ -224,6 +226,11 @@ def parse_json_schema_errors(error):
         logging.info("To address this issue, consider the following steps: ")
         for fix in fixes:
             logging.info(f"\t {fix}")
+
+
+def valid_recipe_file_size(file_path):
+    file_size = os.path.getsize(file_path)
+    return file_size <= consts.MAX_RECIPE_FILE_SIZE_BYTES
 
 
 error_line = "\n=============================== ERROR ===============================\n"

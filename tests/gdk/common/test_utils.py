@@ -275,3 +275,15 @@ def test_parse_json_schema_errors_with_unknown_validator(caplog):
     utils.parse_json_schema_errors(error)
     assert "This validation error may be due to: " not in caplog.text
     assert "To address this issue, consider the following steps: " not in caplog.text
+
+
+def test_valid_recipe_size(mocker):
+    mocker.patch("os.path.getsize", return_value=1000)
+    result = utils.valid_recipe_file_size('small_recipe.json')
+    assert result
+
+
+def test_invalid_recipe_size(mocker):
+    mocker.patch("os.path.getsize", return_value=17000)
+    result = utils.valid_recipe_file_size('large_recipe.yaml')
+    assert not result
