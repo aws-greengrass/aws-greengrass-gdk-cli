@@ -50,7 +50,7 @@ class RecipeValidator:
 
         """
         self.recipe_source = recipe_source
-        self.recipe_data = self._convert_keys_to_lowercase(self._load_recipe())
+        self.recipe_data = self._convert_keys_to_camelcase(self._load_recipe())
 
     def validate_recipe_format_version(self):
         """
@@ -64,7 +64,7 @@ class RecipeValidator:
             If the RecipeFormatVersion field is missing.
 
         """
-        recipe_format_version = self.recipe_data.get("recipeformatversion")
+        recipe_format_version = self.recipe_data.get("RecipeFormatVersion")
         if not recipe_format_version:
             err_msg = "Recipe validation failed for 'RecipeFormatVersion'. This field is required but missing " \
                       "from the recipe. Please correct it and try again."
@@ -121,11 +121,11 @@ class RecipeValidator:
         but does not break the process.
 
         """
-        if "componenttype" in self.recipe_data:
+        if "ComponentType" in self.recipe_data:
             logging.warning("It's not recommended to specify the component type in a recipe. "
                             "AWS IoT Greengrass sets the type for you when you create a component.")
 
-        if "componentsource" in self.recipe_data:
+        if "ComponentSource" in self.recipe_data:
             logging.warning("It's not recommended to specify the component source in a recipe. "
                             "AWS IoT Greengrass sets this parameter for you when you create a "
                             "component from a Lambda function.")
@@ -137,8 +137,8 @@ class RecipeValidator:
         """
         # The "run" lifecycle defines the script to run when the component starts, while the "startup" lifecycle defines
         # the background process to run when the component starts. Defining both may lead to unexpected behavior.
-        if "lifecycle" in self.recipe_data:
-            lifecycle = self.recipe_data["lifecycle"]
+        if "Lifecycle" in self.recipe_data:
+            lifecycle = self.recipe_data["Lifecycle"]
             if "startup" in lifecycle and "run" in lifecycle:
                 logging.warning(
                     "You can define only one startup or run lifecycle in a recipe. Defining both may lead to "
@@ -149,14 +149,14 @@ class RecipeValidator:
         Validates artifacts, platform, and lifecycle within the manifests section of the component recipe.
 
         """
-        if "manifests" in self.recipe_data:
-            manifests = self.recipe_data.get("manifests")  # 'manifests' is a list of object
+        if "Manifests" in self.recipe_data:
+            manifests = self.recipe_data.get("Manifests")  # 'manifests' is a list of object
             for manifest in manifests:
                 self._validate_artifacts(manifest)
                 self._validate_platform(manifest)
 
                 # Similar to the lifecycle check above, but this check is specific to the manifests section.
-                if "lifecycle" in manifest and "startup" in manifest["lifecycle"] and "run" in manifest["lifecycle"]:
+                if "Lifecycle" in manifest and "startup" in manifest["Lifecycle"] and "run" in manifest["Lifecycle"]:
                     logging.warning(
                         "You can define only one startup or run lifecycle in the recipe manifest. Defining both may "
                         "result in unexpected behavior.")
@@ -166,12 +166,12 @@ class RecipeValidator:
         Validates artifact URIs and script alignment within an artifact.
 
         """
-        if "artifacts" in manifest:
-            artifacts = manifest["artifacts"]  # 'artifacts' is a list of object
+        if "Artifacts" in manifest:
+            artifacts = manifest["Artifacts"]  # 'artifacts' is a list of object
             uris = []
             for artifact in artifacts:
-                if "uri" in artifact:
-                    uri = artifact["uri"]
+                if "URI" in artifact:
+                    uri = artifact["URI"]
                     uris.append(uri)
                     # check if the URI of an artifact is an S3 bucket
                     if not uri.startswith(utils.s3_prefix):
@@ -180,12 +180,12 @@ class RecipeValidator:
             # One potential scenario is when a user specifies an artifact URI, but the script to run
             # references a different artifact. Displaying a warning here can help identify such issues early
             # in the validation process.
-            if "lifecycle" in manifest and "run" in manifest["lifecycle"]:
-                run = manifest["lifecycle"]["run"]
+            if "Lifecycle" in manifest and "run" in manifest["Lifecycle"]:
+                run = manifest["Lifecycle"]["run"]
                 if isinstance(run, str):
                     script = run
                 else:
-                    script = run.get("script", None)
+                    script = run.get("Script", None)
                 if script and uris:
                     artifact_names = [uri.split("/")[-1] for uri in uris]
                     if not any(artifact in script for artifact in artifact_names):
@@ -198,9 +198,9 @@ class RecipeValidator:
         Validates platform architecture against the given OS.
 
         """
-        if "platform" in manifest:
-            os = manifest["platform"].get("os")
-            architecture = manifest["platform"].get("architecture")
+        if "Platform" in manifest:
+            os = manifest["Platform"].get("os")
+            architecture = manifest["Platform"].get("architecture")
 
             if os and architecture:
                 if os not in ["any", "all", "*"] and architecture not in ["any", "all", "*"]:
@@ -249,7 +249,7 @@ class RecipeValidator:
             The input dictionary or list.
 
         Returns
-        -------
+        -------0
         CaseInsensitiveDict or list
             The input dictionary or list with keys converted to lowercase.
 
@@ -260,3 +260,75 @@ class RecipeValidator:
             return [self._convert_keys_to_lowercase(item) for item in input_dict]
         else:
             return input_dict
+
+    def _convert_keys_to_camelcase(self, input_data):
+        """
+        Recursively converts keys in a nested dictionary to CamelCase based on the predefined mapping.
+
+        Parameters
+        ----------
+        input_data : CaseInsensitiveDict or list
+            The input dictionary or list to be converted.
+
+        Returns
+        -------
+        CaseInsensitiveDict or list
+            The input dictionary or list with keys converted to CamelCase.
+
+        """
+        if isinstance(input_data, CaseInsensitiveDict):
+            result_dict = {}
+            for key, value in input_data.items():
+                camelcase_key = self.RECIPE_PROPERTY_CASE_MAPPING.get(key.lower(), key)
+                result_dict[camelcase_key] = self._convert_keys_to_camelcase(value)
+            return result_dict
+        elif isinstance(input_data, list):
+            result_list = []
+            for item in input_data:
+                result_list.append(self._convert_keys_to_camelcase(item))
+            return result_list
+        else:
+            return input_data
+
+    RECIPE_PROPERTY_CASE_MAPPING = {
+        "recipeformatversion": "RecipeFormatVersion",
+        "componentname": "ComponentName",
+        "componentversion": "ComponentVersion",
+        "componentdescription": "ComponentDescription",
+        "componentpublisher": "ComponentPublisher",
+        "componentconfiguration": "ComponentConfiguration",
+        "defaultconfiguration": "DefaultConfiguration",
+        "componentdependencies": "ComponentDependencies",
+        "versionrequirement": "VersionRequirement",
+        "dependencytype": "DependencyType",
+        "componenttype": "ComponentType",
+        "componentsource": "ComponentSource",
+        "manifests": "Manifests",
+        "name": "Name",
+        "platform": "Platform",
+        "os": "os",
+        "architecture": "architecture",
+        "architecture.detail": "architecture.detail",
+        "key": "key",
+        "lifecycle": "Lifecycle",
+        "setenv": "Setenv",
+        "install": "install",
+        "script": "Script",
+        "requiresprivilege": "RequiresPrivilege",
+        "skipif": "Skipif",
+        "timeout": "Timeout",
+        "run": "run",
+        "startup": "startup",
+        "shutdown": "shutdown",
+        "recover": "recover",
+        "bootstrap": "bootstrap",
+        "selections": "Selections",
+        "artifacts": "Artifacts",
+        "uri": "URI",
+        "unarchive": "Unarchive",
+        "permission": "Permission",
+        "read": "Read",
+        "execute": "Execute",
+        "digest": "Digest",
+        "algorithm": "Algorithm",
+    }
