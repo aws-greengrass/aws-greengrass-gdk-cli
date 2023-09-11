@@ -35,6 +35,7 @@ repository_list_url = (
         "https://raw.githubusercontent.com/aws-greengrass/aws-greengrass-software-catalog/main/cli-components/"
         + "community-components.json"
 )
+recipe_reference_url = ("https://docs.aws.amazon.com/greengrass/v2/developerguide/component-recipe-reference.html")
 
 # DEFAULT LOGGING
 log_format = "[%(asctime)s] %(levelname)s - %(message)s"

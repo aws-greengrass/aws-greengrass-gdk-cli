@@ -470,6 +470,35 @@ class RecipeValidatorTest(TestCase):
         output = validator._convert_keys_to_camelcase(input_data)
         assert output == expected_output
 
+    def test_get_the_recipe_schema(self):
+        validator = RecipeValidator(CaseInsensitiveDict())
+        schema = validator._get_recipe_schema()
+        assert isinstance(schema, dict)
+        assert "$schema" in schema
+
+    def test_get_recipe_properties(self):
+        validator = RecipeValidator(CaseInsensitiveDict())
+        schema = validator._get_recipe_schema()
+        properties_mapping = validator._get_recipe_schema_properties(schema)
+        assert isinstance(properties_mapping, dict)
+        assert properties_mapping["recipeformatversion"] == "RecipeFormatVersion"
+        assert properties_mapping["algorithm"] == "Algorithm"
+
+    def test_get_properties_from_dict(self):
+        validator = RecipeValidator(CaseInsensitiveDict())
+        data = {
+            'ComponentName': 'example',
+            'mAnifests': [
+                {
+                    'Platform': {'os': 'linux'},
+                    'lifecycle': {'rUn': 'python3 script.py'}
+                }
+            ]
+        }
+        mapping = validator._get_recipe_schema_properties(data)
+        assert mapping == {"componentname": "ComponentName", "manifests": "mAnifests", "os": "os",
+                           "platform": "Platform", "lifecycle": "lifecycle", "run": "rUn"}
+
 
 # =========================== Tests for recipe schema ===========================
 
@@ -511,7 +540,7 @@ def convert_keys_to_camelcase(input_data):
     if isinstance(input_data, dict):
         result_dict = {}
         for key, value in input_data.items():
-            camelcase_key = RecipeValidator.RECIPE_PROPERTY_CASE_MAPPING.get(key.lower(), key)
+            camelcase_key = MAPPING.get(key.lower(), key)
             result_dict[camelcase_key] = convert_keys_to_camelcase(value)
         return result_dict
     elif isinstance(input_data, list):
@@ -521,6 +550,21 @@ def convert_keys_to_camelcase(input_data):
         return result_list
     else:
         return input_data
+
+
+MAPPING = {'recipeformatversion': 'RecipeFormatVersion', 'componentname': 'ComponentName',
+           'componentversion': 'ComponentVersion', 'componentdescription': 'ComponentDescription',
+           'componentpublisher': 'ComponentPublisher', 'componentconfiguration': 'ComponentConfiguration',
+           'defaultconfiguration': 'DefaultConfiguration', 'componentdependencies': 'ComponentDependencies',
+           'versionrequirement': 'VersionRequirement', 'dependencytype': 'DependencyType',
+           'componenttype': 'ComponentType', 'componentsource': 'ComponentSource', 'manifests': 'Manifests',
+           'name': 'Name', 'platform': 'Platform', 'os': 'os', 'architecture': 'architecture',
+           'architecture.detail': 'architecture.detail', 'key': 'key', 'lifecycle': 'Lifecycle', 'setenv': 'Setenv',
+           'install': 'install', 'script': 'Script', 'requiresprivilege': 'RequiresPrivilege', 'skipif': 'Skipif',
+           'timeout': 'Timeout', 'run': 'run', 'startup': 'startup', 'shutdown': 'shutdown', 'recover': 'recover',
+           'bootstrap': 'bootstrap', 'selections': 'Selections', 'artifacts': 'Artifacts', 'uri': 'URI',
+           'unarchive': 'Unarchive', 'permission': 'Permission', 'read': 'Read', 'execute': 'Execute',
+           'digest': 'Digest', 'algorithm': 'Algorithm'}
 
 
 # Define the test function

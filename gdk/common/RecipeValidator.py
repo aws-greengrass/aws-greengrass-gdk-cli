@@ -6,6 +6,7 @@ import jsonschema
 
 from gdk.common import utils, consts
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
+from gdk.common.exceptions import syntax_error_message
 
 
 class RecipeValidator:
@@ -50,6 +51,8 @@ class RecipeValidator:
 
         """
         self.recipe_source = recipe_source
+        self.recipe_schema = self._get_recipe_schema()
+        self.recipe_properties_mapping = self._get_recipe_schema_properties(self.recipe_schema)
         self.recipe_data = self._convert_keys_to_camelcase(self._load_recipe())
 
     def validate_recipe_format_version(self):
@@ -91,12 +94,9 @@ class RecipeValidator:
             If the component recipe data does not conform to the Greengrass component recipe schema.
 
         """
-        recipe_schema = utils.get_static_file_path(consts.user_input_recipe_schema_file)
-        with open(recipe_schema, 'r') as schema_file:
-            schema = json.load(schema_file)
         logging.debug("Validating the recipe file.")
         try:
-            jsonschema.validate(self.recipe_data, schema)
+            jsonschema.validate(self.recipe_data, self.recipe_schema)
         except jsonschema.exceptions.ValidationError as err:
             utils.parse_json_schema_errors(err)
             raise err
@@ -249,7 +249,7 @@ class RecipeValidator:
             The input dictionary or list.
 
         Returns
-        -------0
+        -------
         CaseInsensitiveDict or list
             The input dictionary or list with keys converted to lowercase.
 
@@ -279,7 +279,7 @@ class RecipeValidator:
         if isinstance(input_data, CaseInsensitiveDict):
             result_dict = {}
             for key, value in input_data.items():
-                camelcase_key = self.RECIPE_PROPERTY_CASE_MAPPING.get(key.lower(), key)
+                camelcase_key = self.recipe_properties_mapping.get(key.lower(), key)
                 result_dict[camelcase_key] = self._convert_keys_to_camelcase(value)
             return result_dict
         elif isinstance(input_data, list):
@@ -290,45 +290,57 @@ class RecipeValidator:
         else:
             return input_data
 
-    RECIPE_PROPERTY_CASE_MAPPING = {
-        "recipeformatversion": "RecipeFormatVersion",
-        "componentname": "ComponentName",
-        "componentversion": "ComponentVersion",
-        "componentdescription": "ComponentDescription",
-        "componentpublisher": "ComponentPublisher",
-        "componentconfiguration": "ComponentConfiguration",
-        "defaultconfiguration": "DefaultConfiguration",
-        "componentdependencies": "ComponentDependencies",
-        "versionrequirement": "VersionRequirement",
-        "dependencytype": "DependencyType",
-        "componenttype": "ComponentType",
-        "componentsource": "ComponentSource",
-        "manifests": "Manifests",
-        "name": "Name",
-        "platform": "Platform",
-        "os": "os",
-        "architecture": "architecture",
-        "architecture.detail": "architecture.detail",
-        "key": "key",
-        "lifecycle": "Lifecycle",
-        "setenv": "Setenv",
-        "install": "install",
-        "script": "Script",
-        "requiresprivilege": "RequiresPrivilege",
-        "skipif": "Skipif",
-        "timeout": "Timeout",
-        "run": "run",
-        "startup": "startup",
-        "shutdown": "shutdown",
-        "recover": "recover",
-        "bootstrap": "bootstrap",
-        "selections": "Selections",
-        "artifacts": "Artifacts",
-        "uri": "URI",
-        "unarchive": "Unarchive",
-        "permission": "Permission",
-        "read": "Read",
-        "execute": "Execute",
-        "digest": "Digest",
-        "algorithm": "Algorithm",
-    }
+    def _get_recipe_schema(self):
+        """
+        Retrieves the Json Schema for recipe definition.
+
+        Returns
+        -------
+        dict
+            The dictionary that represents the recipe schema.
+
+        """
+        recipe_schema = utils.get_static_file_path(consts.user_input_recipe_schema_file)
+        with open(recipe_schema, 'r') as schema_file:
+            schema = json.load(schema_file)
+        return schema
+
+    def _get_recipe_schema_properties(self, data):
+        """
+        Extracts and maps recipe properties from the recipe schema, excluding the Json Schema keywords.
+
+        Parameters
+        ----------
+        data : dict
+            The dictionary that represents the recipe schema.
+
+        Returns
+        -------
+        dict
+            A dictionary mapping lowercased recipe property names to their original names.
+
+        """
+        mapping = {}
+
+        def _get_properties(data):
+            """
+            Recursively processes the recipe schema data structure to extract and map property names.
+
+            Parameters
+            ----------
+            data : dict or list
+                A portion of the recipe schema.
+
+            """
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    # eliminate the keywords of Json Schema
+                    if key not in syntax_error_message.JSON_SCHEMA_VALIDATION_KEYWORDS.keys() and key != '$schema':
+                        mapping[key.lower()] = key
+                    _get_properties(value)
+            elif isinstance(data, list):
+                for item in data:
+                    _get_properties(item)
+
+        _get_properties(data)
+        return mapping
