@@ -412,6 +412,93 @@ class RecipeValidatorTest(TestCase):
             RecipeValidator(invalid_data)
         assert "Invalid recipe source type" in e.value.args[0]
 
+    def test_convert_keys_to_camelcase_dict(self):
+        input_data = CaseInsensitiveDict({
+            'compOnentname': 'example',
+            'manifests': [
+                {
+                    'platform': {'os': 'linux'},
+                    'lifecycle': {'rUn': 'python3 script.py'}
+                }
+            ]
+        })
+
+        expected_output = {
+            'ComponentName': 'example',
+            'Manifests': [
+                {
+                    'Platform': {'os': 'linux'},
+                    'Lifecycle': {'run': 'python3 script.py'}
+                }
+            ]
+        }
+        validator = RecipeValidator(CaseInsensitiveDict())
+        output = validator._convert_keys_to_camelcase(input_data)
+        assert output == expected_output
+
+    def test_convert_keys_to_camelcase_list(self):
+        input_data = [
+            CaseInsensitiveDict({'COmponentname': 'example'}),
+            CaseInsensitiveDict({'plAtform': {'os': 'linux'}})
+        ]
+
+        expected_output = [
+            {'ComponentName': 'example'},
+            {'Platform': {'os': 'linux'}}
+        ]
+        validator = RecipeValidator(CaseInsensitiveDict())
+        output = validator._convert_keys_to_camelcase(input_data)
+        assert output == expected_output
+
+    def test_convert_keys_to_camelcase_mixed(self):
+        input_data = CaseInsensitiveDict({
+            'componentname': 'example',
+            'manifests': [
+                {'platform': {'os': 'linux'}},
+                {'Platform': {'os': 'windows'}}
+            ]
+        })
+
+        expected_output = {
+            'ComponentName': 'example',
+            'Manifests': [
+                {'Platform': {'os': 'linux'}},
+                {'Platform': {'os': 'windows'}}
+            ]
+        }
+        validator = RecipeValidator(CaseInsensitiveDict())
+        output = validator._convert_keys_to_camelcase(input_data)
+        assert output == expected_output
+
+    def test_get_the_recipe_schema(self):
+        validator = RecipeValidator(CaseInsensitiveDict())
+        schema = validator._get_recipe_schema()
+        assert isinstance(schema, dict)
+        assert "$schema" in schema
+
+    def test_get_recipe_properties(self):
+        validator = RecipeValidator(CaseInsensitiveDict())
+        schema = validator._get_recipe_schema()
+        properties_mapping = validator._get_recipe_schema_properties(schema)
+        assert isinstance(properties_mapping, dict)
+        assert properties_mapping["recipeformatversion"] == "RecipeFormatVersion"
+        assert properties_mapping["algorithm"] == "Algorithm"
+
+    def test_get_properties_from_dict(self):
+        validator = RecipeValidator(CaseInsensitiveDict())
+        data = {
+            'ComponentName': 'example',
+            'mAnifests': [
+                {
+                    'Platform': {'os': 'linux'},
+                    'lifecycle': {'rUn': 'python3 script.py'}
+                }
+            ]
+        }
+        mapping = validator._get_recipe_schema_properties(data)
+        assert mapping == {"componentname": "ComponentName", "manifests": "mAnifests", "os": "os",
+                           "platform": "Platform", "lifecycle": "lifecycle", "run": "rUn"}
+
 
 # =========================== Tests for recipe schema ===========================
 
@@ -448,19 +535,51 @@ def convert_keys_to_lowercase(input_dict):
         return input_dict
 
 
+# Function to recursively convert keys to predefined CamelCase
+def convert_keys_to_camelcase(input_data):
+    if isinstance(input_data, dict):
+        result_dict = {}
+        for key, value in input_data.items():
+            camelcase_key = MAPPING.get(key.lower(), key)
+            result_dict[camelcase_key] = convert_keys_to_camelcase(value)
+        return result_dict
+    elif isinstance(input_data, list):
+        result_list = []
+        for item in input_data:
+            result_list.append(convert_keys_to_camelcase(item))
+        return result_list
+    else:
+        return input_data
+
+
+MAPPING = {'recipeformatversion': 'RecipeFormatVersion', 'componentname': 'ComponentName',
+           'componentversion': 'ComponentVersion', 'componentdescription': 'ComponentDescription',
+           'componentpublisher': 'ComponentPublisher', 'componentconfiguration': 'ComponentConfiguration',
+           'defaultconfiguration': 'DefaultConfiguration', 'componentdependencies': 'ComponentDependencies',
+           'versionrequirement': 'VersionRequirement', 'dependencytype': 'DependencyType',
+           'componenttype': 'ComponentType', 'componentsource': 'ComponentSource', 'manifests': 'Manifests',
+           'name': 'Name', 'platform': 'Platform', 'os': 'os', 'architecture': 'architecture',
+           'architecture.detail': 'architecture.detail', 'key': 'key', 'lifecycle': 'Lifecycle', 'setenv': 'Setenv',
+           'install': 'install', 'script': 'Script', 'requiresprivilege': 'RequiresPrivilege', 'skipif': 'Skipif',
+           'timeout': 'Timeout', 'run': 'run', 'startup': 'startup', 'shutdown': 'shutdown', 'recover': 'recover',
+           'bootstrap': 'bootstrap', 'selections': 'Selections', 'artifacts': 'Artifacts', 'uri': 'URI',
+           'unarchive': 'Unarchive', 'permission': 'Permission', 'read': 'Read', 'execute': 'Execute',
+           'digest': 'Digest', 'algorithm': 'Algorithm'}
+
+
 # Define the test function
 @pytest.mark.parametrize("recipe_file", valid_recipe_files_json)
 def test_valid_recipes_json(recipe_file):
     with open(recipe_file, 'r') as recipe_file:
         recipe_data = json.load(recipe_file)
-        validate(instance=convert_keys_to_lowercase(recipe_data), schema=schema)
+        validate(instance=convert_keys_to_camelcase(recipe_data), schema=schema)
 
 
 @pytest.mark.parametrize("recipe_file", valid_recipe_files_yaml)
 def test_valid_recipes_yaml(recipe_file):
     with open(recipe_file, 'r') as recipe_file:
         recipe_data = yaml.safe_load(recipe_file)
-        validate(instance=convert_keys_to_lowercase(recipe_data), schema=schema)
+        validate(instance=convert_keys_to_camelcase(recipe_data), schema=schema)
 
 
 @pytest.mark.parametrize("recipe_file", invalid_recipe_files)
@@ -468,4 +587,4 @@ def test_invalid_recipes_raise_error(recipe_file):
     with open(recipe_file, 'r') as recipe_file:
         recipe_data = json.load(recipe_file)
         with pytest.raises(exceptions.ValidationError):
-            validate(instance=convert_keys_to_lowercase(recipe_data), schema=schema)
+            validate(instance=convert_keys_to_camelcase(recipe_data), schema=schema)

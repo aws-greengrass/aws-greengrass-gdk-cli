@@ -170,7 +170,6 @@ def parse_json_error(err):
             logging.info("This might be caused by one of the following reasons: ")
             for cause in causes:
                 logging.info("\t " + cause)
-            logging.info("If none of the above is the cause,")
             break
 
     logging.info("Please review the overall JSON syntax and resolve any issues.")
@@ -194,7 +193,6 @@ def parse_yaml_error(err):
             logging.info("This might be caused by one of the following reasons: ")
             for cause in causes:
                 logging.info("\t " + cause)
-            logging.info("If none of the above is the cause,")
             break
 
     logging.info("Please review the overall YAML syntax and resolve any issues.")
@@ -226,6 +224,8 @@ def parse_json_schema_errors(error):
         logging.info("To address this issue, consider the following steps: ")
         for fix in fixes:
             logging.info(f"\t {fix}")
+    logging.info(f"For more guidance, visit the Greengrass Component Recipe Reference documentation at: "
+                 f"{consts.recipe_reference_url}")
 
 
 def valid_recipe_file_size(file_path):

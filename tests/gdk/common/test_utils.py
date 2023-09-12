@@ -197,7 +197,6 @@ def test_parse_json_error(caplog):
     assert "missing opening or closing quotes for key or value" in caplog.text
     assert "unexpected characters or tokens present" in caplog.text
     assert "trailing comma after the last key-value pair" in caplog.text
-    assert "If none of the above is the cause," in caplog.text
     assert "Please review the overall JSON syntax and resolve any issues." in caplog.text
 
 
@@ -218,7 +217,6 @@ def test_parse_yaml_error(caplog):
     assert "This might be caused by one of the following reasons: " in caplog.text
     assert "missing colon in the line above" in caplog.text
     assert "missing mandatory space after the colon in the line above" in caplog.text
-    assert "If none of the above is the cause," in caplog.text
     assert "Please review the overall YAML syntax and resolve any issues." in caplog.text
 
 
@@ -275,6 +273,13 @@ def test_parse_json_schema_errors_with_unknown_validator(caplog):
     utils.parse_json_schema_errors(error)
     assert "This validation error may be due to: " not in caplog.text
     assert "To address this issue, consider the following steps: " not in caplog.text
+
+
+def test_parse_json_schema_errors_show_recipe_reference_url(caplog):
+    validator = "type"
+    error = jsonschema.exceptions.ValidationError("", validator=validator)
+    utils.parse_json_schema_errors(error)
+    assert "For more guidance, visit the Greengrass Component Recipe Reference documentation at" in caplog.text
 
 
 def test_valid_recipe_size(mocker):

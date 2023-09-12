@@ -150,7 +150,7 @@ class BuildRecipeTransformerTest(TestCase):
             transformer.transform(build_folders)
         except Exception as e:
             assert str(e) == error_messages.RECIPE_FILE_INVALID.format(config.recipe_file,
-                                                                       "'componentname' is a required property")
+                                                                       "'ComponentName' is a required property")
 
         mock_size.assert_called_once_with(config.recipe_file)
         mock_read.assert_called_once_with(config.recipe_file)

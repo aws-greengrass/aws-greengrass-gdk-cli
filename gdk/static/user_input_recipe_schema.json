@@ -2,11 +2,11 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
-        "recipeformatversion": {
+        "RecipeFormatVersion": {
             "type": "string",
             "enum": ["2020-01-25"]
         },
-        "componentname": {
+        "ComponentName": {
             "type": "string",
             "oneOf": [
                 {"pattern": "^[a-zA-Z0-9-_.]+$"},
@@ -14,7 +14,7 @@
             ],
             "maxLength": 128
         },
-        "componentversion": {
+        "ComponentVersion": {
             "type": "string",
             "maxLength": 64,
             "oneOf": [
@@ -26,49 +26,49 @@
                 }
             ]
         },
-        "componentdescription": {
+        "ComponentDescription": {
             "type": "string"
         },
-        "componentpublisher": {
+        "ComponentPublisher": {
             "type": "string"
         },
-        "componentconfiguration": {
+        "ComponentConfiguration": {
             "type": "object",
             "properties": {
-                "defaultconfiguration": {}
+                "DefaultConfiguration": {}
             }
         },
-        "componentdependencies": {
+        "ComponentDependencies": {
             "type": "object",
             "additionalProperties": {
                 "type": "object",
                 "properties": {
-                    "versionrequirement": {
+                    "VersionRequirement": {
                         "type": "string"
                     },
-                    "dependencytype": {
+                    "DependencyType": {
                         "type": "string",
                         "enum": ["SOFT", "HARD"]
                     }
                 }
             }
         },
-        "componenttype": {
+        "ComponentType": {
             "type": "string"
         },
-        "componentsource": {
+        "ComponentSource": {
             "type": "string",
             "pattern": "^arn:aws:lambda:.*$"
         },
-        "manifests": {
+        "Manifests": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "name": {
+                    "Name": {
                         "type": "string"
                     },
-                    "platform": {
+                    "Platform": {
                         "type": "object",
                         "properties": {
                             "os": {
@@ -86,10 +86,10 @@
                         },
                         "additionalProperties": false
                     },
-                    "lifecycle": {
+                    "Lifecycle": {
                         "type": "object",
                         "properties": {
-                            "setenv": {
+                            "Setenv": {
                                 "type": "object",
                                 "additionalProperties": {
                                     "type": "string"
@@ -103,20 +103,20 @@
                                     {
                                         "type": "object",
                                         "properties": {
-                                            "script": {
+                                            "Script": {
                                                 "type": "string"
                                             },
-                                            "requiresprivilege": {
+                                            "RequiresPrivilege": {
                                                 "type": "boolean"
                                             },
-                                            "skipif": {
+                                            "Skipif": {
                                                 "type": "string"
                                             },
-                                            "timeout": {
+                                            "Timeout": {
                                                 "type": "integer",
                                                 "minimum": 0
                                             },
-                                            "setenv": {
+                                            "Setenv": {
                                                 "type": "object",
                                                 "additionalProperties": {
                                                     "type": "string"
@@ -135,20 +135,20 @@
                                     {
                                         "type": "object",
                                         "properties": {
-                                            "script": {
+                                            "Script": {
                                                 "type": "string"
                                             },
-                                            "requiresprivilege": {
+                                            "RequiresPrivilege": {
                                                 "type": "boolean"
                                             },
-                                            "skipif": {
+                                            "Skipif": {
                                                 "type": "string"
                                             },
-                                            "timeout": {
+                                            "Timeout": {
                                                 "type": "integer",
                                                 "minimum": 0
                                             },
-                                            "setenv": {
+                                            "Setenv": {
                                                 "type": "object",
                                                 "additionalProperties": {
                                                     "type": "string"
@@ -167,20 +167,20 @@
                                     {
                                         "type": "object",
                                         "properties": {
-                                            "script": {
+                                            "Script": {
                                                 "type": "string"
                                             },
-                                            "requiresprivilege": {
+                                            "RequiresPrivilege": {
                                                 "type": "boolean"
                                             },
-                                            "skipif": {
+                                            "Skipif": {
                                                 "type": "string"
                                             },
-                                            "timeout": {
+                                            "Timeout": {
                                                 "type": "integer",
                                                 "minimum": 0
                                             },
-                                            "setenv": {
+                                            "Setenv": {
                                                 "type": "object",
                                                 "additionalProperties": {
                                                     "type": "string"
@@ -199,20 +199,20 @@
                                     {
                                         "type": "object",
                                         "properties": {
-                                            "script": {
+                                            "Script": {
                                                 "type": "string"
                                             },
-                                            "requiresprivilege": {
+                                            "RequiresPrivilege": {
                                                 "type": "boolean"
                                             },
-                                            "skipif": {
+                                            "Skipif": {
                                                 "type": "string"
                                             },
-                                            "timeout": {
+                                            "Timeout": {
                                                 "type": "integer",
                                                 "minimum": 0
                                             },
-                                            "setenv": {
+                                            "Setenv": {
                                                 "type": "object",
                                                 "additionalProperties": {
                                                     "type": "string"
@@ -231,20 +231,20 @@
                                     {
                                         "type": "object",
                                         "properties": {
-                                            "script": {
+                                            "Script": {
                                                 "type": "string"
                                             },
-                                            "requiresprivilege": {
+                                            "RequiresPrivilege": {
                                                 "type": "boolean"
                                             },
-                                            "skipif": {
+                                            "Skipif": {
                                                 "type": "string"
                                             },
-                                            "timeout": {
+                                            "Timeout": {
                                                 "type": "integer",
                                                 "minimum": 0
                                             },
-                                            "setenv": {
+                                            "Setenv": {
                                                 "type": "object",
                                                 "additionalProperties": {
                                                     "type": "string"
@@ -263,17 +263,17 @@
                                     {
                                         "type": "object",
                                         "properties": {
-                                            "script": {
+                                            "Script": {
                                                 "type": "string"
                                             },
-                                            "requiresprivilege": {
+                                            "RequiresPrivilege": {
                                                 "type": "boolean"
                                             },
-                                            "timeout": {
+                                            "Timeout": {
                                                 "type": "integer",
                                                 "minimum": 0
                                             },
-                                            "setenv": {
+                                            "Setenv": {
                                                 "type": "object",
                                                 "additionalProperties": {
                                                     "type": "string"
@@ -287,31 +287,31 @@
                         },
                         "additionalProperties": false
                     },
-                    "selections": {
+                    "Selections": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
                     },
-                    "artifacts": {
+                    "Artifacts": {
                         "type": "array",
                         "items": {
                             "type": "object",
                             "properties": {
-                                "uri": {
+                                "URI": {
                                     "type": "string"
                                 },
-                                "unarchive": {
+                                "Unarchive": {
                                     "type": "string",
                                     "enum": [
                                         "NONE",
                                         "ZIP"
                                     ]
                                 },
-                                "permission": {
+                                "Permission": {
                                     "type": "object",
                                     "properties": {
-                                        "read": {
+                                        "Read": {
                                             "type": "string",
                                             "enum": [
                                                 "NONE",
@@ -319,7 +319,7 @@
                                                 "ALL"
                                             ]
                                         },
-                                        "execute": {
+                                        "Execute": {
                                             "type": "string",
                                             "enum": [
                                                 "NONE",
@@ -330,10 +330,10 @@
                                     },
                                     "additionalProperties": false
                                 },
-                                "digest": {
+                                "Digest": {
                                     "type": "string"
                                 },
-                                "algorithm": {
+                                "Algorithm": {
                                     "type": "string"
                                 }
                             },
@@ -344,10 +344,10 @@
                 "additionalProperties": false
             }
         },
-        "lifecycle": {
+        "Lifecycle": {
             "type": "object"
         }
     },
-    "required": ["recipeformatversion", "componentname"],
+    "required": ["RecipeFormatVersion", "ComponentName"],
     "additionalProperties": false
 }
