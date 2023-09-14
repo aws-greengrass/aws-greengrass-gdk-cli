@@ -8,14 +8,14 @@ class RunConfiguration(GDKProject):
     def __init__(self, _args) -> None:
         super().__init__()
         self._args = _args
-        self._test_options_from_config = self.test_config.otf_options
+        self._test_options_from_config = self.test_config.gtf_options
         self._default_tags = "Sample"
         self.default_nucleus_archive_path = self.gg_build_dir.joinpath("greengrass-nucleus-latest.zip").resolve()
         self.options = self._get_options()
 
     def _get_options_from_config(self) -> dict:
         """
-        Read otf_options provided in the gdk-config.json. Validate and update only `tags` and `ggc-archive` for now as these
+        Read gtf_options provided in the gdk-config.json. Validate and update only `tags` and `ggc-archive` for now as these
         are required options. Use rest of the options as they're provided in the test config.
         """
         options = self._test_options_from_config.copy()
@@ -51,7 +51,7 @@ class RunConfiguration(GDKProject):
         return tags
 
     def _get_options(self) -> dict:
-        _options_args = self._args.get("otf_options", "")
+        _options_args = self._args.get("gtf_options", "")
         _options_from_config = self._get_options_from_config()
         if not _options_args:
             return _options_from_config

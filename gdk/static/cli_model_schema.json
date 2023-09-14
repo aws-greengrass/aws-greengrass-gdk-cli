@@ -279,10 +279,10 @@
                 "arguments": {
                     "description": "List of all the arguments that can be passed with the test-e2e init command.",
                     "required": [
-                        "otf_version"
+                        "gtf_version"
                     ],
                     "properties": {
-                        "otf_version": {
+                        "gtf_version": {
                             "$ref": "#/$defs/argument"
                         }
                     }
@@ -303,10 +303,10 @@
                 "arguments": {
                     "description": "List of all the arguments that can be passed with the test-e2e run command.",
                     "required": [
-                        "otf_options"
+                        "gtf_options"
                     ],
                     "properties": {
-                        "otf_options": {
+                        "gtf_options": {
                             "$ref": "#/$defs/argument"
                         }
                     }

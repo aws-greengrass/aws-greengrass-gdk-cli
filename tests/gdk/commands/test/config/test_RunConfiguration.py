@@ -35,14 +35,14 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
+                    "gtf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
                 }
             }
         )
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
 
-        run_config = RunConfiguration({"otf_options": '{"tags": "some-other-tags"}'})
+        run_config = RunConfiguration({"gtf_options": '{"tags": "some-other-tags"}'})
 
         assert run_config.options.get("tags") == "some-other-tags"
         assert (
@@ -56,7 +56,7 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_options": {
+                    "gtf_options": {
                         "tags": "some-tags",
                         "ggc-install-root": "some-install-root",
                         "gg-runtime": "some-runtime",
@@ -68,7 +68,7 @@ class RunConfigurationUnitTest(TestCase):
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
 
         run_config = RunConfiguration(
-            {"otf_options": '{"tags": "tags-from-args", "ggc-install-root": "install-root-from-args"}'}
+            {"gtf_options": '{"tags": "tags-from-args", "ggc-install-root": "install-root-from-args"}'}
         )
 
         assert run_config.options.get("tags") == "tags-from-args"
@@ -84,7 +84,7 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_options": {
+                    "gtf_options": {
                         "tags": "some-tags",
                         "ggc-install-root": "some-install-root",
                         "gg-runtime": "some-runtime",
@@ -99,7 +99,7 @@ class RunConfigurationUnitTest(TestCase):
             "builtins.open",
             mock.mock_open(read_data='{"tags": "tags-from-args", "ggc-install-root": "install-root-from-args"}'),
         ) as mock_file:
-            run_config = RunConfiguration({"otf_options": "/path/to/otf_options.json"})
+            run_config = RunConfiguration({"gtf_options": "/path/to/gtf_options.json"})
             assert mock_file.return_value.read.call_count == 1
 
         assert run_config.options.get("tags") == "tags-from-args"
@@ -115,7 +115,7 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
+                    "gtf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
                 }
             }
         )
@@ -136,7 +136,7 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_options": {"tags": "", "ggc-version": "1.0.0"},
+                    "gtf_options": {"tags": "", "ggc-version": "1.0.0"},
                 }
             }
         )
@@ -154,7 +154,7 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_options": {"ggc-archive": "some-path.zip"},
+                    "gtf_options": {"ggc-archive": "some-path.zip"},
                 }
             }
         )
@@ -173,7 +173,7 @@ class RunConfigurationUnitTest(TestCase):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_options": {"ggc-archive": "some-path.zip"},
+                    "gtf_options": {"ggc-archive": "some-path.zip"},
                 }
             }
         )

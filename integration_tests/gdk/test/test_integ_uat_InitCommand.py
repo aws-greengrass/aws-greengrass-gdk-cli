@@ -79,34 +79,34 @@ class E2ETestInitCommandTest(TestCase):
         # existing consts.E2E_TESTS_DIR_NAME folder is not overridden
         e2e_test_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
         assert e2e_test_folder.exists()
-        # OTF version is updated in pom.xml
+        # GTF version is updated in pom.xml
         with open(e2e_test_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
             content = f.read()
             assert "GDK_TESTING_VERSION" not in content
-            # OTF version set in config file
+            # GTF version set in config file
             assert "<otf.version>1.2.0-SNAPSHOT</otf.version>" in content
 
-    def test_GIVEN_gdk_project_WHEN_test_init_with_otf_version_arg_THEN_version_is_arg_is_used(self):
+    def test_GIVEN_gdk_project_WHEN_test_init_with_gtf_version_arg_THEN_version_is_arg_is_used(self):
         self.setup_test_data_config("config.json")
-        InitCommand({"otf_version": "1.0.0"}).run()
+        InitCommand({"gtf_version": "1.0.0"}).run()
         assert self.mock_template_download.call_args_list == [call(self.url_for_template, stream=True, timeout=30)]
 
         # existing consts.E2E_TESTS_DIR_NAME folder is not overridden
         e2e_test_folder = Path(self.tmpdir).joinpath(consts.E2E_TESTS_DIR_NAME)
         assert e2e_test_folder.exists()
-        # OTF version is updated in pom.xml
+        # GTF version is updated in pom.xml
         with open(e2e_test_folder.joinpath("pom.xml"), "r", encoding="utf-8") as f:
             content = f.read()
             assert "GDK_TESTING_VERSION" not in content
-            # OTF version set in config file
+            # GTF version set in config file
             assert "<otf.version>1.0.0-SNAPSHOT</otf.version>" in content
 
-    def test_GIVEN_gdk_project_WHEN_test_init_with_otf_version_and_otf_version_not_exists_THEN_raise_exc(self):
+    def test_GIVEN_gdk_project_WHEN_test_init_with_gtf_version_and_gtf_version_not_exists_THEN_raise_exc(self):
         self.setup_test_data_config("config.json")
 
         with pytest.raises(ValueError) as e:
-            InitCommand({"otf_version": "10.0.0"}).run()
-        assert "The specified Open Test Framework (OTF) version '10.0.0' does not exist." in e.value.args[0]
+            InitCommand({"gtf_version": "10.0.0"}).run()
+        assert "The specified Greengrass Test Framework (GTF) version '10.0.0' does not exist." in e.value.args[0]
 
         assert not self.mock_template_download.called
 

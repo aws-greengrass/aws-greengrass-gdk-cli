@@ -89,8 +89,8 @@ class Prompter:
 
     def retry_messages(self, field, attempt, max_attempts):
         link = "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
-        default_message = f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again.\nPlease vist: {link}"
-        custom_message = f"Attempt {attempt}/{max_attempts}: Must Specify a custum build command.\nPlease vist: {link}"
+        default_message = f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again.\nPlease visit: {link}"
+        custom_message = f"Attempt {attempt}/{max_attempts}: Must Specify a custom build command.\nPlease visit: {link}"
         if attempt < max_attempts:
             if field == ConfigEnum.CUSTOM_BUILD_COMMAND:
                 logging.warning(custom_message)
@@ -112,7 +112,7 @@ class Prompter:
         """
         self.parser.add_argument(
             f"--change_{field_key}",
-            help=f"Change componenet {field_key} configurations",
+            help=f"Change component {field_key} configurations",
         )
 
         for _ in range(max_attempts):
@@ -129,7 +129,7 @@ class Prompter:
                 return True
             elif response in {"n", "no"}:
                 return False
-            logging.warning("Your input was invalid response. Please respond again.")
+            logging.warning("Your input was an invalid response. Please respond again.")
         return False
 
     def interactive_prompt(self, field, value, require):

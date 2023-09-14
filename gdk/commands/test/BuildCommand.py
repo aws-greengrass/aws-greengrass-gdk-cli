@@ -117,7 +117,7 @@ class BuildCommand(Command):
                     continue
                 artifact_path = self._gdk_project.gg_build_component_artifacts_dir.joinpath(Path(artifact_uri).name).resolve()
                 if not artifact_path.exists():
-                    # TODO: Currently, OTF supports artifacts at local file or class path only.
+                    # TODO: Currently, GTF supports artifacts at local file or class path only.
                     # Raise an exception if the artifact is not found.
                     logging.warning(
                         "Could not update the artifact URI %s as it does not exist in the build directory", artifact_uri

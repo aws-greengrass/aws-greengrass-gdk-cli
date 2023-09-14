@@ -27,13 +27,13 @@ class InitConfigurationUnitTest(TestCase):
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         init_config = InitConfiguration({})
-        assert init_config.otf_version == "1.1.0"
+        assert init_config.gtf_version == "1.1.0"
 
-    def test_GIVEN_gdk_config_with_otf_version_WHEN_test_init_THEN_use_version_from_config(self):
+    def test_GIVEN_gdk_config_with_gtf_version_WHEN_test_init_THEN_use_version_from_config(self):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_version": "1.2.3",
+                    "gtf_version": "1.2.3",
                 }
             }
         )
@@ -41,13 +41,13 @@ class InitConfigurationUnitTest(TestCase):
 
         init_config = InitConfiguration({})
 
-        assert init_config.otf_version == "1.2.3"
+        assert init_config.gtf_version == "1.2.3"
 
-    def test_GIVEN_gdk_config_with_invalid_otf_version_WHEN_test_init_THEN_raise_exc(self):
+    def test_GIVEN_gdk_config_with_invalid_gtf_version_WHEN_test_init_THEN_raise_exc(self):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_version": "1.a.b",
+                    "gtf_version": "1.a.b",
                 }
             }
         )
@@ -57,47 +57,47 @@ class InitConfigurationUnitTest(TestCase):
             InitConfiguration({})
 
         assert (
-            "OTF version 1.a.b is not a valid semver. Please specify a valid OTF version in the GDK config or in the command"
+            "GTF version 1.a.b is not a valid semver. Please specify a valid GTF version in the GDK config or in the command"
             " argument."
             in str(e.value)
         )
 
-    def test_GIVEN_gdk_config_WHEN_test_init_with_otf_version_arg_THEN_use_version_from_arg(self):
+    def test_GIVEN_gdk_config_WHEN_test_init_with_gtf_version_arg_THEN_use_version_from_arg(self):
         config = self._get_config()
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
-        init_config = InitConfiguration({"otf_version": "1.1.0+12-build"})
-        assert init_config.otf_version == "1.1.0+12-build"
+        init_config = InitConfiguration({"gtf_version": "1.1.0+12-build"})
+        assert init_config.gtf_version == "1.1.0+12-build"
 
-    def test_GIVEN_gdk_config_WHEN_test_init_with_invalid_otf_version_arg_THEN_raise_exc(self):
+    def test_GIVEN_gdk_config_WHEN_test_init_with_invalid_gtf_version_arg_THEN_raise_exc(self):
         config = self._get_config()
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         with pytest.raises(ValueError) as e:
-            InitConfiguration({"otf_version": "1.a.b"})
+            InitConfiguration({"gtf_version": "1.a.b"})
 
         assert (
-            "OTF version 1.a.b is not a valid semver. Please specify a valid OTF version in the GDK config or in the command"
+            "GTF version 1.a.b is not a valid semver. Please specify a valid GTF version in the GDK config or in the command"
             " argument."
             in str(e.value)
         )
 
-    def test_GIVEN_gdk_config_with_otf_version_WHEN_test_init_with_otf_version_arg_THEN_use_version_from_arg(self):
+    def test_GIVEN_gdk_config_with_gtf_version_WHEN_test_init_with_gtf_version_arg_THEN_use_version_from_arg(self):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_version": "1.a.b",
+                    "gtf_version": "1.a.b",
                 }
             }
         )
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
-        init_config = InitConfiguration({"otf_version": "1.2.3"})
-        assert init_config.otf_version == "1.2.3"
+        init_config = InitConfiguration({"gtf_version": "1.2.3"})
+        assert init_config.gtf_version == "1.2.3"
 
-    def test_GIVEN_gdk_config_with_otf_version_and_version_not_exits_and_WHEN_test_init_THEN_raise_ex(self):
+    def test_GIVEN_gdk_config_with_gtf_version_and_version_not_exits_and_WHEN_test_init_THEN_raise_ex(self):
         config = self._get_config(
             {
                 "test-e2e": {
-                    "otf_version": "1.a.b",
+                    "gtf_version": "1.a.b",
                 }
             }
         )
@@ -107,10 +107,10 @@ class InitConfigurationUnitTest(TestCase):
         self.mocker.patch("requests.head", return_value=response)
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         with pytest.raises(ValueError) as e:
-            InitConfiguration({"otf_version": "1.2.3"})
+            InitConfiguration({"gtf_version": "1.2.3"})
         assert (
-            "The specified Open Test Framework (OTF) version '1.2.3' does not exist. Please provide a valid OTF version from"
-            " the releases here:"
+            "The specified Greengrass Test Framework (GTF) version '1.2.3' does not exist. Please provide a valid GTF "
+            "version from the releases here:"
             in e.value.args[0]
         )
 
