@@ -43,6 +43,31 @@ class InitConfigurationUnitTest(TestCase):
 
         assert init_config.otf_version == "1.2.3"
 
+    def test_GIVEN_gdk_config_with_gtf_version_WHEN_test_init_THEN_use_version_from_config(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "gtf_version": "1.2.3",
+                    "otf_version": "1.3.4"
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        init_config = InitConfiguration({})
+        assert init_config.otf_version == "1.2.3"
+
+    def test_GIVEN_gdk_config_with_gtf_and_otf_version_WHEN_test_init_THEN_use_gtf_version_from_config(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "gtf_version": "1.2.3",
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        init_config = InitConfiguration({})
+        assert init_config.otf_version == "1.2.3"
+
     def test_GIVEN_gdk_config_with_invalid_otf_version_WHEN_test_init_THEN_raise_exc(self):
         config = self._get_config(
             {

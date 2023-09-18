@@ -1,0 +1,22 @@
+{
+  "component": {
+    "abc": {
+      "author": "abc",
+      "version": "NEXT_PATCH",
+      "build": {
+        "build_system": "zip"
+      },
+      "publish": {
+        "bucket": "default",
+        "region": "us-east-1"
+      }
+    }
+  },
+  "test-e2e": {
+    "gtf_version": "1.2.0",
+    "gtf_options": {
+      "tags": "testtags"
+    }
+  },
+  "gdk_version": "1.0.0"
+}

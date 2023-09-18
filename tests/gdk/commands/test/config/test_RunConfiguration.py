@@ -52,6 +52,20 @@ class RunConfigurationUnitTest(TestCase):
 
         assert len(run_config.options) == 3
 
+    def test_GIVEN_gdk_config_with_gtf_and_otf_options_WHEN_run_without_args_THEN_use_gtf_options(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "gtf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
+                    "otf_options": {"tags": "some-other-tags", "ggc-version": "1.1.0"},
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        run_config = RunConfiguration({})
+        assert run_config.options.get("tags") == "some-tags"
+        assert run_config.options.get("ggc-version") == "1.0.0"
+
     def test_GIVEN_gdk_config_with_three_options_WHEN_run_with_two_overriding_args_THEN_merge_args(self):
         config = self._get_config(
             {

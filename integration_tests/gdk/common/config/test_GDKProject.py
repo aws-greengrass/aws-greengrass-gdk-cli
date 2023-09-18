@@ -41,7 +41,7 @@ class GDKProjectTest(TestCase):
         assert c_dir.joinpath("greengrass-build/artifacts") == gdk_config.gg_build_artifacts_dir
         assert gdk_config.recipe_file == Path(".").joinpath("recipe.yaml").resolve()
 
-    def test_GIVEN_project_with_json_recipet_WHEN_read_test_config_THEN_read_default_values(self):
+    def test_GIVEN_project_with_json_recipe_WHEN_read_test_config_THEN_read_default_values(self):
         shutil.copy(
             self.c_dir.joinpath("integration_tests/test_data/config").joinpath("config.json").resolve(),
             self.tmpdir.joinpath("gdk-config.json"),
@@ -57,6 +57,28 @@ class GDKProjectTest(TestCase):
         assert self.tmpdir.joinpath("greengrass-build/recipes") == gdk_config.gg_build_recipes_dir
         assert self.tmpdir.joinpath("greengrass-build/artifacts") == gdk_config.gg_build_artifacts_dir
         assert gdk_config.recipe_file == self.tmpdir.joinpath("recipe.json").resolve()
+
+    def test_GIVEN_config_file_with_gtf_test_keys_WHEN_read_test_config_THEN_use_gtf_keys(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config").joinpath("config_gtf.json").resolve(),
+            self.tmpdir.joinpath("gdk-config.json"),
+        )
+        recipe_file = self.tmpdir.joinpath("recipe.json")
+        recipe_file.touch()
+        gdk_config = GDKProject()
+        assert gdk_config.test_config.otf_version == "1.2.0"
+        assert gdk_config.test_config.otf_options == {"tags": "testtags"}
+
+    def test_GIVEN_config_file_with_both_gtf_and_otf_test_keys_WHEN_read_test_config_THEN_use_gtf_keys(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config").joinpath("config_gtf_and_otf.json").resolve(),
+            self.tmpdir.joinpath("gdk-config.json"),
+        )
+        recipe_file = self.tmpdir.joinpath("recipe.json")
+        recipe_file.touch()
+        gdk_config = GDKProject()
+        assert gdk_config.test_config.otf_version == "1.0.0"
+        assert gdk_config.test_config.otf_options == {"tags": "testtags"}
 
     def test_GIVEN_project_WHEN_recipe_not_exists_THEN_raise_exception(self):
         # neither recipe.json nor recipe.yaml exists
