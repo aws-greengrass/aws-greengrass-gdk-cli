@@ -278,9 +278,13 @@
             "properties": {
                 "arguments": {
                     "description": "List of all the arguments that can be passed with the test-e2e init command.",
-                    "required": [
-                        "otf_version",
-                        "gtf_version"
+                    "anyOf": [
+                        {
+                            "required": ["otf_version"]
+                        },
+                        {
+                            "required": ["gtf_version"]
+                        }
                     ],
                     "properties": {
                         "otf_version": {
@@ -306,9 +310,13 @@
             "properties": {
                 "arguments": {
                     "description": "List of all the arguments that can be passed with the test-e2e run command.",
-                    "required": [
-                        "otf_options",
-                        "gtf_options"
+                    "anyOf": [
+                        {
+                            "required": ["otf_options"]
+                        },
+                        {
+                            "required": ["gtf_options"]
+                        }
                     ],
                     "properties": {
                         "otf_options": {
