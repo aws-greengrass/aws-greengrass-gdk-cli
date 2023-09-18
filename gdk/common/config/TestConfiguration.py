@@ -14,5 +14,9 @@ class TestConfiguration:
         self.test_build_system = test_build_config.get("build_system", self.test_build_system)
 
     def _set_otf_config(self, test_config):
-        self.otf_version = test_config.get("otf_version", self.otf_version)
-        self.otf_options = test_config.get("otf_options", {})
+        self.otf_version = (test_config.get("gtf_version")
+                            if "gtf_version" in test_config
+                            else test_config.get("otf_version", self.otf_version))
+        self.otf_options = (test_config.get("gtf_options")
+                            if "gtf_options" in test_config
+                            else test_config.get("otf_options", {}))
