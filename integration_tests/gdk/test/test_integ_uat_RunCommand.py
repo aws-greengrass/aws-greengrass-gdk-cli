@@ -57,7 +57,7 @@ class E2ETestRunCommandTest(TestCase):
         # When
         run_command.run()
 
-        # # Then
+        # Then
         assert not url_downloader.called
         assert run_jar.called
 
@@ -169,7 +169,7 @@ class E2ETestRunCommandTest(TestCase):
         # When
         run_command.run()
 
-        # Theb
+        # Then
         assert len(spy_run.call_args_list) == 2
 
         _first_call = spy_run.call_args_list[0]

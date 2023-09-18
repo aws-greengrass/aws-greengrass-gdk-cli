@@ -43,7 +43,7 @@ class InitConfigurationUnitTest(TestCase):
 
         assert init_config.otf_version == "1.2.3"
 
-    def test_GIVEN_gdk_config_with_gtf_version_WHEN_test_init_THEN_use_version_from_config(self):
+    def test_GIVEN_gdk_config_with_gtf_and_otf_version_WHEN_test_init_THEN_use_version_from_config(self):
         config = self._get_config(
             {
                 "test-e2e": {
@@ -56,7 +56,7 @@ class InitConfigurationUnitTest(TestCase):
         init_config = InitConfiguration({})
         assert init_config.otf_version == "1.2.3"
 
-    def test_GIVEN_gdk_config_with_gtf_and_otf_version_WHEN_test_init_THEN_use_gtf_version_from_config(self):
+    def test_GIVEN_gdk_config_with_gtf_version_WHEN_test_init_THEN_use_gtf_version_from_config(self):
         config = self._get_config(
             {
                 "test-e2e": {
@@ -67,6 +67,42 @@ class InitConfigurationUnitTest(TestCase):
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         init_config = InitConfiguration({})
         assert init_config.otf_version == "1.2.3"
+
+    def test_GIVEN_gdk_config_with_gtf_version_WHEN_test_init_with_otf_version_arg_THEN_use_arg_version(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "gtf_version": "1.1.0",
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        init_config = InitConfiguration({"otf_version": "1.2.3"})
+        assert init_config.otf_version == "1.2.3"
+
+    def test_GIVEN_gdk_config_with_gtf_version_WHEN_test_init_with_gtf_version_arg_THEN_use_arg_version(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "gtf_version": "1.1.0",
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        init_config = InitConfiguration({"gtf_version": "1.2.3"})
+        assert init_config.otf_version == "1.2.3"
+
+    def test_GIVEN_gdk_config_with_version_WHEN_test_init_with_gtf_and_otf_version_arg_THEN_use_gtf_arg_version(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "gtf_version": "1.1.0",
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        init_config = InitConfiguration({"otf_version": "1.2.3", "gtf_version": "1.0.0"})
+        assert init_config.otf_version == "1.0.0"
 
     def test_GIVEN_gdk_config_with_invalid_otf_version_WHEN_test_init_THEN_raise_exc(self):
         config = self._get_config(

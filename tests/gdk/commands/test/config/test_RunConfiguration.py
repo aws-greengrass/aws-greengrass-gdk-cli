@@ -52,6 +52,35 @@ class RunConfigurationUnitTest(TestCase):
 
         assert len(run_config.options) == 3
 
+    def test_GIVEN_gdk_config_with_tags_WHEN_run_with_gtf_tag_args_THEN_use_tags_from_args(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "otf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        run_config = RunConfiguration({"gtf_options": '{"tags": "some-other-tags"}'})
+        assert run_config.options.get("tags") == "some-other-tags"
+
+    def test_GIVEN_gdk_config_with_tags_WHEN_run_with_gtf_and_otf_tag_args_THEN_use_gtf_tags_from_args(self):
+        config = self._get_config(
+            {
+                "test-e2e": {
+                    "otf_options": {"tags": "some-tags", "ggc-version": "1.0.0"},
+                }
+            }
+        )
+        self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
+        run_config = RunConfiguration(
+            {
+                "gtf_options": '{"tags": "some-other-tags"}',
+                "otf_options": '{"tags": "another-tag"}'
+            }
+        )
+        assert run_config.options.get("tags") == "some-other-tags"
+
     def test_GIVEN_gdk_config_with_gtf_and_otf_options_WHEN_run_without_args_THEN_use_gtf_options(self):
         config = self._get_config(
             {

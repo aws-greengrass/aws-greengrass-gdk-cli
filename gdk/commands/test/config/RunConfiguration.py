@@ -51,7 +51,9 @@ class RunConfiguration(GDKProject):
         return tags
 
     def _get_options(self) -> dict:
-        _options_args = self._args.get("otf_options", "")
+        _options_args = (self._args.get("gtf_options")
+                        if "gtf_options" in self._args
+                        else self._args.get("otf_options", ""))
         _options_from_config = self._get_options_from_config()
         if not _options_args:
             return _options_from_config
