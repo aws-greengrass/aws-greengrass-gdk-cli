@@ -13,6 +13,10 @@ arg_parameters = [
     "metavar",
     "dest",
 ]
+
+# MAX RECIPE FILE SIZE
+MAX_RECIPE_FILE_SIZE_BYTES = 16000
+
 # FILES
 config_schema_file = "config_schema.json"
 cli_model_file = "cli_model.json"

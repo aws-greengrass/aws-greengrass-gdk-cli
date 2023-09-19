@@ -129,6 +129,16 @@ class ComponentBuildCommandIntegTest(TestCase):
         assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/").exists()
         assert not build_recipe_file.exists()
 
+    def test_GIVEN_gdk_project_with_oversized_recipe_file_WHEN_build_THEN_raise_exception(self):
+        self.zip_test_data_oversized_recipe()
+        bc = BuildCommand({})
+        with pytest.raises(Exception) as e:
+            bc.run()
+        assert "Please make sure it does not exceed 16kB (16000 bytes) and try again" in str(e)
+
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert not build_recipe_file.exists()
+
     def zip_test_data(self):
         shutil.copy(
             self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
@@ -136,6 +146,24 @@ class ComponentBuildCommandIntegTest(TestCase):
 
         shutil.copy(
             self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
+        with open(self.tmpdir.joinpath("recipe.yaml"), "r") as f:
+            recipe = f.read()
+            recipe = recipe.replace("$GG_ARTIFACT", self.tmpdir.name + ".zip")
+
+        with open(self.tmpdir.joinpath("recipe.yaml"), "w") as f:
+            f.write(recipe)
+
+        self.tmpdir.joinpath("hello_world.py").touch()
+
+    def zip_test_data_oversized_recipe(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
+        )
+
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe_really_big.yaml"),
             self.tmpdir.joinpath("recipe.yaml"),
         )
         with open(self.tmpdir.joinpath("recipe.yaml"), "r") as f:

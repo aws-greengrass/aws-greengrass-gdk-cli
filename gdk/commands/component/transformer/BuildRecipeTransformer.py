@@ -7,6 +7,7 @@ import gdk.common.consts as consts
 import gdk.common.utils as utils
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 from gdk.aws_clients.S3Client import S3Client
+from gdk.common.exceptions.error_messages import RECIPE_SIZE_INVALID
 
 
 class BuildRecipeTransformer:
@@ -22,6 +23,13 @@ class BuildRecipeTransformer:
         return self._s3_client
 
     def transform(self, build_folders):
+        logging.info(f"Validating the file size of recipe {self.project_config.recipe_file}")
+        # Validate the size of the recipe file before processing its content.
+        valid_file_size, input_recipe_file_size = utils.is_recipe_size_valid(self.project_config.recipe_file)
+        if not valid_file_size:
+            logging.error(RECIPE_SIZE_INVALID.format(self.project_config.recipe_file, input_recipe_file_size))
+            raise Exception(RECIPE_SIZE_INVALID.format(self.project_config.recipe_file, input_recipe_file_size))
+
         component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)
         self.update_component_recipe_file(component_recipe, build_folders)
         self.create_build_recipe_file(component_recipe)

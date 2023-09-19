@@ -8,6 +8,14 @@ PROJECT_RECIPE_FILE_NOT_FOUND = (
 )
 PROJECT_CONFIG_FILE_INVALID = "Project configuration file '{}' is invalid. Please correct its format and try again. Error: {} "
 CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
+RECIPE_SIZE_INVALID = (
+    "The input recipe file '{}' has an invalid size of {} bytes. Please make sure it does not exceed 16kB"
+    " (16000 bytes) and try again."
+)
+BUILT_RECIPE_SIZE_INVALID = (
+    "The build updated recipe file is too big with a size of {} bytes. Component recipes must be 16 kB"
+    " or smaller. Reduce the size of the recipe and re-build."
+)
 
 # CLI MODEL
 INVALID_CLI_MODEL = "CLI model is invalid. Please provide a valid model to create the CLI parser."

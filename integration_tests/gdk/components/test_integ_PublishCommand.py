@@ -255,6 +255,35 @@ class ComponentPublishCommandIntegTest(TestCase):
             PublishCommand({"options": str(self.tmpdir.joinpath("options.json").resolve())})
         assert "JSON string is incorrectly formatted." in e.value.args[0]
 
+    def test_GIVEN_built_artifacts_WHEN_publish_with_oversized_recipe_THEN_raise_exception(self):
+        self.zip_test_data_oversized_recipe()
+
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/").mkdir(parents=True, exist_ok=True)
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/hello_world.py").touch()
+        self.mocker.patch(
+            "gdk.common.configuration.get_configuration",
+            return_value={
+                "component": {
+                    "abc": {
+                        "author": "author",
+                        "version": "2.0.0",
+                        "build": {"build_system": "zip"},
+                        "publish": {"bucket": "default", "region": "us-west-2"},
+                    }
+                }
+            },
+        )
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/somefile").touch()
+        account_num = "123456789012"
+        self.sts_client_stub.add_response("get_caller_identity", {"Account": account_num}, {})
+        self.mocker.patch.object(self.s3_client, "get_bucket_location", return_value={"LocationConstraint": "us-west-2"})
+        self.mocker.patch.object(self.s3_client, "upload_file", return_value=None)
+
+        with pytest.raises(Exception) as e:
+            pc = PublishCommand({})
+            pc.run()
+        assert "Component recipes must be 16 kB or smaller. Reduce the size of the recipe and re-build." in str(e)
+
     def zip_test_data(self):
         shutil.copy(
             self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
@@ -262,6 +291,27 @@ class ComponentPublishCommandIntegTest(TestCase):
 
         shutil.copy(
             self.c_dir.joinpath("integration_tests/test_data/recipes/build_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
+
+        content = CaseInsensitiveRecipeFile().read(self.tmpdir.joinpath("recipe.yaml"))
+        content.update_value("componentName", "abc")
+        CaseInsensitiveRecipeFile().write(self.tmpdir.joinpath("recipe.yaml"), content)
+
+        self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/").mkdir(parents=True, exist_ok=True)
+        self.tmpdir.joinpath("greengrass-build/recipes/").mkdir(parents=True, exist_ok=True)
+        shutil.copy(
+            self.tmpdir.joinpath("recipe.yaml"),
+            self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml"),
+        )
+
+    def zip_test_data_oversized_recipe(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
+        )
+
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/build_recipe_really_big.yaml"),
             self.tmpdir.joinpath("recipe.yaml"),
         )
 

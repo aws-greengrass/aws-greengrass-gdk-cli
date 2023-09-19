@@ -5,6 +5,7 @@ from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiv
 
 import gdk.common.consts as consts
 import gdk.common.utils as utils
+from gdk.common.exceptions.error_messages import BUILT_RECIPE_SIZE_INVALID
 
 
 class PublishRecipeTransformer:
@@ -82,5 +83,14 @@ class PublishRecipeTransformer:
             None
 
         """
+
         logging.debug("Creating component recipe at '%s'.", self.project_config.publish_recipe_file)
         CaseInsensitiveRecipeFile().write(self.project_config.publish_recipe_file, parsed_component_recipe)
+
+        recipe_path = Path(self.project_config.gg_build_recipes_dir).joinpath(self.project_config.publish_recipe_file)
+        logging.info(f"Validating the file size of the built recipe {recipe_path}")
+        # Validate the size of the created recipe file so we can raise an exception if it is too big
+        valid_file_size, input_recipe_file_size = utils.is_recipe_size_valid(recipe_path)
+        if not valid_file_size:
+            logging.error(BUILT_RECIPE_SIZE_INVALID.format(input_recipe_file_size))
+            raise Exception(BUILT_RECIPE_SIZE_INVALID.format(input_recipe_file_size))
