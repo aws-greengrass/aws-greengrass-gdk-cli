@@ -134,12 +134,19 @@
                     "init": {
                         "help": "Initialize GDK project with user acceptance testing module",
                         "arguments": {
+                            "gtf_version": {
+                                "name": [
+                                    "-gv",
+                                    "--gtf-version"
+                                ],
+                                "help": "Version of the testing jar."
+                            },
                             "otf_version": {
                                 "name": [
                                     "-ov",
                                     "--otf-version"
                                 ],
-                                "help": "Version of the testing jar."
+                                "help": "DEPRECATED: This argument has the same functionality as --gtf-version which will take priority over this one."
                             }
                         }
                     },
@@ -148,12 +155,19 @@
                     },
                     "run": {
                         "arguments": {
+                            "gtf_options": {
+                                "name": [
+                                    "-go",
+                                    "--gtf-options"
+                                ],
+                                "help": "GTF configuration options used when running the E2E tests. This argument needs to be a valid json string or file path to a JSON file containing the config options. This argument overrides the options provided in the gdk configuration."
+                            },
                             "otf_options": {
                                 "name": [
                                     "-oo",
                                     "--otf-options"
                                 ],
-                                "help": "OTF configuration options used when running the E2E tests. This argument needs to be a valid json string or file path to a JSON file containing the config options. This argument overrides the options provided in the gdk configuration."
+                                "help": "DEPRECATED: This argument has the same functionality as --gtf-options which will take priority over this one."
                             }
                         },
                         "help": "Run user acceptance tests on GreengrassV2 components."
