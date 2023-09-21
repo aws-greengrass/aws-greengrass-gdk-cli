@@ -1,8 +1,10 @@
 import json
+import logging
 from pathlib import Path
 
 import yaml
 from requests.structures import CaseInsensitiveDict as _CaseInsensitiveDict
+from gdk.common.consts import DOCS_RECIPE_LINK
 
 
 class CaseInsensitiveDict(_CaseInsensitiveDict):
@@ -80,11 +82,21 @@ class CaseInsensitiveRecipeFile:
 
     def _read_from_yaml(self, file_path: Path) -> dict:
         with open(file_path, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f.read())
+            try:
+                return yaml.safe_load(f.read())
+            except yaml.YAMLError as err:
+                logging.error(f"Syntax error when parsing the recipe file: {file_path}. For information and examples" +
+                              f" regarding component recipes refer to the docs here: {DOCS_RECIPE_LINK}")
+                raise err
 
     def _read_from_json(self, file_path: Path) -> dict:
         with open(file_path, "r", encoding="utf-8") as f:
-            return json.loads(f.read())
+            try:
+                return json.loads(f.read())
+            except json.JSONDecodeError as err:
+                logging.error(f"Syntax error when parsing the recipe file: {file_path}. For information and examples" +
+                              f" regarding component recipes refer to the docs here: {DOCS_RECIPE_LINK}")
+                raise err
 
     def _write_to_json(self, file_path: Path, content: dict) -> None:
         with open(file_path, "w", encoding="utf-8") as f:

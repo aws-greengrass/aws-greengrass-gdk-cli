@@ -1,4 +1,5 @@
 import json
+import logging
 import tempfile
 from pathlib import Path
 from unittest import TestCase
@@ -14,6 +15,10 @@ class CaseInsensitiveRecipeFileTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
+
+    @pytest.fixture(autouse=True)
+    def caplog(self, caplog):
+        self.caplog = caplog
 
     def test_read_json(self):
         json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("valid_component_recipe.json").resolve()
@@ -36,6 +41,24 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         assert "ARTIFACTS" in case_insensitive_recipe["manifests"][0]
         assert "uri" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
         assert "URI" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
+
+    def test_read_json_with_syntax_err(self):
+        self.caplog.set_level(logging.ERROR)
+        json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("recipe_missing_comma.json").resolve()
+        with pytest.raises(Exception) as e:
+            CaseInsensitiveRecipeFile().read(json_file)
+        logs = self.caplog.text
+        assert "For information and examples regarding component recipes refer to the docs here" in logs
+        assert "Expecting ',' delimiter: line 6 column 3" in str(e)
+
+    def test_read_yaml_with_syntax_err(self):
+        self.caplog.set_level(logging.ERROR)
+        json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.yaml").resolve()
+        with pytest.raises(Exception) as e:
+            CaseInsensitiveRecipeFile().read(json_file)
+        logs = self.caplog.text
+        assert "For information and examples regarding component recipes refer to the docs here" in logs
+        assert "expected <block end>, but found '<block mapping start>'" in str(e)
 
     def test_read_invalid_format(self):
         invalid_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("not_exists.txt").resolve()
