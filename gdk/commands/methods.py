@@ -1,5 +1,6 @@
 from gdk.commands.component import component
 from gdk.commands.test import test
+from gdk.commands.config import config
 import gdk.CLIParser
 
 
@@ -24,8 +25,8 @@ def _gdk_component_list(d_args):
     component.list(d_args)
 
 
-def _gdk_component_wizard(d_args):
-    component.wizard(d_args)
+def _gdk_config_component(d_args):
+    config.component(d_args)
 
 
 def _gdk_test_hyphen_e2e_init(d_args):

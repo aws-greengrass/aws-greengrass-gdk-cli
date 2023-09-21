@@ -29,3 +29,9 @@ def test_gdk_component_list(mocker):
     mock_component_list = mocker.patch("gdk.commands.component.component.list", return_value=None)
     methods._gdk_component_list({})
     assert mock_component_list.call_count == 1
+
+
+def test_gdk_config_component(mocker):
+    mock_config_component = mocker.patch("gdk.commands.config.config.component", return_value=None)
+    methods._gdk_config_component({})
+    assert mock_config_component.call_count == 1

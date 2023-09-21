@@ -70,9 +70,6 @@
                     "build": {
                         "help": "Build GreengrassV2 component artifacts and recipes from its source code."
                     },
-                    "wizard": {
-                        "help": "Helps users populates the gdk-config.json file."
-                    },
                     "publish": {
                         "help": "Create a new version of a GreengrassV2 component from its built artifacts and recipes.",
                         "arguments": {
@@ -174,6 +171,15 @@
                     }
                 },
                 "help": "Test component features using open-source test framework"
+            },
+            "config": {
+                "sub-commands": {
+                    "component": {
+                        "help": "Populate component related values in the gdk-config.json file.",
+                        "arguments": {}
+                    }
+                },
+                "help": "Populate values in the gdk-config.json configuration file via the CLI."
             }
         },
         "help": "Greengrass development kit - CLI for developing AWS IoT GreengrassV2 components."
