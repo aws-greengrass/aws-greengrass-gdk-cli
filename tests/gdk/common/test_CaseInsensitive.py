@@ -42,7 +42,7 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         assert "uri" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
         assert "URI" in case_insensitive_recipe["Manifests"][0]["Artifacts"][0]
 
-    def test_read_json_with_syntax_err(self):
+    def test_GIVEN_json_recipe_file_with_syntax_err_WHEN_read_recipe_THEN_throw_err_logging_and_exception(self):
         self.caplog.set_level(logging.ERROR)
         json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("recipe_missing_comma.json").resolve()
         with pytest.raises(Exception) as e:
@@ -51,11 +51,11 @@ class CaseInsensitiveRecipeFileTest(TestCase):
         assert "For information and examples regarding component recipes refer to the docs here" in logs
         assert "Expecting ',' delimiter: line 6 column 3" in str(e)
 
-    def test_read_yaml_with_syntax_err(self):
+    def test_GIVEN_yaml_recipe_file_with_syntax_err_WHEN_read_recipe_THEN_throw_err_logging_and_exception(self):
         self.caplog.set_level(logging.ERROR)
-        json_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.yaml").resolve()
+        yaml_file = Path(".").joinpath("tests/gdk/static/project_utils").joinpath("invalid_component_recipe.yaml").resolve()
         with pytest.raises(Exception) as e:
-            CaseInsensitiveRecipeFile().read(json_file)
+            CaseInsensitiveRecipeFile().read(yaml_file)
         logs = self.caplog.text
         assert "For information and examples regarding component recipes refer to the docs here" in logs
         assert "expected <block end>, but found '<block mapping start>'" in str(e)
