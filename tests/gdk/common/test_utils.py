@@ -181,3 +181,19 @@ def test_cli_version_check_latest_available(mocker):
 )
 def test_get_next_patch_version(version):
     assert utils.get_next_patch_version(version) == "1.0.1"
+
+
+def test_valid_recipe_size(mocker):
+    mock_response = mocker.Mock(st_size=1000)
+    mocker.patch("pathlib.Path.stat", return_value=mock_response)
+    is_valid_size, file_size = utils.is_recipe_size_valid('small_recipe.json')
+    assert is_valid_size
+    assert file_size == 1000
+
+
+def test_invalid_recipe_size(mocker):
+    mock_response = mocker.Mock(st_size=17000)
+    mocker.patch("pathlib.Path.stat", return_value=mock_response)
+    is_valid_size, file_size = utils.is_recipe_size_valid('large_recipe.yaml')
+    assert not is_valid_size
+    assert file_size == 17000

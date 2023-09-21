@@ -222,13 +222,23 @@ class PublishRecipeTransformerTest(TestCase):
         prg.update_component_recipe_file(cis_recipe)
         assert not mock_glob.called
 
-    def test_create_publish_recipe_file(self):
+    def test_create_publish_recipe_file_good_recipe_size(self):
+        self.mocker.patch("gdk.common.utils.is_recipe_size_valid", return_value=[True, 1000])
         prg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
         cis_recipe = CaseInsensitiveDict(fake_recipe())
         mocker_recipe_write = self.mocker.patch.object(CaseInsensitiveRecipeFile, "write")
         prg.create_publish_recipe_file(cis_recipe)
         recipe_path = Path(prg.project_config.publish_recipe_file).resolve()
         assert mocker_recipe_write.call_args_list == [call(recipe_path, cis_recipe)]
+
+    def test_create_publish_recipe_file_oversized_recipe(self):
+        self.mocker.patch("gdk.common.utils.is_recipe_size_valid", return_value=[False, 17000])
+        prg = PublishRecipeTransformer(ComponentPublishConfiguration({}))
+        cis_recipe = CaseInsensitiveDict(fake_recipe())
+        self.mocker.patch.object(CaseInsensitiveRecipeFile, "write")
+        with pytest.raises(Exception) as e:
+            prg.create_publish_recipe_file(cis_recipe)
+        assert "is too big with a size of 17000 bytes. Component recipes must be 16 kB or smaller" in str(e)
 
 
 def config():

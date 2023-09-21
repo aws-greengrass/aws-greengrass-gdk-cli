@@ -34,7 +34,8 @@ class BuildRecipeTransformerTest(TestCase):
         brg = BuildRecipeTransformer(pc)
         assert brg.project_config == pc
 
-    def test_transform(self):
+    def test_transform_good_recipe_size(self):
+        self.mocker.patch("gdk.common.utils.is_recipe_size_valid", return_value=[True, 1000])
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
         build_folders = [Path("zip-build").resolve()]
         mock_update = self.mocker.patch.object(BuildRecipeTransformer, "update_component_recipe_file", return_value=None)
@@ -43,6 +44,15 @@ class BuildRecipeTransformerTest(TestCase):
 
         assert mock_update.call_args_list == [call(self.mock_component_recipe.return_value, build_folders)]
         assert mock_create.call_args_list == [call(self.mock_component_recipe.return_value)]
+
+    def test_transform_oversized_recipe(self):
+        self.mocker.patch("gdk.common.utils.is_recipe_size_valid", return_value=[False, 17000])
+        brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))
+        build_folders = [Path("zip-build").resolve()]
+        with pytest.raises(Exception) as e:
+            brg.transform(build_folders)
+
+        assert "has an invalid size of 17000 bytes. Please make sure it does not exceed 16kB (16000 bytes)" in str(e)
 
     def test_update_component_recipe_file_in_build(self):
         brg = BuildRecipeTransformer(ComponentBuildConfiguration({}))

@@ -7,6 +7,7 @@ from packaging.version import Version
 
 import gdk
 import gdk._version as version
+from gdk.common.consts import MAX_RECIPE_FILE_SIZE_BYTES
 
 
 def get_static_file_path(file_name):
@@ -144,6 +145,11 @@ def get_next_patch_version(version_number: str) -> str:
 
 def get_current_directory() -> Path:
     return Path(".").resolve()
+
+
+def is_recipe_size_valid(file_path):
+    file_size = Path(file_path).stat().st_size
+    return file_size <= MAX_RECIPE_FILE_SIZE_BYTES, file_size
 
 
 error_line = "\n=============================== ERROR ===============================\n"
