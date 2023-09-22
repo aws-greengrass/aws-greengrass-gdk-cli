@@ -52,3 +52,9 @@ BUILD_FAILED = "Failed to build the component with the given project configurati
 
 # PUBLISH COMMAND
 PUBLISH_FAILED = "Failed to publish new version of component with the given configuration."
+
+# CONFIG UPDATE COMMAND
+CONFIG_UPDATE_WITH_INVALID_ARGS = (
+    "Could not start the prompter as the command arguments are invalid. Please supply `--component`"
+    " as an argument to the update command.\nTry `gdk config update --help`"
+)

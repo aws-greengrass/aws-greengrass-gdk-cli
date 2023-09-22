@@ -14,7 +14,8 @@
                 "sub-commands": {
                     "required": [
                         "component",
-                        "test-e2e"
+                        "test-e2e",
+                        "config"
                     ],
                     "properties": {
                         "component": {
@@ -22,6 +23,9 @@
                         },
                         "test-e2e": {
                             "$ref": "#/$defs/test-e2e"
+                        },
+                        "config": {
+                            "$ref": "#/$defs/config"
                         }
                     },
                     "additionalProperties": false
@@ -323,6 +327,50 @@
                             "$ref": "#/$defs/argument"
                         },
                         "gtf_options": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
+        },
+        "config": {
+            "type": "object",
+            "description": "A command of gdk cli tool. This is one of the sub parsers under the top-level parser ('gdk') of the cli.",
+            "properties": {
+                "sub-commands": {
+                    "required": [
+                        "update"
+                    ],
+                    "properties": {
+                        "update": {
+                            "$ref": "#/$defs/update"
+                        }
+                    }
+                },
+                "help": {
+                    "$ref": "#/$defs/help"
+                }
+            },
+            "additionalProperties": false
+        },
+        "update": {
+            "type": "object",
+            "description": "Sub command under 'config' command. This is one of the sub-parsers under 'config' parser.",
+            "required": [
+                "help"
+            ],
+            "properties": {
+                "arguments": {
+                    "description": "List of all the arguments that can be passed with the config update command.",
+                    "required": [
+                        "component"
+                    ],
+                    "properties": {
+                        "component": {
                             "$ref": "#/$defs/argument"
                         }
                     }
