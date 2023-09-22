@@ -1,8 +1,8 @@
-from gdk.commands.config.ComponentCommand import ComponentCommand
+from gdk.commands.config.UpdateCommand import UpdateCommand
 
 
-def component(d_args):
+def update(d_args):
     """
-    gdk config component
+    gdk config update
     """
-    ComponentCommand(d_args).run()
+    UpdateCommand(d_args).run()

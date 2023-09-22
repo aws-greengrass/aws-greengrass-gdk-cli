@@ -25,8 +25,8 @@ def _gdk_component_list(d_args):
     component.list(d_args)
 
 
-def _gdk_config_component(d_args):
-    config.component(d_args)
+def _gdk_config_update(d_args):
+    config.update(d_args)
 
 
 def _gdk_test_hyphen_e2e_init(d_args):

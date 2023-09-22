@@ -343,11 +343,11 @@
             "properties": {
                 "sub-commands": {
                     "required": [
-                        "component"
+                        "update"
                     ],
                     "properties": {
-                        "component": {
-                            "$ref": "#/$defs/config-component"
+                        "update": {
+                            "$ref": "#/$defs/update"
                         }
                     }
                 },
@@ -357,7 +357,7 @@
             },
             "additionalProperties": false
         },
-        "config-component": {
+        "update": {
             "type": "object",
             "description": "Sub command under 'config' command. This is one of the sub-parsers under 'config' parser.",
             "required": [
@@ -365,9 +365,15 @@
             ],
             "properties": {
                 "arguments": {
-                    "description": "List of all the arguments that can be passed with the config component command.",
-                    "required":  [],
-                    "properties": {}
+                    "description": "List of all the arguments that can be passed with the config update command.",
+                    "required": [
+                        "component"
+                    ],
+                    "properties": {
+                        "component": {
+                            "$ref": "#/$defs/argument"
+                        }
+                    }
                 },
                 "help": {
                     "$ref": "#/$defs/help"

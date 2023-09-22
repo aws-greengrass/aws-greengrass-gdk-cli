@@ -174,9 +174,18 @@
             },
             "config": {
                 "sub-commands": {
-                    "component": {
+                    "update": {
                         "help": "Populate component related values in the gdk-config.json file.",
-                        "arguments": {}
+                        "arguments": {
+                            "component": {
+                                "name": [
+                                    "-c",
+                                    "--component"
+                                ],
+                                "help": "Used to specify that the command should update component related fields in the gdk-config.json file.",
+                                "action": "store_true"
+                            }
+                        }
                     }
                 },
                 "help": "Populate values in the gdk-config.json configuration file via the CLI."
