@@ -3,7 +3,6 @@ from gdk.wizard.ConfigEnum import ConfigEnum
 from gdk.wizard.WizardChecker import WizardChecker
 from gdk.wizard.WizardConfigUtils import WizardConfigUtils
 import logging
-from PyInquirer import prompt
 import argparse
 import sys
 
@@ -146,17 +145,11 @@ class Prompter:
         -------
             string: the value of field that the user has entered through the interactive prompt
         """
-        questions = [
-            {
-                "type": "input",
-                "name": "user_input",
-                "message": f"Current value of the {require}{field} is:",
-                "default": f"{value}",
-            }
-        ]
         try:
-            answer = prompt(questions)
-            return answer["user_input"]
+            answer = input(f"Current value of the {require}{field} is (default: {value}): ")
+            if not answer:
+                answer = value
+            return answer
         except (KeyError, TypeError):
             raise Exception("Wizard interrupted. Exiting...")
 
@@ -231,7 +224,7 @@ class Prompter:
 
     def prompt_fields(self):
         """
-        Wapper method that prompts users for required and optional field values
+        Wrapper method that prompts users for required and optional field values
         for the gdk config file
 
         Parameters
