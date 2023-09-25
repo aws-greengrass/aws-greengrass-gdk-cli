@@ -238,6 +238,9 @@ class Prompter:
 
         self.add_parser_arguments()
 
+        component_name = self.prompter(ConfigEnum.COMPONENT_NAME, required=True)
+        self.data.set_component_name(component_name)
+
         response_author = self.prompter(ConfigEnum.AUTHOR, required=True)
         self.data.set_field(ConfigEnum.AUTHOR, response_author)
 
