@@ -2,36 +2,36 @@ import logging
 import argparse
 import sys
 
-from gdk.wizard.WizardData import WizardData
-from gdk.wizard.ConfigEnum import ConfigEnum
-from gdk.wizard.WizardChecker import WizardChecker
-from gdk.wizard.WizardConfigUtils import WizardConfigUtils
+from gdk.commands.config.update.ConfigData import ConfigData
+from gdk.commands.config.update.ConfigEnum import ConfigEnum
+from gdk.commands.config.update.ConfigChecker import ConfigChecker
+from gdk.commands.config.update.ConfigUtils import ConfigUtils
 from gdk.common.consts import GDK_CONFIG_DOCS_LINK
 
 
 class Prompter:
     """
-    A class used to represent the GDK Startup Wizard
+    A class used to represent the GDK Config Update Prompter
     """
 
     def __init__(self) -> None:
         """
-        Initialize the Wizard object
+        Initialize the Prompter object
 
         Attributes
         ----------
-            data: Wizard_data object
-            model: Wizard getter and setter object
-            checker: Wizard_checker object
+            data: ConfigData object
+            model: Config getter and setter object
+            checker: ConfigChecker object
             parser: argparse object
         """
 
-        self.utils = WizardConfigUtils()
+        self.utils = ConfigUtils()
         self.project_config_file = self.utils.get_project_config_file()
         self.field_dict = self.utils.read_from_config_file()
 
-        self.data = WizardData(self.field_dict)
-        self.checker = WizardChecker()
+        self.data = ConfigData(self.field_dict)
+        self.checker = ConfigChecker()
         self.parser = argparse.ArgumentParser()
 
     def prompter(self, field, required, max_attempts=3):
@@ -80,7 +80,8 @@ class Prompter:
         if field == ConfigEnum.CUSTOM_BUILD_COMMAND:
             self.utils.write_to_config_file(self.field_dict, self.project_config_file)
             sys.exit(
-                f"Attempt {attempt}/{max_attempts}: Failed to enter a valid custom build command. Exiting wizard..."
+                f"Attempt {attempt}/{max_attempts}: Failed to enter a valid custom build command." +
+                " Exiting interactive prompter..."
             )
 
         logging.info(
@@ -154,7 +155,7 @@ class Prompter:
                 answer = value
             return answer
         except (KeyError, TypeError):
-            raise Exception("Wizard interrupted. Exiting...")
+            raise Exception("Interactive prompter interrupted. Exiting...")
 
     def prompt_build_configs(self):
         """

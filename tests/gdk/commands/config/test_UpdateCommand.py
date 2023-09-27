@@ -5,9 +5,9 @@ from unittest.mock import Mock
 from pathlib import Path
 
 from gdk.commands.config.UpdateCommand import UpdateCommand
-from gdk.wizard.Prompter import Prompter
-from gdk.wizard.WizardConfigUtils import WizardConfigUtils
-from gdk.wizard.WizardData import WizardData
+from gdk.commands.config.update.Prompter import Prompter
+from gdk.commands.config.update.ConfigUtils import ConfigUtils
+from gdk.commands.config.update.ConfigData import ConfigData
 
 
 class UpdateCommandTest(TestCase):
@@ -21,7 +21,7 @@ class UpdateCommandTest(TestCase):
         )
 
         self.mock_write_to_config_field = self.mocker.patch(
-            "gdk.wizard.WizardConfigUtils.WizardConfigUtils.write_to_config_file",
+            "gdk.commands.config.update.ConfigUtils.ConfigUtils.write_to_config_file",
             side_effect=Mock,
         )
 
@@ -32,9 +32,9 @@ class UpdateCommandTest(TestCase):
     def test_GIVEN_component_arg_WHEN_run_update_command_THEN_log_exiting_statement(self):
         self.caplog.set_level(logging.INFO)
         mock_prompt = self.mocker.patch.object(Prompter, "prompt_fields", return_value=None)
-        self.mocker.patch.object(WizardData, "__init__", return_value=None)
+        self.mocker.patch.object(ConfigData, "__init__", return_value=None)
 
-        self.mocker.patch.object(WizardConfigUtils, "read_from_config_file", return_value=None)
+        self.mocker.patch.object(ConfigUtils, "read_from_config_file", return_value=None)
         config_update = UpdateCommand({"component": True})
         config_update.run()
         logs = self.caplog.text
@@ -49,15 +49,15 @@ class UpdateCommandTest(TestCase):
         assert ("Could not start the prompter as the command arguments are invalid. Please supply `--component`" +
                 " as an argument to the update command.\nTry `gdk config update --help`") in e.value.args[0]
 
-    def test_wizard_custom_build_system(self):
+    def test_prompter_custom_build_system(self):
         mock_change_configuration = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.change_configuration",
+            "gdk.commands.config.update.Prompter.Prompter.change_configuration",
             side_effect=["yes", "y"],
         )
         test_d_args = {"component": True}
 
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=[
                 "1",
                 "test_author",
@@ -78,15 +78,15 @@ class UpdateCommandTest(TestCase):
         self.assertEqual(mock_user_input.call_count, 9)
         self.assertEqual(self.mock_write_to_config_field.call_count, 1)
 
-    def test_wizard_zip_build_system(self):
+    def test_prompter_zip_build_system(self):
         mock_change_configuration = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.change_configuration",
+            "gdk.commands.config.update.Prompter.Prompter.change_configuration",
             side_effect=["yes", "y"],
         )
         test_d_args = {"component": True}
 
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=[
                 "1",
                 "test_author",
@@ -107,15 +107,15 @@ class UpdateCommandTest(TestCase):
         self.assertEqual(mock_user_input.call_count, 9)
         self.assertEqual(self.mock_write_to_config_field.call_count, 1)
 
-    def test_wizard_invalid_custom_build_command(self):
+    def test_prompter_invalid_custom_build_command(self):
         mock_change_configuration = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.change_configuration",
+            "gdk.commands.config.update.Prompter.Prompter.change_configuration",
             side_effect=["yes", "no"],
         )
         test_d_args = {"component": True}
 
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=["1", "test_author", "1.0.0", "custom", "None", "{}", "()"],
         )
 

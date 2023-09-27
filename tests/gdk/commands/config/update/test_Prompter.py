@@ -1,9 +1,10 @@
 import pytest
 from unittest import TestCase
 from unittest.mock import patch, Mock
-from gdk.wizard.ConfigEnum import ConfigEnum
-from gdk.wizard.Prompter import Prompter
 from pathlib import Path
+
+from gdk.commands.config.update.ConfigEnum import ConfigEnum
+from gdk.commands.config.update.Prompter import Prompter
 
 
 class TestPrompter(TestCase):
@@ -66,10 +67,10 @@ class TestPrompter(TestCase):
 
     def test_prompt_first_try(self):
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt", return_value="new_value"
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt", return_value="new_value"
         )
         mock_checker = self.mocker.patch(
-            "gdk.wizard.WizardChecker.WizardChecker.is_valid_input", return_value=True
+            "gdk.commands.config.update.ConfigChecker.ConfigChecker.is_valid_input", return_value=True
         )
 
         prompter = Prompter()
@@ -83,11 +84,11 @@ class TestPrompter(TestCase):
 
     def test_prompter_second_retry(self):
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=["new_value", "ok"],
         )
         mock_checker = self.mocker.patch(
-            "gdk.wizard.WizardChecker.WizardChecker.is_valid_input",
+            "gdk.commands.config.update.ConfigChecker.ConfigChecker.is_valid_input",
             side_effect=[False, True],
         )
 
@@ -102,11 +103,11 @@ class TestPrompter(TestCase):
 
     def test_prompter_third_retry(self):
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=["new_value", "ok", "bar"],
         )
         mock_checker = self.mocker.patch(
-            "gdk.wizard.WizardChecker.WizardChecker.is_valid_input",
+            "gdk.commands.config.update.ConfigChecker.ConfigChecker.is_valid_input",
             side_effect=[False, False, True],
         )
 
@@ -121,15 +122,15 @@ class TestPrompter(TestCase):
 
     def test_prompter_invalid_input(self):
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=["invalid"] * 3,
         )
         mock_checker = self.mocker.patch(
-            "gdk.wizard.WizardChecker.WizardChecker.is_valid_input",
+            "gdk.commands.config.update.ConfigChecker.ConfigChecker.is_valid_input",
             side_effect=[False] * 3,
         )
         mock_get_field = self.mocker.patch(
-            "gdk.wizard.WizardData.WizardData.get_field", return_value="old_value"
+            "gdk.commands.config.update.ConfigData.ConfigData.get_field", return_value="old_value"
         )
 
         prompter = Prompter()
@@ -144,18 +145,18 @@ class TestPrompter(TestCase):
 
     def test_prompter_invalid_input_custom_build_command(self):
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=["invalid"] * 3,
         )
         mock_checker = self.mocker.patch(
-            "gdk.wizard.WizardChecker.WizardChecker.is_valid_input",
+            "gdk.commands.config.update.ConfigChecker.ConfigChecker.is_valid_input",
             side_effect=[False] * 3,
         )
         mock_get_field = self.mocker.patch(
-            "gdk.wizard.WizardData.WizardData.get_field", return_value="old_value"
+            "gdk.commands.config.update.ConfigData.ConfigData.get_field", return_value="old_value"
         )
         mock_write_to_config_field = self.mocker.patch(
-            "gdk.wizard.WizardConfigUtils.WizardConfigUtils.write_to_config_file",
+            "gdk.commands.config.update.ConfigUtils.ConfigUtils.write_to_config_file",
             side_effect=Mock,
         )
         prompter = Prompter()
@@ -189,11 +190,11 @@ class TestPrompter(TestCase):
         }
 
         mock_change_configuration = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.change_configuration",
+            "gdk.commands.config.update.Prompter.Prompter.change_configuration",
             side_effect=["yes", "y"],
         )
         mock_user_input = self.mocker.patch(
-            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            "gdk.commands.config.update.Prompter.Prompter.interactive_prompt",
             side_effect=[
                 "new.component.name",
                 "test_author",

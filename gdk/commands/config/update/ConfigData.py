@@ -1,6 +1,7 @@
-from gdk.wizard.ConfigEnum import ConfigEnum
 import json
 import ast
+
+from gdk.commands.config.update.ConfigEnum import ConfigEnum
 
 
 class Model:
@@ -9,7 +10,7 @@ class Model:
         self.setter = setter
 
 
-class WizardData:
+class ConfigData:
     def __init__(self, field_dict):
         self.field_dict = field_dict
         self.project_config = self.field_dict.get(
