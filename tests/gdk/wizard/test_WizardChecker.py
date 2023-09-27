@@ -4,6 +4,24 @@ from gdk.wizard.ConfigEnum import ConfigEnum
 
 
 @pytest.mark.parametrize(
+    "valid_component_name",
+    ["test", "com.example.HelloWorldComponent"],
+)
+def test_check_component_name_valid(valid_component_name):
+    checker = WizardChecker()
+    assert checker.is_valid_input(valid_component_name, ConfigEnum.COMPONENT_NAME) is True
+
+
+@pytest.mark.parametrize(
+    "invalid_component_name",
+    [""],
+)
+def test_check_component_name_invalid(invalid_component_name):
+    checker = WizardChecker()
+    assert checker.is_valid_input(invalid_component_name, ConfigEnum.COMPONENT_NAME) is False
+
+
+@pytest.mark.parametrize(
     "valid_author",
     ["test", "''[]''"],
 )

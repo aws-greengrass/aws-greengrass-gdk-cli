@@ -19,6 +19,7 @@ class WizardData:
         )
 
         self.switch = {
+            ConfigEnum.COMPONENT_NAME: Model(self.get_component_name, self.set_component_name),
             ConfigEnum.AUTHOR: Model(self.get_author, self.set_author),
             ConfigEnum.VERSION: Model(self.get_version, self.set_version),
             ConfigEnum.BUILD_SYSTEM: Model(
@@ -43,6 +44,9 @@ class WizardData:
 
     def set_field(self, field, value):
         self.switch.get(field).setter(value)
+
+    def get_component_name(self):
+        return self.component_name
 
     def get_author(self):
         return self.component_config.get(
@@ -106,6 +110,11 @@ class WizardData:
         return self.field_dict.get(
             ConfigEnum.GDK_VERSION.value.key, ConfigEnum.GDK_VERSION.value.default
         )
+
+    def set_component_name(self, value):
+        if value is not None:
+            self.project_config[value] = self.project_config.pop(self.component_name)
+            self.component_name = value
 
     def set_author(self, value):
         if value is not None:

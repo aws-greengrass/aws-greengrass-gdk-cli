@@ -7,6 +7,7 @@ import json
 class WizardChecker:
     def __init__(self):
         self.switch = {
+            ConfigEnum.COMPONENT_NAME: self.is_valid_component_name,
             ConfigEnum.AUTHOR: self.is_valid_author,
             ConfigEnum.VERSION: self.is_valid_version,
             ConfigEnum.CUSTOM_BUILD_COMMAND: self.is_valid_custom_build_command,
@@ -33,6 +34,10 @@ class WizardChecker:
             boolean: True if the input value is valid for the field, False otherwise.
         """
         return self.switch.get(field)(input_value)
+
+    def is_valid_component_name(self, input_value):
+        # input must be a non-empty string
+        return isinstance(input_value, str) and len(input_value) > 0
 
     def is_valid_author(self, input_value):
         # input must be a non-empty string

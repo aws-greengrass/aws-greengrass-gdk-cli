@@ -20,6 +20,10 @@ class TestWizardModel(TestCase):  # Inherit from unittest.TestCase
             "gdk_version": "1.0.0",
         }
 
+    def test_get_component_name(self):
+        data = WizardData(self.field_dict)
+        self.assertEqual(data.get_component_name(), "1")
+
     def test_get_author(self):
         data = WizardData(self.field_dict)
         self.assertEqual(data.get_author(), "abc")
@@ -55,6 +59,11 @@ class TestWizardModel(TestCase):  # Inherit from unittest.TestCase
     def test_get_gdk_version(self):
         data = WizardData(self.field_dict)
         self.assertEqual(data.get_gdk_version(), "1.0.0")
+
+    def test_set_component_name(self):
+        data = WizardData(self.field_dict)
+        data.set_component_name("2")
+        self.assertEqual(data.get_component_name(), "2")
 
     def test_set_author(self):
         data = WizardData(self.field_dict)
