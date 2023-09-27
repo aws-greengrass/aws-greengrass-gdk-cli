@@ -239,6 +239,7 @@ class Prompter:
         -------
             None
         """
+        logging.info("Beginning config update prompting. Leave a field blank to use the default value provided.")
 
         self.add_parser_arguments()
 
