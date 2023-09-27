@@ -96,19 +96,20 @@ class Prompter:
             else:
                 logging.warning(default_message)
 
-    def change_configuration(self, field_key, max_attempts=3):
+    def change_configuration(self, field, max_attempts=3):
         """
         Prompts the users to answer if they would like to change the build or publish configurations
 
         Parameters
         ----------
-            build_or_publish(string): takes value "build" or "publish"
+            field(enum): takes value "build" or "publish"
 
         Returns
         -------
             boolean: True if user wants to change the 'build_or_publish' configuration and False otherwise
 
         """
+        field_key = field.value.key
         self.parser.add_argument(
             f"--change_{field_key}",
             help=f"Change componenet {field_key} configurations",
@@ -166,7 +167,7 @@ class Prompter:
             None
 
         """
-        if self.change_configuration(ConfigEnum.BUILD.value.key):
+        if self.change_configuration(ConfigEnum.BUILD):
             response_build_system = self.prompter(
                 ConfigEnum.BUILD_SYSTEM, required=True
             )
@@ -200,7 +201,7 @@ class Prompter:
             None
 
         """
-        if self.change_configuration(ConfigEnum.PUBLISH.value.key):
+        if self.change_configuration(ConfigEnum.PUBLISH):
             response_bucket = self.prompter(ConfigEnum.BUCKET, required=True)
             self.data.set_field(ConfigEnum.BUCKET, response_bucket)
 

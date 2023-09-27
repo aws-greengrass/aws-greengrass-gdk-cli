@@ -12,7 +12,9 @@ class Model:
 class WizardData:
     def __init__(self, field_dict):
         self.field_dict = field_dict
-        self.project_config = self.field_dict[ConfigEnum.COMPONENT.value.key]
+        self.project_config = self.field_dict.get(
+            ConfigEnum.COMPONENT.value.key, ConfigEnum.COMPONENT.value.default
+        )
         self.component_name = next(iter(self.project_config))
         self.component_config = self.project_config.get(
             self.component_name, ConfigEnum.COMPONENT_NAME.value.default

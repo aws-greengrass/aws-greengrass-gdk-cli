@@ -1,12 +1,13 @@
 import pytest
 import logging
 from unittest import TestCase
+from unittest.mock import Mock
+from pathlib import Path
 
 from gdk.commands.config.UpdateCommand import UpdateCommand
 from gdk.wizard.Prompter import Prompter
 from gdk.wizard.WizardConfigUtils import WizardConfigUtils
 from gdk.wizard.WizardData import WizardData
-from gdk.wizard.WizardChecker import WizardChecker
 
 
 class UpdateCommandTest(TestCase):
@@ -14,8 +15,15 @@ class UpdateCommandTest(TestCase):
     def __inject_fixtures(self, mocker):
         self.mocker = mocker
 
-        self.mocker.patch.object(WizardData, "__init__", return_value=None)
-        self.mocker.patch.object(WizardChecker, "__init__", return_value=None)
+        self.mock_get_project_config_file = self.mocker.patch(
+            "gdk.common.configuration._get_project_config_file",
+            return_value=Path(".").joinpath("tests/gdk/static").joinpath("config.json"),
+        )
+
+        self.mock_write_to_config_field = self.mocker.patch(
+            "gdk.wizard.WizardConfigUtils.WizardConfigUtils.write_to_config_file",
+            side_effect=Mock,
+        )
 
     @pytest.fixture(autouse=True)
     def caplog(self, caplog):
@@ -24,16 +32,15 @@ class UpdateCommandTest(TestCase):
     def test_GIVEN_component_arg_WHEN_run_update_command_THEN_log_exiting_statement(self):
         self.caplog.set_level(logging.INFO)
         mock_prompt = self.mocker.patch.object(Prompter, "prompt_fields", return_value=None)
+        self.mocker.patch.object(WizardData, "__init__", return_value=None)
 
-        self.mocker.patch.object(WizardConfigUtils, "get_project_config_file", return_value=None)
         self.mocker.patch.object(WizardConfigUtils, "read_from_config_file", return_value=None)
-        mock_write = self.mocker.patch.object(WizardConfigUtils, "write_to_config_file", return_value=None)
         config_update = UpdateCommand({"component": True})
         config_update.run()
         logs = self.caplog.text
         assert "Config file has been updated. Exiting..." in logs
         assert mock_prompt.call_count == 1
-        assert mock_write.call_count == 1
+        assert self.mock_write_to_config_field.call_count == 1
 
     def test_GIVEN_improper_args_WHEN_run_update_command_THEN_raise_exception(self):
         config_update = UpdateCommand({})
@@ -41,3 +48,80 @@ class UpdateCommandTest(TestCase):
             config_update.run()
         assert ("Could not start the prompter as the command arguments are invalid. Please supply `--component`" +
                 " as an argument to the update command.\nTry `gdk config update --help`") in e.value.args[0]
+
+    def test_wizard_custom_build_system(self):
+        mock_change_configuration = self.mocker.patch(
+            "gdk.wizard.Prompter.Prompter.change_configuration",
+            side_effect=["yes", "y"],
+        )
+        test_d_args = {"component": True}
+
+        mock_user_input = self.mocker.patch(
+            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            side_effect=[
+                "1",
+                "test_author",
+                "1.0.0",
+                "custom",
+                "['cmake', '—build', 'build', '—config', 'Release']",
+                "S3",
+                "us-west-2",
+                "{}",
+                "1.0.0",
+            ],
+        )
+
+        UpdateCommand(test_d_args).run()
+
+        self.assertEqual(self.mock_get_project_config_file.call_count, 2)
+        self.assertEqual(mock_change_configuration.call_count, 2)
+        self.assertEqual(mock_user_input.call_count, 9)
+        self.assertEqual(self.mock_write_to_config_field.call_count, 1)
+
+    def test_wizard_zip_build_system(self):
+        mock_change_configuration = self.mocker.patch(
+            "gdk.wizard.Prompter.Prompter.change_configuration",
+            side_effect=["yes", "y"],
+        )
+        test_d_args = {"component": True}
+
+        mock_user_input = self.mocker.patch(
+            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            side_effect=[
+                "1",
+                "test_author",
+                "1.0.0",
+                "zip",
+                '{"file_upload_args": {"bucket": "bucket1"}}',
+                "S3",
+                "us-west-2",
+                "{}",
+                "1.0.0",
+            ],
+        )
+
+        UpdateCommand(test_d_args).run()
+
+        self.assertEqual(self.mock_get_project_config_file.call_count, 2)
+        self.assertEqual(mock_change_configuration.call_count, 2)
+        self.assertEqual(mock_user_input.call_count, 9)
+        self.assertEqual(self.mock_write_to_config_field.call_count, 1)
+
+    def test_wizard_invalid_custom_build_command(self):
+        mock_change_configuration = self.mocker.patch(
+            "gdk.wizard.Prompter.Prompter.change_configuration",
+            side_effect=["yes", "no"],
+        )
+        test_d_args = {"component": True}
+
+        mock_user_input = self.mocker.patch(
+            "gdk.wizard.Prompter.Prompter.interactive_prompt",
+            side_effect=["1", "test_author", "1.0.0", "custom", "None", "{}", "()"],
+        )
+
+        with self.assertRaises(SystemExit):
+            UpdateCommand(test_d_args).run()
+
+        self.assertEqual(self.mock_get_project_config_file.call_count, 2)
+        self.assertEqual(mock_change_configuration.call_count, 1)
+        self.assertEqual(mock_user_input.call_count, 7)
