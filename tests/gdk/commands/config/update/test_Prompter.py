@@ -206,13 +206,11 @@ class TestPrompter(TestCase):
                 "S3",
                 "us-east-1",
                 '{"file_upload_args": {}}',
-                "1.0.0",
             ],
         )
         prompter = Prompter()
         prompter.prompt_fields()
         self.assertEqual(mock_change_configuration.call_count, 2)
-        self.assertEqual(mock_user_input.call_count, 11)
-        self.assertEqual(mock_user_input.call_count, 11)
+        self.assertEqual(mock_user_input.call_count, 10)
         self.assertEqual(expected_field_dict, prompter.field_dict)
         self.assertEqual(self.mock_get_project_config_file.call_count, 2)

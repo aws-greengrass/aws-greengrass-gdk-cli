@@ -253,6 +253,3 @@ class Prompter:
 
         self.prompt_build_configs()
         self.prompt_publish_configs()
-
-        response_gdk_version = self.prompter(ConfigEnum.GDK_VERSION, required=True)
-        self.data.set_field(ConfigEnum.GDK_VERSION, response_gdk_version)

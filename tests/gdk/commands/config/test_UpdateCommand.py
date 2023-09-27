@@ -67,7 +67,6 @@ class UpdateCommandTest(TestCase):
                 "S3",
                 "us-west-2",
                 "{}",
-                "1.0.0",
             ],
         )
 
@@ -75,7 +74,7 @@ class UpdateCommandTest(TestCase):
 
         self.assertEqual(self.mock_get_project_config_file.call_count, 2)
         self.assertEqual(mock_change_configuration.call_count, 2)
-        self.assertEqual(mock_user_input.call_count, 9)
+        self.assertEqual(mock_user_input.call_count, 8)
         self.assertEqual(self.mock_write_to_config_field.call_count, 1)
 
     def test_prompter_zip_build_system(self):
@@ -96,7 +95,6 @@ class UpdateCommandTest(TestCase):
                 "S3",
                 "us-west-2",
                 "{}",
-                "1.0.0",
             ],
         )
 
@@ -104,7 +102,7 @@ class UpdateCommandTest(TestCase):
 
         self.assertEqual(self.mock_get_project_config_file.call_count, 2)
         self.assertEqual(mock_change_configuration.call_count, 2)
-        self.assertEqual(mock_user_input.call_count, 9)
+        self.assertEqual(mock_user_input.call_count, 8)
         self.assertEqual(self.mock_write_to_config_field.call_count, 1)
 
     def test_prompter_invalid_custom_build_command(self):
