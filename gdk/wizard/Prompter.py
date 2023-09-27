@@ -1,10 +1,12 @@
+import logging
+import argparse
+import sys
+
 from gdk.wizard.WizardData import WizardData
 from gdk.wizard.ConfigEnum import ConfigEnum
 from gdk.wizard.WizardChecker import WizardChecker
 from gdk.wizard.WizardConfigUtils import WizardConfigUtils
-import logging
-import argparse
-import sys
+from gdk.common.consts import GDK_CONFIG_DOCS_LINK
 
 
 class Prompter:
@@ -87,9 +89,9 @@ class Prompter:
         return current_field_value
 
     def retry_messages(self, field, attempt, max_attempts):
-        link = "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
-        default_message = f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again.\nPlease vist: {link}"
-        custom_message = f"Attempt {attempt}/{max_attempts}: Must Specify a custum build command.\nPlease vist: {link}"
+        link = GDK_CONFIG_DOCS_LINK
+        default_message = f"Attempt {attempt}/{max_attempts}: Invalid response. Please try again.\nPlease visit: {link}"
+        custom_message = f"Attempt {attempt}/{max_attempts}: Must specify a custom build command.\nPlease visit: {link}"
         if attempt < max_attempts:
             if field == ConfigEnum.CUSTOM_BUILD_COMMAND:
                 logging.warning(custom_message)
@@ -112,7 +114,7 @@ class Prompter:
         field_key = field.value.key
         self.parser.add_argument(
             f"--change_{field_key}",
-            help=f"Change componenet {field_key} configurations",
+            help=f"Change component {field_key} configurations",
         )
 
         for _ in range(max_attempts):

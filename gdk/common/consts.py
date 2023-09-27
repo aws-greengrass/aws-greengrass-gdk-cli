@@ -33,6 +33,9 @@ repository_list_url = (
     + "community-components.json"
 )
 DOCS_RECIPE_LINK = "https://docs.aws.amazon.com/greengrass/v2/developerguide/component-recipe-reference.html"
+GDK_CONFIG_DOCS_LINK = (
+    "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
+)
 
 # DEFAULT LOGGING
 log_format = "[%(asctime)s] %(levelname)s - %(message)s"

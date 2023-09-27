@@ -30,9 +30,9 @@ class GDKProjectTest(TestCase):
 
         gdk_config = GDKProject()
         assert gdk_config.component_name == "abc"
-        assert gdk_config.test_config.otf_version == "1.1.0"
+        assert gdk_config.test_config.gtf_version == "1.1.0"
         assert gdk_config.test_config.test_build_system == "maven"
-        assert gdk_config.test_config.otf_options == {}
+        assert gdk_config.test_config.gtf_options == {}
 
         c_dir = Path(".").resolve()
         assert c_dir.joinpath("greengrass-build") == gdk_config.gg_build_dir
@@ -50,7 +50,7 @@ class GDKProjectTest(TestCase):
         recipe_file.touch()
         gdk_config = GDKProject()
         assert gdk_config.component_name == "abc"
-        assert gdk_config.test_config.otf_version == "1.2.0"
+        assert gdk_config.test_config.gtf_version == "1.2.0"
         assert gdk_config.test_config.test_build_system == "maven"
         assert self.tmpdir.joinpath("greengrass-build") == gdk_config.gg_build_dir
         assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH") == gdk_config.gg_build_component_artifacts_dir
@@ -66,8 +66,8 @@ class GDKProjectTest(TestCase):
         recipe_file = self.tmpdir.joinpath("recipe.json")
         recipe_file.touch()
         gdk_config = GDKProject()
-        assert gdk_config.test_config.otf_version == "1.2.0"
-        assert gdk_config.test_config.otf_options == {"tags": "testtags"}
+        assert gdk_config.test_config.gtf_version == "1.2.0"
+        assert gdk_config.test_config.gtf_options == {"tags": "testtags"}
 
     def test_GIVEN_config_file_with_both_gtf_and_otf_test_keys_WHEN_read_test_config_THEN_use_gtf_keys(self):
         shutil.copy(
@@ -77,8 +77,8 @@ class GDKProjectTest(TestCase):
         recipe_file = self.tmpdir.joinpath("recipe.json")
         recipe_file.touch()
         gdk_config = GDKProject()
-        assert gdk_config.test_config.otf_version == "1.0.0"
-        assert gdk_config.test_config.otf_options == {"tags": "testtags"}
+        assert gdk_config.test_config.gtf_version == "1.0.0"
+        assert gdk_config.test_config.gtf_options == {"tags": "testtags"}
 
     def test_GIVEN_project_WHEN_recipe_not_exists_THEN_raise_exception(self):
         # neither recipe.json nor recipe.yaml exists
