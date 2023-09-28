@@ -62,7 +62,7 @@ class Prompter:
                 [
                     f"--{parser_argument}",
                     self.interactive_prompt(
-                        parser_argument, current_field_value, require
+                        parser_argument, str(current_field_value), require
                     ),
                 ]
             )
