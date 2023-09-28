@@ -102,9 +102,14 @@ class TestConfigModel(TestCase):  # Inherit from unittest.TestCase
         data.set_field(ConfigEnum.REGION, "random-region123")
         self.assertEqual(data.get_region(), "random-region123")
 
-    def test_set_publish_options(self):
+    def test_set_publish_options_str(self):
         data = ConfigData(self.field_dict)
         data.set_field(ConfigEnum.PUBLISH_OPTIONS, '{"bar": "foo"}')
+        self.assertEqual(data.get_publish_options(), {"bar": "foo"})
+
+    def test_set_publish_options_dict(self):
+        data = ConfigData(self.field_dict)
+        data.set_field(ConfigEnum.PUBLISH_OPTIONS, {"bar": "foo"})
         self.assertEqual(data.get_publish_options(), {"bar": "foo"})
 
     def test_set_gdk_version(self):

@@ -162,8 +162,7 @@ class ConfigData:
 
     def set_publish_options(self, value):
         # value can be a dict object or a string
-        formatted_input = value.replace("'", '"')
-        new_value = json.loads(formatted_input) if isinstance(value, str) else value
+        new_value = json.loads(value.replace("'", '"')) if isinstance(value, str) else value
         self._set_publish_config_values(ConfigEnum.PUBLISH_OPTIONS.value, new_value)
 
     def set_gdk_version(self, value):
