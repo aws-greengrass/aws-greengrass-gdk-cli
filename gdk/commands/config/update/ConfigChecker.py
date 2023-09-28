@@ -1,10 +1,11 @@
-from gdk.wizard.ConfigEnum import ConfigEnum
 import re
 import ast
 import json
 
+from gdk.commands.config.update.ConfigEnum import ConfigEnum
 
-class WizardChecker:
+
+class ConfigChecker:
     def __init__(self):
         self.switch = {
             ConfigEnum.COMPONENT_NAME: self.is_valid_component_name,
@@ -71,7 +72,7 @@ class WizardChecker:
         to a list of strings. If it fails, then the input is not valid. Then command_list a non-empty
         list of strings
 
-        required if build_system is custom, exit the wizard with error message
+        required if build_system is custom, exit with error message
         second approach revert to build_system to zip
         or infinite loop
         """

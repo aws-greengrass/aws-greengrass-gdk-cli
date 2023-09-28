@@ -2,7 +2,7 @@ import gdk.common.configuration as config
 import json
 
 
-class WizardConfigUtils:
+class ConfigUtils:
     def get_project_config_file(self):
         return config._get_project_config_file()
 

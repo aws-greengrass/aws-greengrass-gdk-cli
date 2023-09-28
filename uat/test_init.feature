@@ -1,4 +1,4 @@
-Feature: As a component builder, I can run `gdk test-e2e init` command to initialize an existing GDK project with the testing module that uses OTF.
+Feature: As a component builder, I can run `gdk test-e2e init` command to initialize an existing GDK project with the testing module that uses GTF.
 
     @version(min='1.3.0')
     @change_cwd
@@ -15,7 +15,7 @@ Feature: As a component builder, I can run `gdk test-e2e init` command to initia
 
     @version(min='1.3.0')
     @change_cwd
-    Scenario: test-e2e-init-2: Initialize a GDK project with an end-to-end testing module using a specific version of OTF
+    Scenario: test-e2e-init-2: Initialize a GDK project with an end-to-end testing module using a specific version of GTF
         Given we have cli installed
         When we run gdk component init -t HelloWorld -l python -n test-dir
         Then command was successful
@@ -24,7 +24,7 @@ Feature: As a component builder, I can run `gdk test-e2e init` command to initia
         And we verify gdk project files
         When we run gdk test-e2e init --otf-version 1.0.0
         Then we verify gdk test files
-        Then we verify that the OTF version used is 1.0.0
+        Then we verify that the GTF version used is 1.0.0
 
     @version(min='1.3.0')
     @change_cwd
@@ -38,12 +38,12 @@ Feature: As a component builder, I can run `gdk test-e2e init` command to initia
         When we run gdk test-e2e init --otf-version 1.1.0
         Then we verify gdk test files
         When we run gdk test-e2e init --otf-version 1.0.0
-        Then we verify that the OTF version used is 1.1.0
+        Then we verify that the GTF version used is 1.1.0
 
 
     @version(min='1.3.0')
     @change_cwd
-    Scenario: test-e2e-init-4: When I initialize a GDK project with an e2e testing module using a version of OTF that doesn't exist, the command exits with an error
+    Scenario: test-e2e-init-4: When I initialize a GDK project with an e2e testing module using a version of GTF that doesn't exist, the command exits with an error
         Given we have cli installed
         When we run gdk component init -t HelloWorld -l python -n test-dir
         Then command was successful

@@ -142,7 +142,7 @@ class RunConfigurationUnitTest(TestCase):
             "builtins.open",
             mock.mock_open(read_data='{"tags": "tags-from-args", "ggc-install-root": "install-root-from-args"}'),
         ) as mock_file:
-            run_config = RunConfiguration({"otf_options": "/path/to/otf_options.json"})
+            run_config = RunConfiguration({"otf_options": "/path/to/gtf_options.json"})
             assert mock_file.return_value.read.call_count == 1
 
         assert run_config.options.get("tags") == "tags-from-args"

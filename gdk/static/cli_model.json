@@ -157,7 +157,7 @@
                                     "-go",
                                     "--gtf-options"
                                 ],
-                                "help": "GTF configuration options used when running the E2E tests. This argument needs to be a valid json string or file path to a JSON file containing the config options. This argument overrides the options provided in the gdk configuration."
+                                "help": "GTF configuration options used when running the E2E tests. This argument needs to be a valid JSON string or file path to a JSON file containing the config options. This argument overrides the options provided in the GDK configuration."
                             },
                             "otf_options": {
                                 "name": [
