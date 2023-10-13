@@ -1,3 +1,4 @@
+import fnmatch
 import shutil
 import logging
 from pathlib import Path
@@ -38,10 +39,21 @@ class Zip(GDKBuildSystem):
             artifacts_zip_build = Path(zip_build).joinpath(utils.get_current_directory().name).resolve()
             utils.clean_dir(zip_build)
             logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
+            root_directory_path = utils.get_current_directory()
+
+            def ignore_patterns_in_root(path, names):
+                if str(path) == str(root_directory_path):
+                    return {
+                        name
+                        for pattern in self.get_ignored_file_patterns(project_config)
+                        for name in fnmatch.filter(names, pattern)
+                    }
+                return set()
+
             shutil.copytree(
-                utils.get_current_directory(),
+                root_directory_path,
                 artifacts_zip_build,
-                ignore=shutil.ignore_patterns(*self.get_ignored_file_patterns(project_config)),
+                ignore=ignore_patterns_in_root,
             )
 
             # Get build file name without extension. This will be used as name of the archive.

@@ -26,8 +26,14 @@ class ComponentBuildCommandIntegTest(TestCase):
         bc = BuildCommand({})
         bc.run()
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
-        assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/" + self.tmpdir.name + ".zip").exists()
+        included_file_path = f"zip-build/{self.tmpdir.name}/src/test_do_want_this_file.txt"
+        excluded_file_path = f"zip-build/{self.tmpdir.name}/test_dont_want_this_file.txt"
+        test_file_included = self.tmpdir.joinpath(included_file_path).resolve()
+        test_file_excluded = self.tmpdir.joinpath(excluded_file_path).resolve()
+        assert self.tmpdir.joinpath(f"greengrass-build/artifacts/abc/NEXT_PATCH/{self.tmpdir.name}.zip").exists()
         assert build_recipe_file.exists()
+        assert test_file_included.exists()
+        assert not test_file_excluded.exists()
 
         with open(build_recipe_file, "r") as f:
             assert f"s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/{self.tmpdir.name}.zip" in f.read()
@@ -156,6 +162,9 @@ class ComponentBuildCommandIntegTest(TestCase):
             f.write(recipe)
 
         self.tmpdir.joinpath("hello_world.py").touch()
+        self.tmpdir.joinpath("test_dont_want_this_file.txt").touch()
+        self.tmpdir.joinpath("src").mkdir()
+        self.tmpdir.joinpath("src", "test_do_want_this_file.txt").touch()
 
     def zip_test_data_oversized_recipe(self):
         shutil.copy(
