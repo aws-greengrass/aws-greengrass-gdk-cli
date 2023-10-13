@@ -26,11 +26,11 @@ class ComponentBuildCommandIntegTest(TestCase):
         bc = BuildCommand({})
         bc.run()
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
-        included_file_path = "zip-build/" + self.tmpdir.name + "/src/test_do_want_this_file.txt"
-        excluded_file_path = "zip-build/" + self.tmpdir.name + "/test_dont_want_this_file.txt"
+        included_file_path = f"zip-build/{self.tmpdir.name}/src/test_do_want_this_file.txt"
+        excluded_file_path = f"zip-build/{self.tmpdir.name}/test_dont_want_this_file.txt"
         test_file_included = self.tmpdir.joinpath(included_file_path).resolve()
         test_file_excluded = self.tmpdir.joinpath(excluded_file_path).resolve()
-        assert self.tmpdir.joinpath("greengrass-build/artifacts/abc/NEXT_PATCH/" + self.tmpdir.name + ".zip").exists()
+        assert self.tmpdir.joinpath(f"greengrass-build/artifacts/abc/NEXT_PATCH/{self.tmpdir.name}.zip").exists()
         assert build_recipe_file.exists()
         assert test_file_included.exists()
         assert not test_file_excluded.exists()
