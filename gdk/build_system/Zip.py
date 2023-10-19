@@ -1,3 +1,5 @@
+import glob
+import os
 import shutil
 import logging
 from pathlib import Path
@@ -44,8 +46,8 @@ class Zip(GDKBuildSystem):
             custom_copytree.copytree(
                 root_directory_path,
                 artifacts_zip_build,
-                excluded_pathnames=utils.generate_ignore_list_from_globs(root_directory_path,
-                                                                         self.get_ignored_file_patterns(project_config)),
+                excluded_pathnames=self.generate_ignore_list_from_globs(root_directory_path,
+                                                                        self.get_ignored_file_patterns(project_config)),
             )
 
             # Get build file name without extension. This will be used as name of the archive.
@@ -107,3 +109,11 @@ class Zip(GDKBuildSystem):
             ignore_list.extend(options.get("excludes", []))
 
         return ignore_list
+
+    def generate_ignore_list_from_globs(self, root_directory, globs):
+        ignored_pathnames = set()
+        for pattern in globs:
+            # glob.glob has a root_dir parameter, but only for python 3.10+, so we prepend the root dir to the glob pattern
+            glob_pattern_whole = f"{root_directory}{os.path.sep}{pattern}"
+            ignored_pathnames = ignored_pathnames | set(glob.glob(glob_pattern_whole, recursive=True))
+        return ignored_pathnames

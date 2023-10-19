@@ -197,9 +197,3 @@ def test_invalid_recipe_size(mocker):
     is_valid_size, file_size = utils.is_recipe_size_valid('large_recipe.yaml')
     assert not is_valid_size
     assert file_size == 17000
-
-
-def test_generate_ignore_list_from_globs(mocker):
-    mocker.patch("glob.glob", side_effect=[set(['a']), set(['b', '1']), set(['c'])])
-    ignore_set = utils.generate_ignore_list_from_globs("/path/to/root", ["glob", "glob2", "glob3"])
-    assert ignore_set == {'a', 'b', '1', 'c'}

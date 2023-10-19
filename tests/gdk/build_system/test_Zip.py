@@ -49,6 +49,12 @@ class ZipTests(TestCase):
             "**/node_modules",
         ] == zip.get_ignored_file_patterns(config)
 
+    def test_generate_ignore_list_from_globs(self):
+        zip = Zip()
+        self.mocker.patch("glob.glob", side_effect=[set(['a']), set(['b', '1']), set(['c'])])
+        ignore_set = zip.generate_ignore_list_from_globs("/path/to/root", ["glob", "glob2", "glob3"])
+        assert ignore_set == {'a', 'b', '1', 'c'}
+
 
 def config():
     return {
