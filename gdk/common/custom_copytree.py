@@ -37,7 +37,7 @@ def copytree(src, dst, symlinks=False, excluded_pathnames=None, copy_function=sh
         if srcentry.path in excluded_pathnames:
             logging.debug("Found path to be excluded: " + srcentry.path)
             continue
-        elif srcentry.is_dir and f"{srcentry.path}/" in excluded_pathnames:
+        elif srcentry.is_dir and f"{srcentry.path}{os.path.sep}" in excluded_pathnames:
             # Edge case where we provide a glob ending in / so glob.glob returns a directory path ending in /.
             logging.debug("Found path to be excluded: " + srcentry.path)
             continue

@@ -56,7 +56,7 @@ class TestCopyTree(BaseTest, unittest.TestCase):
             write_file((src_dir, 'test_dir2', 'subdir2', 'test.py'), '456')
 
             try:
-                excluded = set([f"{src_dir}/test.tmp", f"{src_dir}/test_dir2"])
+                excluded = set([f"{src_dir}{os.path.sep}test.tmp", f"{src_dir}{os.path.sep}test_dir2"])
                 custom_copytree.copytree(src_dir, dst_dir, excluded_pathnames=excluded)
                 # checking the result: some elements should not be copied
                 self.assertTrue(exists(join(dst_dir, 'test.txt')))
@@ -65,7 +65,7 @@ class TestCopyTree(BaseTest, unittest.TestCase):
             finally:
                 shutil.rmtree(dst_dir)
             try:
-                excluded = set([f"{src_dir}/test.tmp"])
+                excluded = set([f"{src_dir}{os.path.sep}test.tmp"])
                 custom_copytree.copytree(src_dir, dst_dir, excluded_pathnames=excluded)
                 # checking the result: some elements should not be copied
                 self.assertFalse(exists(join(dst_dir, 'test.tmp')))

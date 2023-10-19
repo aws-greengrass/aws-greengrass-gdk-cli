@@ -1,5 +1,6 @@
 import glob
 import logging
+import os
 import shutil
 from pathlib import Path
 
@@ -157,7 +158,7 @@ def generate_ignore_list_from_globs(root_directory, globs):
     ignored_pathnames = set()
     for pattern in globs:
         # glob.glob has a root_dir parameter, but only for python 3.10+, so we prepend the root dir to the glob pattern
-        glob_pattern_whole = f"{root_directory}/{pattern}"
+        glob_pattern_whole = f"{root_directory}{os.path.sep}{pattern}"
         ignored_pathnames = ignored_pathnames | set(glob.glob(glob_pattern_whole, recursive=True))
     return ignored_pathnames
 
