@@ -168,7 +168,7 @@ class BuildCommandTest(TestCase):
         zip_artifacts_path = Path(zip_build_path).joinpath(utils.get_current_directory().name).resolve()
 
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-        mock_copytree = self.mocker.patch("gdk.common.utils.custom_copytree")
+        mock_copytree = self.mocker.patch("gdk.common.custom_copytree.copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
         mock_make_archive = self.mocker.patch("shutil.make_archive")
         build_config = config()
@@ -276,4 +276,3 @@ def config():
         },
         "gdk_version": "1.0.0",
     }
-

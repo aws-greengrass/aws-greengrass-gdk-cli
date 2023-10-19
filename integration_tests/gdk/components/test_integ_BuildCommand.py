@@ -237,4 +237,3 @@ class ComponentBuildCommandIntegTest(TestCase):
             self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe.yaml"),
             self.tmpdir.joinpath("recipe.yaml"),
         )
-

@@ -1,10 +1,10 @@
-import fnmatch
 import shutil
 import logging
 from pathlib import Path
 
 import gdk.common.utils as utils
 import gdk.common.consts as consts
+import gdk.common.custom_copytree as custom_copytree
 from gdk.build_system.GDKBuildSystem import GDKBuildSystem
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 
@@ -41,7 +41,7 @@ class Zip(GDKBuildSystem):
             logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
             root_directory_path = utils.get_current_directory()
 
-            utils.custom_copytree(
+            custom_copytree.copytree(
                 root_directory_path,
                 artifacts_zip_build,
                 excluded_pathnames=utils.generate_ignore_list_from_globs(root_directory_path,
@@ -107,4 +107,3 @@ class Zip(GDKBuildSystem):
             ignore_list.extend(options.get("excludes", []))
 
         return ignore_list
-

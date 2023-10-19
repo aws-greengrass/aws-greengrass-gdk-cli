@@ -62,4 +62,3 @@ def config():
         },
         "gdk_version": "1.0.0",
     }
-
