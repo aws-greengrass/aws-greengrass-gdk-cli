@@ -41,19 +41,11 @@ class Zip(GDKBuildSystem):
             logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
             root_directory_path = utils.get_current_directory()
 
-            def ignore_patterns_in_root(path, names):
-                if str(path) == str(root_directory_path):
-                    return {
-                        name
-                        for pattern in self.get_ignored_file_patterns(project_config)
-                        for name in fnmatch.filter(names, pattern)
-                    }
-                return set()
-
-            shutil.copytree(
+            utils.custom_copytree(
                 root_directory_path,
                 artifacts_zip_build,
-                ignore=ignore_patterns_in_root,
+                excluded_pathnames=utils.generate_ignore_list_from_globs(root_directory_path,
+                                                                         self.get_ignored_file_patterns(project_config)),
             )
 
             # Get build file name without extension. This will be used as name of the archive.
@@ -107,11 +99,12 @@ class Zip(GDKBuildSystem):
             ignore_list.extend(
                 [
                     "test*",
-                    ".*",
-                    "node_modules",
+                    "**/.*",
+                    "**/node_modules",
                 ]
             )
         else:
             ignore_list.extend(options.get("excludes", []))
 
         return ignore_list
+

@@ -45,8 +45,8 @@ class ZipTests(TestCase):
             "greengrass-build",
             "recipe.json",
             "test*",
-            ".*",
-            "node_modules",
+            "**/.*",
+            "**/node_modules",
         ] == zip.get_ignored_file_patterns(config)
 
 
@@ -62,3 +62,4 @@ def config():
         },
         "gdk_version": "1.0.0",
     }
+

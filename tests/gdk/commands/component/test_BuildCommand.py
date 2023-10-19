@@ -168,7 +168,7 @@ class BuildCommandTest(TestCase):
         zip_artifacts_path = Path(zip_build_path).joinpath(utils.get_current_directory().name).resolve()
 
         mock_clean_dir = self.mocker.patch("gdk.common.utils.clean_dir", return_value=None)
-        mock_copytree = self.mocker.patch("shutil.copytree")
+        mock_copytree = self.mocker.patch("gdk.common.utils.custom_copytree")
         mock_subprocess_run = self.mocker.patch("subprocess.run", return_value=None)
         mock_make_archive = self.mocker.patch("shutil.make_archive")
         build_config = config()
@@ -186,7 +186,7 @@ class BuildCommandTest(TestCase):
         assert not mock_subprocess_run.called
         mock_clean_dir.assert_called_with(zip_build_path)
 
-        mock_copytree.assert_called_with(utils.get_current_directory(), zip_artifacts_path, ignore=ANY)
+        mock_copytree.assert_called_with(utils.get_current_directory(), zip_artifacts_path, excluded_pathnames=ANY)
         assert mock_make_archive.called
         zip_build_file = Path(zip_build_path).joinpath("com.example.PythonLocalPubSub").resolve()
         mock_make_archive.assert_called_with(zip_build_file, "zip", root_dir=zip_artifacts_path)
@@ -276,3 +276,4 @@ def config():
         },
         "gdk_version": "1.0.0",
     }
+
