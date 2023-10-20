@@ -1,4 +1,5 @@
-import fnmatch
+import glob
+import os
 import shutil
 import logging
 from pathlib import Path
@@ -41,19 +42,21 @@ class Zip(GDKBuildSystem):
             logging.debug("Copying over component files to the '{}' folder.".format(artifacts_zip_build.name))
             root_directory_path = utils.get_current_directory()
 
-            def ignore_patterns_in_root(path, names):
-                if str(path) == str(root_directory_path):
-                    return {
-                        name
-                        for pattern in self.get_ignored_file_patterns(project_config)
-                        for name in fnmatch.filter(names, pattern)
-                    }
-                return set()
+            unwanted_paths = self.generate_ignore_list_from_globs(root_directory_path,
+                                                                  self.get_ignored_file_patterns(project_config))
+
+            def ignore_with_glob_support(dir, names):
+                ignore_set = set()
+                for name in names:
+                    full_pathname = Path(dir) / name
+                    if str(full_pathname) in unwanted_paths or f"{str(full_pathname)}{os.path.sep}" in unwanted_paths:
+                        ignore_set.add(name)
+                return ignore_set
 
             shutil.copytree(
                 root_directory_path,
                 artifacts_zip_build,
-                ignore=ignore_patterns_in_root,
+                ignore=ignore_with_glob_support,
             )
 
             # Get build file name without extension. This will be used as name of the archive.
@@ -89,7 +92,7 @@ class Zip(GDKBuildSystem):
         5. node_modules
         6. hidden files
 
-        Otherwise it exclues:
+        Otherwise it excludes:
         1. project config file -> gdk-config.json
         2. greengrass-build directory
         3. recipe file
@@ -107,11 +110,19 @@ class Zip(GDKBuildSystem):
             ignore_list.extend(
                 [
                     "test*",
-                    ".*",
-                    "node_modules",
+                    "**/.*",
+                    "**/node_modules",
                 ]
             )
         else:
             ignore_list.extend(options.get("excludes", []))
 
         return ignore_list
+
+    def generate_ignore_list_from_globs(self, root_directory, globs):
+        ignored_pathnames = set()
+        for pattern in globs:
+            # glob.glob has a root_dir parameter, but only for python 3.10+, so we prepend the root dir to the glob pattern
+            glob_pattern_whole = f"{root_directory}{os.path.sep}{pattern}"
+            ignored_pathnames = ignored_pathnames | set(glob.glob(glob_pattern_whole, recursive=True))
+        return ignored_pathnames
