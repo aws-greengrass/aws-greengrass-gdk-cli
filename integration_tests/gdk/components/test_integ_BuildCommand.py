@@ -26,10 +26,10 @@ class ComponentBuildCommandIntegTest(TestCase):
         bc = BuildCommand({})
         bc.run()
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
-        included_file_path = f"zip-build/{self.tmpdir.name}/src/test_do_want_this_file.txt"
-        excluded_file_path = f"zip-build/{self.tmpdir.name}/test_dont_want_this_file.txt"
-        test_file_included = self.tmpdir.joinpath(included_file_path).resolve()
-        test_file_excluded = self.tmpdir.joinpath(excluded_file_path).resolve()
+        test_subdir_file_path = f"zip-build/{self.tmpdir.name}/src/test_subdir.txt"
+        test_root_file_path = f"zip-build/{self.tmpdir.name}/test_root.txt"
+        test_root_file = self.tmpdir.joinpath(test_root_file_path).resolve()
+        test_subdir_file = self.tmpdir.joinpath(test_subdir_file_path).resolve()
         node_modules_root_excluded = self.tmpdir.joinpath(f"zip-build/{self.tmpdir.name}/node_modules").resolve()
         node_modules_subdir_excluded = self.tmpdir.joinpath(f"zip-build/{self.tmpdir.name}/src/node_modules").resolve()
         node_modules_file_path = f"zip-build/{self.tmpdir.name}/src/node_modules/excluded_file.txt"
@@ -37,8 +37,8 @@ class ComponentBuildCommandIntegTest(TestCase):
 
         assert self.tmpdir.joinpath(f"greengrass-build/artifacts/abc/NEXT_PATCH/{self.tmpdir.name}.zip").exists()
         assert build_recipe_file.exists()
-        assert test_file_included.exists()
-        assert not test_file_excluded.exists()
+        assert not test_root_file.exists()
+        assert not test_subdir_file.exists()
         assert not node_modules_root_excluded.exists()
         assert not node_modules_subdir_excluded.exists()
         assert not node_modules_file_excluded.exists()
@@ -170,9 +170,9 @@ class ComponentBuildCommandIntegTest(TestCase):
             f.write(recipe)
 
         self.tmpdir.joinpath("hello_world.py").touch()
-        self.tmpdir.joinpath("test_dont_want_this_file.txt").touch()
+        self.tmpdir.joinpath("test_root.txt").touch()
         self.tmpdir.joinpath("src").mkdir()
-        self.tmpdir.joinpath("src", "test_do_want_this_file.txt").touch()
+        self.tmpdir.joinpath("src", "test_subdir.txt").touch()
         self.tmpdir.joinpath("node_modules").mkdir()
         self.tmpdir.joinpath("src", "node_modules").mkdir()
         self.tmpdir.joinpath("src", "node_modules", "excluded_file.txt").touch()
