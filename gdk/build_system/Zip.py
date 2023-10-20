@@ -109,7 +109,7 @@ class Zip(GDKBuildSystem):
         if not options:
             ignore_list.extend(
                 [
-                    "test*",
+                    "**/test*",
                     "**/.*",
                     "**/node_modules",
                 ]
