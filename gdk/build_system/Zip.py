@@ -147,6 +147,9 @@ class Zip(GDKBuildSystem):
         if not excludes_list or os.environ.get(GDK_EXCLUDES_ENV_KEY, "False").lower() == "true":
             return
         elif all(pattern.find("/") == -1 for pattern in excludes_list):
+            # We check if we issue the warning by seeing if there are any slashes in any items in the provided excludes
+            # configuration. If there are any slashes, we assume that the project is created using GDK 1.5.0+ and does
+            # not need the warning.
             suggestion_list = [f"**/{old_pattern}" for old_pattern in excludes_list]
             suggestion_list_str = str(suggestion_list).replace("'", '"')
             logging.warning(f"{warning_string}{suggestion_list_str}")
