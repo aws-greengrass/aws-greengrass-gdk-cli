@@ -141,6 +141,8 @@ class Zip(GDKBuildSystem):
                           "only match at the root level of the project. If this is intentional, you can ignore this " +
                           "warning, but to achieve the old behavior excluding from each subdirectory, append \'**/\' " +
                           "to each pattern as such: ")
+        warning_string_2 = (". To ignore this warning in the future, set the GDK_EXCLUDES_WARN_IGNORE environment " +
+                            "variable to true.")
         GDK_EXCLUDES_ENV_KEY = "GDK_EXCLUDES_WARN_IGNORE"
         build_options = project_config.build_options
         excludes_list = build_options.get("excludes", [])
@@ -152,6 +154,6 @@ class Zip(GDKBuildSystem):
             # not need the warning.
             suggestion_list = [f"**/{old_pattern}" for old_pattern in excludes_list]
             suggestion_list_str = str(suggestion_list).replace("'", '"')
-            logging.warning(f"{warning_string}{suggestion_list_str}")
+            logging.warning(f"{warning_string}{suggestion_list_str}{warning_string_2}")
         else:
             return
