@@ -44,6 +44,7 @@ class Zip(GDKBuildSystem):
 
             unwanted_paths = self.generate_ignore_list_from_globs(root_directory_path,
                                                                   self.get_ignored_file_patterns(project_config))
+            self.smart_excludes_warning(project_config)
 
             def ignore_with_glob_support(dir, names):
                 ignore_set = set()
@@ -126,3 +127,28 @@ class Zip(GDKBuildSystem):
             glob_pattern_whole = f"{root_directory}{os.path.sep}{pattern}"
             ignored_pathnames = ignored_pathnames | set(glob.glob(glob_pattern_whole, recursive=True))
         return ignored_pathnames
+
+    def smart_excludes_warning(self, project_config: ComponentBuildConfiguration):
+        """
+        Smart warning to warn user of excludes behavior change, if it is detected that a custom excludes is provided
+        and none of the patterns attempt to match any directories. This warning can be ignored by setting the
+        environment variable GDK_EXCLUDES_WARN_IGNORE to true. This is added in the 1.5.0 release and can be removed
+        at some point in the future.
+        """
+        warning_string = ("Build option \'excludes\' found in config and none of the provided patterns " +
+                          "include directory matching. In GDK version 1.5.0, patterns for exclusions in zip builds " +
+                          "were changed to use the glob format, so patterns with no specified directory pattern will " +
+                          "only match at the root level of the project. If this is intentional, you can ignore this " +
+                          "warning, but to achieve the old behavior excluding from each subdirectory, append \'**/\' " +
+                          "to each pattern as such: ")
+        GDK_EXCLUDES_ENV_KEY = "GDK_EXCLUDES_WARN_IGNORE"
+        build_options = project_config.build_options
+        excludes_list = build_options.get("excludes", [])
+        if not excludes_list or os.environ.get(GDK_EXCLUDES_ENV_KEY, "False").lower() == "true":
+            return
+        elif all(pattern.find("/") == -1 for pattern in excludes_list):
+            suggestion_list = [f"**/{old_pattern}" for old_pattern in excludes_list]
+            suggestion_list_str = str(suggestion_list).replace("'", '"')
+            logging.warning(f"{warning_string}{suggestion_list_str}")
+        else:
+            return
