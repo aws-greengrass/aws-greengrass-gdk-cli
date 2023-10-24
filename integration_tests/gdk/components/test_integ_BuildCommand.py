@@ -1,5 +1,6 @@
 from unittest import TestCase
 import pytest
+import logging
 from pathlib import Path
 import os
 import shutil
@@ -20,6 +21,10 @@ class ComponentBuildCommandIntegTest(TestCase):
         os.chdir(self.tmpdir)
         yield
         os.chdir(self.c_dir)
+
+    @pytest.fixture(autouse=True)
+    def caplog(self, caplog):
+        self.caplog = caplog
 
     def test_GIVEN_zip_build_system_WHEN_build_THEN_build_zip_artifacts(self):
         self.zip_test_data()
@@ -45,6 +50,36 @@ class ComponentBuildCommandIntegTest(TestCase):
 
         with open(build_recipe_file, "r") as f:
             assert f"s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/{self.tmpdir.name}.zip" in f.read()
+
+    def test_GIVEN_zip_build_system_WHEN_excludes_provided_with_old_patterns_THEN_warn_in_logs(self):
+        self.caplog.set_level(logging.WARNING)
+        self.zip_old_excludes_test_data()
+        bc = BuildCommand({})
+        bc.run()
+
+        logs = self.caplog.text
+        assert "In GDK version 1.5.0, patterns for exclusions in zip builds" in logs
+        assert "[\"**/node_modules\", \"**/test*\", \"**/*.txt\"]" in logs
+
+    def test_GIVEN_zip_build_system_WHEN_excludes_provided_with_old_patterns_and_env_var_set_THEN_no_warn_in_logs(self):
+        self.caplog.set_level(logging.WARNING)
+        self.mocker.patch.dict(os.environ, {"GDK_EXCLUDES_WARN_IGNORE": "true"})
+        self.zip_old_excludes_test_data()
+        bc = BuildCommand({})
+        bc.run()
+
+        logs = self.caplog.text
+        assert "In GDK version 1.5.0, patterns for exclusions in zip builds" not in logs
+        assert "[\"**/node_modules\", \"**/test*\", \"**/*.txt\"]" not in logs
+
+    def test_GIVEN_zip_build_system_WHEN_excludes_provided_with_new_patterns_THEN_no_warn_in_logs(self):
+        self.caplog.set_level(logging.WARNING)
+        self.zip_new_excludes_test_data()
+        bc = BuildCommand({})
+        bc.run()
+
+        logs = self.caplog.text
+        assert "In GDK version 1.5.0, patterns for exclusions in zip builds" not in logs
 
     def test_GIVEN_zip_build_system_WHEN_build_and_artifacts_not_on_s3_THEN_build_raises_exception(self):
         self.zip_test_data()
@@ -176,6 +211,44 @@ class ComponentBuildCommandIntegTest(TestCase):
         self.tmpdir.joinpath("node_modules").mkdir()
         self.tmpdir.joinpath("src", "node_modules").mkdir()
         self.tmpdir.joinpath("src", "node_modules", "excluded_file.txt").touch()
+
+    def zip_old_excludes_test_data(self):
+        old_excludes_config_path = "integration_tests/test_data/config/config_old_excludes.json"
+        shutil.copy(
+            self.c_dir.joinpath(old_excludes_config_path), self.tmpdir.joinpath("gdk-config.json")
+        )
+
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
+        with open(self.tmpdir.joinpath("recipe.yaml"), "r") as f:
+            recipe = f.read()
+            recipe = recipe.replace("$GG_ARTIFACT", self.tmpdir.name + ".zip")
+
+        with open(self.tmpdir.joinpath("recipe.yaml"), "w") as f:
+            f.write(recipe)
+
+        self.tmpdir.joinpath("hello_world.py").touch()
+
+    def zip_new_excludes_test_data(self):
+        new_excludes_config_path = "integration_tests/test_data/config/config_new_excludes.json"
+        shutil.copy(
+            self.c_dir.joinpath(new_excludes_config_path), self.tmpdir.joinpath("gdk-config.json")
+        )
+
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
+        with open(self.tmpdir.joinpath("recipe.yaml"), "r") as f:
+            recipe = f.read()
+            recipe = recipe.replace("$GG_ARTIFACT", self.tmpdir.name + ".zip")
+
+        with open(self.tmpdir.joinpath("recipe.yaml"), "w") as f:
+            f.write(recipe)
+
+        self.tmpdir.joinpath("hello_world.py").touch()
 
     def zip_test_data_oversized_recipe(self):
         shutil.copy(

@@ -1,0 +1,29 @@
+{
+  "component": {
+    "abc": {
+      "author": "abc",
+      "version": "NEXT_PATCH",
+      "build": {
+        "build_system": "zip",
+        "options": {
+          "excludes": [
+            "**/node_modules",
+            "test*",
+            "**/*.txt"
+          ]
+        }
+      },
+      "publish": {
+        "bucket": "default",
+        "region": "us-east-1"
+      }
+    }
+  },
+  "test-e2e": {
+    "otf_version": "1.2.0",
+    "otf_options": {
+      "tags": "testtags"
+    }
+  },
+  "gdk_version": "1.0.0"
+}
