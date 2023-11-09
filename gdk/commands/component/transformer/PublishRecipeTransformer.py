@@ -1,11 +1,13 @@
+import jsonschema
 import logging
 from pathlib import Path
 from gdk.commands.component.config.ComponentPublishConfiguration import ComponentPublishConfiguration
 from gdk.common.CaseInsensitive import CaseInsensitiveRecipeFile, CaseInsensitiveDict
+from gdk.common.RecipeValidator import RecipeValidator
 
 import gdk.common.consts as consts
 import gdk.common.utils as utils
-from gdk.common.exceptions.error_messages import BUILT_RECIPE_SIZE_INVALID
+from gdk.common.exceptions.error_messages import BUILT_RECIPE_SIZE_INVALID, BUILD_RECIPE_FILE_INVALID
 
 
 class PublishRecipeTransformer:
@@ -94,3 +96,11 @@ class PublishRecipeTransformer:
         if not valid_file_size:
             logging.error(BUILT_RECIPE_SIZE_INVALID.format(input_recipe_file_size))
             raise Exception(BUILT_RECIPE_SIZE_INVALID.format(input_recipe_file_size))
+
+        logging.info("Validating the built recipe against the Greengrass recipe schema.")
+        try:
+            recipe_schema_path = utils.get_static_file_path(consts.recipe_schema_file)
+            validator = RecipeValidator(recipe_schema_path)
+            validator.validate_recipe(parsed_component_recipe.to_dict())
+        except jsonschema.exceptions.ValidationError as err:
+            raise Exception(BUILD_RECIPE_FILE_INVALID.format(recipe_path, err.message))

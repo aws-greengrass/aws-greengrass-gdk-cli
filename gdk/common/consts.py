@@ -19,6 +19,7 @@ MAX_RECIPE_FILE_SIZE_BYTES = 16000
 
 # FILES
 config_schema_file = "config_schema.json"
+recipe_schema_file = "recipe_schema.json"
 cli_model_file = "cli_model.json"
 cli_project_config_file = "gdk-config.json"
 greengrass_build_dir = "greengrass-build"
