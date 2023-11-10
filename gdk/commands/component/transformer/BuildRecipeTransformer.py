@@ -9,7 +9,7 @@ import gdk.common.consts as consts
 import gdk.common.utils as utils
 from gdk.commands.component.config.ComponentBuildConfiguration import ComponentBuildConfiguration
 from gdk.aws_clients.S3Client import S3Client
-from gdk.common.exceptions.error_messages import RECIPE_SIZE_INVALID, PROJECT_RECIPE_FILE_INVALID
+from gdk.common.exceptions.error_messages import RECIPE_SIZE_INVALID, PROJECT_RECIPE_FILE_INVALID, SCHEMA_FILE_INVALID
 
 
 class BuildRecipeTransformer:
@@ -42,6 +42,8 @@ class BuildRecipeTransformer:
             validator.validate_recipe(component_recipe.to_dict())
         except jsonschema.exceptions.ValidationError as err:
             raise Exception(PROJECT_RECIPE_FILE_INVALID.format(self.project_config.recipe_file, err.message))
+        except jsonschema.exceptions.SchemaError as err:
+            raise Exception(SCHEMA_FILE_INVALID.format(err.message))
 
         self.create_build_recipe_file(component_recipe)
 

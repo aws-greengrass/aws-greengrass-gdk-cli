@@ -378,7 +378,7 @@
             "$id": "#/properties/ComponentSource",
             "type": "string",
             "title": "The ComponentSource schema",
-            "pattern": "^arn:aws:lambda:.*$",
+            "pattern": "^arn:aws(-(cn|us-gov|iso(-[a-z])?))?:lambda:.*$",
             "description": "The lambda arn which is source of this component.",
             "default": ""
         },
