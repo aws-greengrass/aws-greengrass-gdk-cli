@@ -33,6 +33,7 @@ class BuildRecipeTransformer:
             raise Exception(RECIPE_SIZE_INVALID.format(self.project_config.recipe_file, input_recipe_file_size))
 
         component_recipe = CaseInsensitiveRecipeFile().read(self.project_config.recipe_file)
+        self.update_component_recipe_file(component_recipe, build_folders)
 
         logging.info("Validating the recipe against the Greengrass recipe schema.")
         try:
@@ -42,7 +43,6 @@ class BuildRecipeTransformer:
         except jsonschema.exceptions.ValidationError as err:
             raise Exception(PROJECT_RECIPE_FILE_INVALID.format(self.project_config.recipe_file, err.message))
 
-        self.update_component_recipe_file(component_recipe, build_folders)
         self.create_build_recipe_file(component_recipe)
 
     def update_component_recipe_file(self, parsed_component_recipe: CaseInsensitiveDict, build_folders):
