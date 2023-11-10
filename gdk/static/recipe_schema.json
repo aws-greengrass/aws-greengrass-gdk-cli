@@ -221,7 +221,7 @@
                         }
                     ],
                     "additionalProperties": {
-                        "anyof": [
+                        "anyOf": [
                             {
                                 "type": "number"
                             },
