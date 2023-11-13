@@ -1,0 +1,554 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "title": "The AWS IoT Greengrass v2 recipe schema",
+    "default": {
+        "recipeformatversion": "2020-01-25",
+        "componentname": "com.example.hello",
+        "componentpublisher": "Me",
+        "componentversion": "1.0.0",
+        "manifests": [
+            {
+                "Lifecycle": {
+                    "run": "echo Hello"
+                }
+            }
+        ]
+    },
+    "examples": [],
+    "required": [
+        "recipeformatversion",
+        "componentname",
+        "componentversion",
+        "manifests"
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "permissions": {
+            "type": "string",
+            "pattern": "^(?i)(NONE|OWNER|ALL)$"
+        },
+        "lifecycle": {
+            "type": "object",
+            "properties": {
+                "setenv": {
+                    "$ref": "#/definitions/setenv"
+                },
+                "bootstrap": {
+                    "$ref": "#/definitions/lifecycleElement"
+                },
+                "install": {
+                    "$ref": "#/definitions/lifecycleElement"
+                },
+                "startup": {
+                    "$ref": "#/definitions/lifecycleElement"
+                },
+                "run": {
+                    "$ref": "#/definitions/lifecycleElement"
+                },
+                "shutdown": {
+                    "$ref": "#/definitions/lifecycleElement"
+                },
+                "recover": {
+                    "$ref": "#/definitions/lifecycleElement"
+                }
+            }
+        },
+        "baseLifecycle": {
+            "type": "object",
+            "properties": {
+                "setenv": {
+                    "$ref": "#/definitions/setenv"
+                },
+                "bootstrap": {
+                    "$ref": "#/definitions/baseLifecycleElement"
+                },
+                "install": {
+                    "$ref": "#/definitions/baseLifecycleElement"
+                },
+                "startup": {
+                    "$ref": "#/definitions/baseLifecycleElement"
+                },
+                "run": {
+                    "$ref": "#/definitions/baseLifecycleElement"
+                },
+                "shutdown": {
+                    "$ref": "#/definitions/baseLifecycleElement"
+                },
+                "recover": {
+                    "$ref": "#/definitions/baseLifecycleElement"
+                }
+            }
+        },
+        "globalLifecycle": {
+            "type": "object",
+            "properties": {
+                "setenv": {
+                    "$ref": "#/definitions/setenv"
+                },
+                "bootstrap": {
+                    "$ref": "#/definitions/globalLifecycleElement"
+                },
+                "install": {
+                    "$ref": "#/definitions/globalLifecycleElement"
+                },
+                "startup": {
+                    "$ref": "#/definitions/globalLifecycleElement"
+                },
+                "run": {
+                    "$ref": "#/definitions/globalLifecycleElement"
+                },
+                "shutdown": {
+                    "$ref": "#/definitions/globalLifecycleElement"
+                },
+                "recover": {
+                    "$ref": "#/definitions/globalLifecycleElement"
+                }
+            }
+        },
+        "globalLifecycleElement": {
+            "$ref": "#/definitions/lifecycleElement",
+            "properties": {
+                "script": {
+                    "$ref": "#/definitions/selections"
+                }
+            }
+        },
+        "lifecycleElement": {
+            "anyOf": [
+                {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/baseLifecycleElement"
+                        },
+                        {
+                            "required": [
+                                "script"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "baseLifecycleElement": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "skipif": {
+                            "type": "string",
+                            "description": "The check to determine whether or not to run the script. You can define to check if an executable is on the path or if a file exists. If the output is true, then the AWS IoT Greengrass Core software skips the step.",
+                            "default": "",
+                            "pattern": "(onpath|exists)\\s+.*",
+                            "examples": [
+                                "exists /usr/local/bin/python3"
+                            ]
+                        },
+                        "script": {
+                            "type": "string",
+                            "description": "The shell script to execute for this lifecycle",
+                            "examples": [
+                                "sudo apt-get install git"
+                            ]
+                        },
+                        "requiresprivilege": {
+                            "oneOf": [
+                                {
+                                    "type": "boolean",
+                                    "description": "If set to true the script will be execute with root privileges",
+                                    "default": false,
+                                    "examples": [
+                                        false
+                                    ]
+                                },
+                                {
+                                    "type": "string",
+                                    "description": "If set to true the script will be execute with root privileges.",
+                                    "default": "false",
+                                    "examples": [
+                                        "false"
+                                    ]
+                                }
+                            ]
+                        },
+                        "setenv": {
+                            "$ref": "#/definitions/setenv"
+                        },
+                        "timeout": {
+                            "oneOf": [
+                                {
+                                    "type": "integer",
+                                    "description": "The maximum amount of time in seconds that the script can run before the AWS IoT Greengrass Core software terminates the process.",
+                                    "default": 120,
+                                    "examples": [
+                                        120
+                                    ]
+                                },
+                                {
+                                    "type": "string",
+                                    "description": "The maximum amount of time in seconds that the script can run before the AWS IoT Greengrass Core software terminates the process.",
+                                    "default": "120",
+                                    "examples": [
+                                        "120"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        "setenv": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "title": "The Setenv schema",
+                    "description": "Setting environment variable, which will be provided to the process executed by the lifecycle script",
+                    "default": "{}",
+                    "examples": [
+                        {
+                            "VAR_A": "10"
+                        }
+                    ],
+                    "additionalProperties": {
+                        "anyof": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "boolean"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "selections": {
+            "oneOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "const": "all"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "topLevelSelections": {
+            "properties": {
+                "all": {
+                    "$ref": "#/definitions/lifecycle"
+                }
+            },
+            "patternProperties": {
+                ".*": {
+                    "$ref": "#/definitions/lifecycle"
+                }
+            }
+        },
+        "multiLevelSelections": {
+            "properties": {
+                "all": {
+                    "$ref": "#/definitions/globalLifecycle"
+                }
+            },
+            "patternProperties": {
+                ".*": {
+                    "$ref": "#/definitions/globalLifecycle"
+                }
+            }
+        }
+    },
+    "properties": {
+        "recipeformatversion": {
+            "$id": "#/properties/RecipeFormatVersion",
+            "type": "string",
+            "title": "The RecipeFormatVersion schema",
+            "description": "",
+            "default": "2020-01-25",
+            "enum": [
+                "2020-01-25"
+            ],
+            "examples": [
+                {
+                    "RecipeFormatVersion": "2020-01-25"
+                }
+            ]
+        },
+        "componentname": {
+            "$id": "#/properties/ComponentName",
+            "type": "string",
+            "title": "The ComponentName schema",
+            "description": "The name of the component",
+            "pattern": "^[a-zA-Z0-9-_.]+$",
+            "maxLength": 128,
+            "examples": [
+                "com.example.FooService"
+            ]
+        },
+        "componentdescription": {
+            "$id": "#/properties/ComponentDescription",
+            "type": "string",
+            "title": "The ComponentDescription schema",
+            "description": "The description of the component",
+            "default": "",
+            "examples": [
+                "Complete recipe for AWS IoT Greengrass components"
+            ]
+        },
+        "componentpublisher": {
+            "$id": "#/properties/ComponentPublisher",
+            "type": "string",
+            "title": "The ComponentPublisher schema",
+            "description": "The publisher of this component.",
+            "default": "Me"
+        },
+        "componentversion": {
+            "$id": "#/properties/ComponentVersion",
+            "type": "string",
+            "title": "The ComponentVersion schema",
+            "description": "",
+            "default": "1.0.0",
+            "maxLength": 64,
+            "examples": [
+                "1.0.0-alpha"
+            ]
+        },
+        "componentconfiguration": {
+            "$id": "#/properties/ComponentConfiguration",
+            "type": "object",
+            "title": "The ComponentConfiguration schema",
+            "description": "The default configuration for this component\nDefines arbitrary configuration objects and accessControl object",
+            "default": "{}",
+            "examples": [
+                {
+                    "defaultconfiguration": {
+                        "TestParam": "TestValue"
+                    }
+                }
+            ],
+            "properties": {
+                "defaultconfiguration": {
+                    "title": "The DefaultConfiguration schema",
+                    "description": "Default configuration parameters for the component",
+                    "default": "{}"
+                }
+            }
+        },
+        "componenttype": {
+            "$id": "#/properties/ComponentType",
+            "type": "string",
+            "title": "The ComponentType schema",
+            "description": "The type of this component.",
+            "default": "aws.greengrass.generic",
+            "pattern" : "^(?i)(aws\\.greengrass\\.(nucleus|generic|plugin|lambda))$"
+        },
+        "componentsource": {
+            "$id": "#/properties/ComponentSource",
+            "type": "string",
+            "title": "The ComponentSource schema",
+            "pattern": "^arn:aws(-(cn|us-gov|iso(-[a-z])?))?:lambda:.*$",
+            "description": "The lambda arn which is source of this component.",
+            "default": ""
+        },
+        "componentdependencies": {
+            "$id": "#/properties/ComponentDependencies",
+            "type": "object",
+            "title": "The ComponentDependencies schema",
+            "description": "Map describing the dependencies for this component",
+            "default": "{}",
+            "examples": [
+                {
+                    "BarService": {
+                        "versionrequirement": "^1.1.0",
+                        "dependencytype": "SOFT"
+                    },
+                    "BazService": {
+                        "versionrequirement": "^2.0.0"
+                    }
+                }
+            ],
+            "patternProperties": {
+                "^[a-zA-Z0-9-_.]+$": {
+                    "type": "object",
+                    "title": "The dependency schema",
+                    "description": "Dependency configuration for this component",
+                    "default": {
+                        "VersionRequirement": ">0.0.0"
+                    },
+                    "examples": [
+                        {
+                            "VersionRequirement": "^1.1.0",
+                            "DependencyType": "SOFT"
+                        }
+                    ],
+                    "required": [
+                        "versionrequirement"
+                    ],
+                    "properties": {
+                        "versionrequirement": {
+                            "type": "string",
+                            "title": "The VersionRequirement schema",
+                            "description": "The version of the dependency",
+                            "default": "",
+                            "examples": [
+                                "^1.1.0"
+                            ]
+                        },
+                        "dependencytype": {
+                            "type": "string",
+                            "title": "The DependencyType schema",
+                            "description": "The type of this dependency.",
+                            "default": "HARD",
+                            "pattern": "^(?i)(SOFT|HARD)$",
+                            "examples": [
+                                "SOFT"
+                            ]
+                        }
+                    },
+                    "additionalProperties": true
+                }
+            }
+        },
+        "manifests": {
+            "$id": "#/properties/Manifests",
+            "type": "array",
+            "title": "The Manifests schema",
+            "description": "List of manifests describing the component lifecycle and artifacts for specific platform",
+            "items": {
+                "$id": "#/properties/Manifests/items",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "platform": {
+                        "type": "object",
+                        "properties": {
+                            "os": {
+                                "type": "string"
+                            },
+                            "architecture": {
+                                "type": "string"
+                            }
+                        },
+                        "patternProperties": {
+                            ".*": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "lifecycle": {
+                        "$ref": "#/definitions/baseLifecycle"
+                    },
+                    "selections": {
+                        "$ref": "#/definitions/selections"
+                    },
+                    "artifacts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "uri"
+                            ],
+                            "properties": {
+                                "uri": {
+                                    "type": "string"
+                                },
+                                "unarchive": {
+                                    "type": "string",
+                                    "default": "NONE",
+                                    "pattern": "^(?i)(ZIP|NONE)$"
+                                },
+                                "permission": {
+                                    "type": "object",
+                                    "examples": [
+                                        {
+                                            "read": "OWNER",
+                                            "execute": "NONE"
+                                        }
+                                    ],
+                                    "properties": {
+                                        "read": {
+                                            "$ref": "#/definitions/permissions"
+                                        },
+                                        "execute": {
+                                            "$ref": "#/definitions/permissions"
+                                        }
+                                    }
+                                },
+                                "digest": {
+                                    "type": "string",
+                                    "description": "the digest of the component",
+                                    "readOnly": true
+                                },
+                                "algorithm": {
+                                    "type": "string",
+                                    "description": "The hash algorithm that AWS IoT Greengrass uses to calculate the digest hash of the artifact",
+                                    "readOnly": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "lifecycle": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/topLevelSelections"
+                },
+                {
+                    "$ref": "#/definitions/globalLifecycle"
+                },
+                {
+                    "$ref": "#/definitions/multiLevelSelections"
+                }
+            ]
+        }
+    },
+    "if": {
+        "not": {
+            "properties": {
+                "componenttype": {
+                    "const": "aws.greengrass.plugin"
+                }
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "manifests": {
+                "items": {
+                    "properties": {
+                        "lifecycle": {
+                            "$ref": "#/definitions/lifecycle"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -188,6 +188,16 @@ class ComponentBuildCommandIntegTest(TestCase):
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
         assert not build_recipe_file.exists()
 
+    def test_GIVEN_gdk_project_with_semantically_invalid_recipe_WHEN_build_THEN_raise_exception(self):
+        self.zip_test_data_invalid_recipe()
+        bc = BuildCommand({})
+        with pytest.raises(Exception) as e:
+            bc.run()
+        assert "is invalid. Please correct its format and try again. Error: '20-01-25' is not one of" in str(e)
+
+        build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
+        assert not build_recipe_file.exists()
+
     def zip_test_data(self):
         shutil.copy(
             self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
@@ -211,6 +221,24 @@ class ComponentBuildCommandIntegTest(TestCase):
         self.tmpdir.joinpath("node_modules").mkdir()
         self.tmpdir.joinpath("src", "node_modules").mkdir()
         self.tmpdir.joinpath("src", "node_modules", "excluded_file.txt").touch()
+
+    def zip_test_data_invalid_recipe(self):
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/config/config.json"), self.tmpdir.joinpath("gdk-config.json")
+        )
+
+        shutil.copy(
+            self.c_dir.joinpath("integration_tests/test_data/recipes/hello_world_recipe_invalid.yaml"),
+            self.tmpdir.joinpath("recipe.yaml"),
+        )
+        with open(self.tmpdir.joinpath("recipe.yaml"), "r") as f:
+            recipe = f.read()
+            recipe = recipe.replace("$GG_ARTIFACT", self.tmpdir.name + ".zip")
+
+        with open(self.tmpdir.joinpath("recipe.yaml"), "w") as f:
+            f.write(recipe)
+
+        self.tmpdir.joinpath("hello_world.py").touch()
 
     def zip_old_excludes_test_data(self):
         old_excludes_config_path = "integration_tests/test_data/config/config_old_excludes.json"
