@@ -26,11 +26,7 @@
     "definitions": {
         "permissions": {
             "type": "string",
-            "enum": [
-                "NONE",
-                "OWNER",
-                "ALL"
-            ]
+            "pattern": "^(?i)(NONE|OWNER|ALL)$"
         },
         "lifecycle": {
             "type": "object",
@@ -221,7 +217,7 @@
                         }
                     ],
                     "additionalProperties": {
-                        "anyOf": [
+                        "anyof": [
                             {
                                 "type": "number"
                             },
@@ -334,10 +330,10 @@
             "type": "string",
             "title": "The ComponentVersion schema",
             "description": "",
-            "default": "",
+            "default": "1.0.0",
             "maxLength": 64,
             "examples": [
-                "1.0.0-aplpha"
+                "1.0.0-alpha"
             ]
         },
         "componentconfiguration": {
@@ -367,12 +363,7 @@
             "title": "The ComponentType schema",
             "description": "The type of this component.",
             "default": "aws.greengrass.generic",
-            "enum": [
-                "aws.greengrass.generic",
-                "aws.greengrass.plugin",
-                "aws.greengrass.nucleus",
-                "aws.greengrass.lambda"
-            ]
+            "pattern" : "^(?i)(aws\\.greengrass\\.(nucleus|generic|plugin|lambda))$"
         },
         "componentsource": {
             "$id": "#/properties/ComponentSource",
@@ -430,11 +421,8 @@
                             "type": "string",
                             "title": "The DependencyType schema",
                             "description": "The type of this dependency.",
-                            "default": "",
-                            "enum": [
-                                "SOFT",
-                                "HARD"
-                            ],
+                            "default": "HARD",
+                            "pattern": "^(?i)(SOFT|HARD)$",
                             "examples": [
                                 "SOFT"
                             ]
@@ -491,10 +479,8 @@
                                 },
                                 "unarchive": {
                                     "type": "string",
-                                    "enum": [
-                                        "ZIP",
-                                        "NONE"
-                                    ]
+                                    "default": "NONE",
+                                    "pattern": "^(?i)(ZIP|NONE)$"
                                 },
                                 "permission": {
                                     "type": "object",
