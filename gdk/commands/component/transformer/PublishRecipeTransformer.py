@@ -7,7 +7,7 @@ from gdk.common.RecipeValidator import RecipeValidator
 
 import gdk.common.consts as consts
 import gdk.common.utils as utils
-from gdk.common.exceptions.error_messages import BUILT_RECIPE_SIZE_INVALID, BUILD_RECIPE_FILE_INVALID, SCHEMA_FILE_INVALID
+from gdk.common.exceptions.error_messages import BUILT_RECIPE_SIZE_INVALID, PROJECT_RECIPE_FILE_INVALID, SCHEMA_FILE_INVALID
 
 
 class PublishRecipeTransformer:
@@ -103,6 +103,6 @@ class PublishRecipeTransformer:
             validator = RecipeValidator(recipe_schema_path)
             validator.validate_recipe(parsed_component_recipe.to_dict())
         except jsonschema.exceptions.ValidationError as err:
-            raise Exception(BUILD_RECIPE_FILE_INVALID.format(recipe_path, err.message))
+            raise Exception(PROJECT_RECIPE_FILE_INVALID.format(recipe_path, err.message))
         except jsonschema.exceptions.SchemaError as err:
             raise Exception(SCHEMA_FILE_INVALID.format(err.message))
