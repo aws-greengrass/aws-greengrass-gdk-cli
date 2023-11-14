@@ -16,11 +16,6 @@ SCHEMA_FILE_INVALID = (
     "The Greengrass recipe schema file has an unexpected error.\nPlease report it at " +
     "https://github.com/aws-greengrass/aws-greengrass-gdk-cli/issues if the issue persists.\nError details: {} "
 )
-BUILD_RECIPE_FILE_INVALID = (
-    "Built recipe file '{}' is invalid. Please correct its format and try again.\nFor more information regarding " +
-    "component recipes refer to the docs here: https://docs.aws.amazon.com/greengrass/v2/developerguide/" +
-    "component-recipe-reference.html\nError: {} "
-)
 CLI_MODEL_FILE_NOT_EXISTS = "Model validation failed. CLI model file doesn't exist."
 RECIPE_SIZE_INVALID = (
     "The input recipe file '{}' has an invalid size of {} bytes. Please make sure it does not exceed 16kB"
