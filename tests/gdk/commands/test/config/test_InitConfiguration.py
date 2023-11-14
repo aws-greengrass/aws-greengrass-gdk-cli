@@ -27,7 +27,7 @@ class InitConfigurationUnitTest(TestCase):
 
         self.mocker.patch("gdk.common.configuration.get_configuration", return_value=config)
         init_config = InitConfiguration({})
-        assert init_config.gtf_version == "1.1.0"
+        assert init_config.gtf_version == "1.2.0"
 
     def test_GIVEN_gdk_config_with_otf_version_WHEN_test_init_THEN_use_version_from_config(self):
         config = self._get_config(

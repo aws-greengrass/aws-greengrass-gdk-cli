@@ -30,7 +30,7 @@ class GDKProjectTest(TestCase):
 
         gdk_config = GDKProject()
         assert gdk_config.component_name == "abc"
-        assert gdk_config.test_config.gtf_version == "1.1.0"
+        assert gdk_config.test_config.gtf_version == "1.2.0"
         assert gdk_config.test_config.test_build_system == "maven"
         assert gdk_config.test_config.gtf_options == {}
 
