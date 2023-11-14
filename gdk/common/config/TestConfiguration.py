@@ -1,7 +1,7 @@
 class TestConfiguration:
     def __init__(self, test_config):
         self.test_build_system = "maven"
-        self.gtf_version = "1.1.0"  # TODO: Default value should be the latest version of otf testing standalone jar.
+        self.gtf_version = "1.2.0"  # TODO: Default value should be the latest version of otf testing standalone jar.
         self.gtf_options = {}
 
         self._set_test_config(test_config)
