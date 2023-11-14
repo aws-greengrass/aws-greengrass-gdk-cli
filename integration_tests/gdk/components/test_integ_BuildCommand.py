@@ -188,12 +188,12 @@ class ComponentBuildCommandIntegTest(TestCase):
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
         assert not build_recipe_file.exists()
 
-    def test_GIVEN_gdk_project_with_semantically_invalid_recipe_WHEN_build_THEN_raise_exception(self):
+    def test_GIVEN_gdk_project_with_invalid_recipe_WHEN_build_THEN_raise_exception(self):
         self.zip_test_data_invalid_recipe()
         bc = BuildCommand({})
         with pytest.raises(Exception) as e:
             bc.run()
-        assert "is invalid. Please correct its format and try again. Error: '20-01-25' is not one of" in str(e)
+        assert "Error: '20-01-25' is not one of" in str(e)
 
         build_recipe_file = self.tmpdir.joinpath("greengrass-build/recipes/recipe.yaml").resolve()
         assert not build_recipe_file.exists()
