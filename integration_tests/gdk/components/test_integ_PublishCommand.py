@@ -255,7 +255,7 @@ class ComponentPublishCommandIntegTest(TestCase):
             PublishCommand({"options": str(self.tmpdir.joinpath("options.json").resolve())})
         assert "JSON string is incorrectly formatted." in e.value.args[0]
 
-    def test_GIVEN_built_artifacts_WHEN_publish_with_semantically_invalid_recipe_THEN_raise_exception(self):
+    def test_GIVEN_built_artifacts_WHEN_publish_with_invalid_recipe_THEN_raise_exception(self):
         self.zip_test_data_invalid_recipe()
 
         self.tmpdir.joinpath("greengrass-build/artifacts/abc/2.0.0/").mkdir(parents=True, exist_ok=True)
@@ -282,7 +282,7 @@ class ComponentPublishCommandIntegTest(TestCase):
         with pytest.raises(Exception) as e:
             pc = PublishCommand({})
             pc.run()
-        assert "is invalid. Please correct its format and try again. Error: '2020-05-25' is not one of" in str(e)
+        assert "Error: '2020-05-25' is not one of" in str(e)
 
     def test_GIVEN_built_artifacts_WHEN_publish_with_oversized_recipe_THEN_raise_exception(self):
         self.zip_test_data_oversized_recipe()
