@@ -26,7 +26,7 @@
     "definitions": {
         "permissions": {
             "type": "string",
-            "pattern": "^(?i)(NONE|OWNER|ALL)$"
+            "pattern": "(?i)^(NONE|OWNER|ALL)$"
         },
         "lifecycle": {
             "type": "object",
@@ -363,7 +363,7 @@
             "title": "The ComponentType schema",
             "description": "The type of this component.",
             "default": "aws.greengrass.generic",
-            "pattern" : "^(?i)(aws\\.greengrass\\.(nucleus|generic|plugin|lambda))$"
+            "pattern" : "(?i)^(aws\\.greengrass\\.(nucleus|generic|plugin|lambda))$"
         },
         "componentsource": {
             "$id": "#/properties/ComponentSource",
@@ -422,7 +422,7 @@
                             "title": "The DependencyType schema",
                             "description": "The type of this dependency.",
                             "default": "HARD",
-                            "pattern": "^(?i)(SOFT|HARD)$",
+                            "pattern": "(?i)^(SOFT|HARD)$",
                             "examples": [
                                 "SOFT"
                             ]
@@ -480,7 +480,7 @@
                                 "unarchive": {
                                     "type": "string",
                                     "default": "NONE",
-                                    "pattern": "^(?i)(ZIP|NONE)$"
+                                    "pattern": "(?i)^(ZIP|NONE)$"
                                 },
                                 "permission": {
                                     "type": "object",
