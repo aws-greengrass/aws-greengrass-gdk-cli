@@ -152,6 +152,10 @@ def is_recipe_size_valid(file_path):
     return file_size <= MAX_RECIPE_FILE_SIZE_BYTES, file_size
 
 
+def convertToLowercase(value):
+    return str.lower(value)
+
+
 error_line = "\n=============================== ERROR ===============================\n"
 help_line = "\n=============================== HELP ===============================\n"
 current_directory = Path(".").resolve()
