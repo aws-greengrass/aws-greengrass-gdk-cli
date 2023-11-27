@@ -15,7 +15,7 @@
                                     "python",
                                     "java"
                                 ],
-                                "type": "str.lower"
+                                "type": "convertToLowercase"
                             },
                             "template": {
                                 "name": [
