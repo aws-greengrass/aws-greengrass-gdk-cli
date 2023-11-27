@@ -14,7 +14,7 @@ jobs:
     strategy:
       max-parallel: 6
       matrix:
-        gdk-version: [ HEAD, v1.5.0, v1.4.0]
+        gdk-version: [ HEAD, v1.6.0, v1.5.0]
         python-version: [3.7, 3.8, 3.x]
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
