@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 from gdk.commands.test.config.InitConfiguration import InitConfiguration
 from gdk.common.config.GDKProject import GDKProject
+from gdk.common.GithubUtils import GithubUtils
 import requests
 
 
@@ -12,6 +13,7 @@ class InitConfigurationUnitTest(TestCase):
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
         self.tmpdir = tmpdir
+        self.mocker.patch.object(GithubUtils, "get_latest_release_name", return_value="1.2.0")
         self.c_dir = Path(".").resolve()
         self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
         os.chdir(tmpdir)
