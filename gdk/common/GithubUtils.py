@@ -7,4 +7,4 @@ class GithubUtils:
         response = requests.get(latest_release_api_url)
         if response.status_code != 200:
             response.raise_for_status()
-        return response.json()["name"]
+        return response.json().get("name")  # We typically name our GTF releases by the version.

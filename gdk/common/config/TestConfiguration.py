@@ -23,8 +23,12 @@ class TestConfiguration:
         github_utils = GithubUtils()
         try:
             latest_gtf_version = github_utils.get_latest_release_name(GTF_REPO_OWNER, GTF_REPO_NAME)
-            self.gtf_version = latest_gtf_version
-            logging.info("Discovered %s as latest GTF release name.", self.gtf_version)
+            if latest_gtf_version is not None:
+                self.gtf_version = latest_gtf_version
+                logging.info("Discovered %s as latest GTF release name.", self.gtf_version)
+            else:
+                logging.info("Unable to get the latest GTF release name. Using %s as the default value.", self.gtf_version)
+                logging.debug("GTF release name was found to be None, so using default.")
         except Exception as e:
             logging.info("Unable to get the latest GTF release name. Using %s as the default value.", self.gtf_version)
             logging.debug("Exception information for GTF release name API call: %s", str(e))
