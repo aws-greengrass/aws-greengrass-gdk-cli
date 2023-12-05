@@ -8,6 +8,7 @@ import shutil
 from urllib3.exceptions import HTTPError
 import gdk.common.consts as consts
 from gdk.common.config.GDKProject import GDKProject
+from gdk.common.GithubUtils import GithubUtils
 import requests
 
 
@@ -27,6 +28,7 @@ class E2ETestInitCommandTest(TestCase):
             + "TestTemplateForCLI.zip"
         )
         self.mocker.patch.object(GDKProject, "_get_recipe_file", return_value=Path(".").joinpath("recipe.json").resolve())
+        self.mocker.patch.object(GithubUtils, "get_latest_release_name", return_value="1.2.0")
 
         os.chdir(tmpdir)
         yield

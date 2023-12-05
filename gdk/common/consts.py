@@ -37,6 +37,8 @@ DOCS_RECIPE_LINK = "https://docs.aws.amazon.com/greengrass/v2/developerguide/com
 GDK_CONFIG_DOCS_LINK = (
     "https://docs.aws.amazon.com/greengrass/v2/developerguide/gdk-cli-configuration-file.html#gdk-config-format"
 )
+GTF_REPO_OWNER = "aws-greengrass"
+GTF_REPO_NAME = "aws-greengrass-testing"
 
 # DEFAULT LOGGING
 log_format = "[%(asctime)s] %(levelname)s - %(message)s"
