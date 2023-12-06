@@ -10,6 +10,8 @@ class TestConfiguration:
         self.test_build_system = "maven"
         self.gtf_version = "1.2.0"  # Default value for when Github API call fails
         self.gtf_options = {}
+        self.upgrade_suggestion = False
+        self.latest_gtf_version = None
 
         self._set_test_config(test_config)
 
@@ -22,12 +24,11 @@ class TestConfiguration:
 
     def _set_gtf_config(self, test_config):
         github_utils = GithubUtils()
-        latest_gtf_version = None
         try:
             release_name = github_utils.get_latest_release_name(GTF_REPO_OWNER, GTF_REPO_NAME)
             if release_name is not None:
                 self.gtf_version = release_name
-                latest_gtf_version = release_name
+                self.latest_gtf_version = release_name
                 logging.info("Discovered %s as latest GTF release name.", self.gtf_version)
             else:
                 logging.info("Unable to get the latest GTF release name. Using %s as the default value.", self.gtf_version)
@@ -41,11 +42,12 @@ class TestConfiguration:
         try:
             # We have handling later to determine if user-provided version is incorrect, so if they are not proper
             # versions to qualify for this warning, catch the error and just pass
-            if Version(self.gtf_version) < Version(latest_gtf_version):
+            if Version(self.gtf_version) < Version(self.latest_gtf_version):
                 logging.info(
-                    f"The current latest version of GTF is {latest_gtf_version}. Please consider updating your configuration "
-                    "to use the latest version."
+                    f"The current latest version of GTF is {self.latest_gtf_version}. Please consider updating your "
+                    "gdk-config.json to use the latest version."
                 )
+                self.upgrade_suggestion = True
         except Exception as e:
             logging.debug("Not providing GTF update suggestion due to caught version error: %s", str(e))
         self.gtf_options = (test_config.get("gtf_options")
