@@ -16,7 +16,7 @@ End-to-end setup uses `pytest` and expects test dependencies to be installed.
 To install the latest version of CLI using this git repository and pip, run the following command
 
 ```shell
-git clone https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1.6.0
+git clone https://github.com/aws-greengrass/aws-greengrass-gdk-cli.git@v1.6.1
 cd aws-greengrass-gdk-cli
 ```
 
