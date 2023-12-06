@@ -10,7 +10,7 @@ class TestConfiguration:
         self.test_build_system = "maven"
         self.gtf_version = "1.2.0"  # Default value for when Github API call fails
         self.gtf_options = {}
-        self.upgrade_suggestion = False
+        self.upgrade_suggestion_already_provided = False
         self.latest_gtf_version = None
 
         self._set_test_config(test_config)
@@ -47,7 +47,7 @@ class TestConfiguration:
                     f"The current latest version of GTF is {self.latest_gtf_version}. Please consider updating your "
                     "gdk-config.json to use the latest version."
                 )
-                self.upgrade_suggestion = True
+                self.upgrade_suggestion_already_provided = True
         except Exception as e:
             logging.debug("Not providing GTF update suggestion due to caught version error: %s", str(e))
         self.gtf_options = (test_config.get("gtf_options")

@@ -18,15 +18,6 @@ class InitConfiguration(GDKProject):
             _version_arg = self._args.get("otf_version", None)
         if _version_arg:
             logging.info("Using the GTF version provided in the command %s", _version_arg)
-            if not self.test_config.upgrade_suggestion:
-                try:
-                    if Version(_version_arg) < Version(self.test_config.latest_gtf_version):
-                        logging.info(
-                            f"The current latest version of GTF is {self.test_config.latest_gtf_version}. Please consider "
-                            "using the latest version."
-                        )
-                except Exception as e:
-                    logging.debug("Not providing GTF update suggestion due to caught version error: %s", str(e))
             return self._validated_gtf_version(_version_arg)
         logging.info("Using the GTF version provided in the GDK test config %s", self.test_config.gtf_version)
         return self._validated_gtf_version(self.test_config.gtf_version)
@@ -50,6 +41,16 @@ class InitConfiguration(GDKProject):
                 f"The specified Greengrass Test Framework (GTF) version '{_version}' does not exist. Please"
                 f" provide a valid GTF version from the releases here: {self._gtf_releases_url}"
             )
+
+        try:
+            if (Version(_version) < Version(self.test_config.latest_gtf_version) and
+                    not self.test_config.upgrade_suggestion_already_provided):
+                logging.info(
+                    f"The current latest version of GTF is {self.test_config.latest_gtf_version}. Please consider "
+                    "using the latest version."
+                )
+        except Exception as e:
+            logging.debug("Not providing GTF update suggestion due to caught version error: %s", str(e))
 
         return _version
 
