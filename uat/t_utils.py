@@ -24,7 +24,7 @@ def update_config(config_file, component_name, region, bucket, author, version="
 def update_config_build_sytem(config_file, component_name, build_system):
     with open(str(config_file), "r") as f:
         config = json.loads(f.read())
-        config["component"][component_name]["build"]["build_sytem"] = build_system
+        config["component"][component_name]["build"]["build_system"] = build_system
     with open(str(config_file), "w") as f:
         f.write(json.dumps(config, indent=4))
 

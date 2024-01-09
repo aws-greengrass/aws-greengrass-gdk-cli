@@ -1,7 +1,10 @@
-import subprocess as sp
-from gdk.build_system.GDKBuildSystem import GDKBuildSystem
-import platform
 import logging
+import platform
+import subprocess as sp
+from pathlib import Path
+
+from gdk.build_system.GDKBuildSystem import GDKBuildSystem
+from gdk.common import utils
 
 
 class GradleWrapper(GDKBuildSystem):
@@ -9,7 +12,7 @@ class GradleWrapper(GDKBuildSystem):
     def build_command(self):
         os_platform = platform.system()
         if os_platform == "Windows":
-            return ["./gradlew.bat", "build"]
+            return [str(Path(self.path).joinpath("gradlew.bat").absolute()), "build"]
         else:
             return ["./gradlew", "build"]
 
@@ -22,6 +25,6 @@ class GradleWrapper(GDKBuildSystem):
         return ["build.gradle", "build.gradle.kts"]
 
     def build(self, **kwargs):
-        path = kwargs.get("path")
+        self.path = kwargs.get("path") or utils.get_current_directory()
         logging.info("Running the build command '%s'", " ".join(self.build_command))
-        sp.run(self.build_command, check=True, cwd=path)
+        sp.run(self.build_command, check=True, cwd=self.path)
