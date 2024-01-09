@@ -2,6 +2,7 @@ from pathlib import Path
 import pytest
 from unittest import TestCase
 from gdk.common.config.GDKProject import GDKProject
+from gdk.common.GithubUtils import GithubUtils
 
 import gdk.common.exceptions.error_messages as error_messages
 import os
@@ -13,6 +14,7 @@ class GDKProjectTest(TestCase):
     @pytest.fixture(autouse=True)
     def __inject_fixtures(self, mocker, tmpdir):
         self.mocker = mocker
+        self.mocker.patch.object(GithubUtils, "get_latest_release_name", return_value="1.2.0")
         self.tmpdir = Path(tmpdir).resolve()
         self.c_dir = Path(".").resolve()
         os.chdir(self.tmpdir)

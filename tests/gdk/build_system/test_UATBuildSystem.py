@@ -1,8 +1,11 @@
+from pathlib import Path
 from unittest import TestCase
 import pytest
 from gdk.build_system.E2ETestBuildSystem import E2ETestBuildSystem
 from unittest.mock import call
 import platform
+
+from gdk.common import utils
 
 
 class E2ETestBuildSystemTests(TestCase):
@@ -40,9 +43,11 @@ class E2ETestBuildSystemTests(TestCase):
         assert build_system.build_system_identifier == ["build.gradle", "build.gradle.kts"]
 
         if platform.system() == "Windows":
-            assert mock_subprocess.call_args_list == [call(["./gradlew.bat", "build"], check=True, cwd=None)]
+            assert mock_subprocess.call_args_list == [call([str(Path(utils.get_current_directory()).joinpath(
+                "gradlew.bat").absolute()), "build"], check=True, cwd=utils.get_current_directory())]
         else:
-            assert mock_subprocess.call_args_list == [call(["./gradlew", "build"], check=True, cwd=None)]
+            assert mock_subprocess.call_args_list == [call(["./gradlew", "build"], check=True,
+                                                           cwd=utils.get_current_directory())]
 
     def test_build_system_not_supported(self):
         with pytest.raises(Exception) as e:

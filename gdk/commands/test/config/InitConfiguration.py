@@ -2,6 +2,7 @@ import semver
 from gdk.common.config.GDKProject import GDKProject
 import logging
 import requests
+from packaging.version import Version
 
 
 class InitConfiguration(GDKProject):
@@ -40,6 +41,16 @@ class InitConfiguration(GDKProject):
                 f"The specified Greengrass Test Framework (GTF) version '{_version}' does not exist. Please"
                 f" provide a valid GTF version from the releases here: {self._gtf_releases_url}"
             )
+
+        try:
+            if (Version(_version) < Version(self.test_config.latest_gtf_version) and
+                    not self.test_config.upgrade_suggestion_already_provided):
+                logging.info(
+                    f"The current latest version of GTF is {self.test_config.latest_gtf_version}. Please consider "
+                    "using the latest version."
+                )
+        except Exception as e:
+            logging.debug("Not providing GTF update suggestion due to caught version error: %s", str(e))
 
         return _version
 
