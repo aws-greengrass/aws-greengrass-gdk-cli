@@ -105,7 +105,7 @@ Feature: gdk component build works
     Then command was successful
     And we verify component build files
 
-  @version(gt='1.1.0')
+  @version(gt='1.6.1')
   @change_cwd
   Scenario: build gradle kotlin multi project using gradle wrapper
     Given we have cli installed
