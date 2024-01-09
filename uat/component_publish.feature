@@ -9,11 +9,11 @@ Feature: gdk component publish works
     And command was successful
     And we verify gdk project files
     And change component name to com.example.PythonHelloWorld
-    And change artifact uri for all platform from HelloWorld to helloworld
+    And change artifact uri for all platform from com.example.PythonHelloWorld to ${context.last_component}
     And we run gdk component build
     And command was successful
     And we verify component zip build files
-    And we verify build artifact named helloworld.zip
+    And we verify build artifact named ${context.last_component}.zip
     When we run gdk component publish
     And command was successful
 
@@ -26,10 +26,11 @@ Feature: gdk component publish works
     And we change directory to HelloWorld
     And we verify gdk project files
     And change component name to com.example.PythonHelloWorld
+    And change artifact uri for all platform from com.example.PythonHelloWorld to ${context.last_component}
     And we run gdk component build
     And command was successful
     And we verify component zip build files
-    And we verify build artifact named HelloWorld.zip
+    And we verify build artifact named ${context.last_component}.zip
     When we run gdk component publish
     And command was successful
 
@@ -42,11 +43,12 @@ Feature: gdk component publish works
     And we change directory to HelloWorld
     And we verify gdk project files
     And change component name to com.example.PythonHelloWorld
+    And change artifact uri for all platform from com.example.PythonHelloWorld to ${context.last_component}
     And we get s3 bucket name
     When we run gdk component publish -b <last_s3_bucket>
     And command was successful
     And we verify component zip build files
-    And we verify build artifact named HelloWorld.zip
+    And we verify build artifact named ${context.last_component}.zip
 
   @version(gt='1.1.0')
   @change_cwd

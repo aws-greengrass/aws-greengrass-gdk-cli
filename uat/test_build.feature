@@ -8,6 +8,7 @@ Feature: As a component builder, I can run `gdk test-e2e build` command to build
         Then command was successful
         And we change directory to HelloWorld
         And change component name to com.example.PythonHelloWorld
+        And change artifact uri for all platform from com.example.PythonHelloWorld to ${context.last_component}
         And we verify gdk project files
         When we run gdk component build
         When we run gdk test-e2e init
@@ -23,6 +24,7 @@ Feature: As a component builder, I can run `gdk test-e2e build` command to build
         Then command was successful
         And we change directory to HelloWorld
         And change component name to com.example.PythonHelloWorld
+        And change artifact uri for all platform from com.example.PythonHelloWorld to ${context.last_component}
         And we verify gdk project files
         When we run gdk test-e2e init
         Then we verify gdk test files
