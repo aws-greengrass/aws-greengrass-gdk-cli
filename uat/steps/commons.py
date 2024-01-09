@@ -29,6 +29,13 @@ def change_work_dir(context, dir_name):
     context.cwd = os.getcwd()
 
 
+@step('set {path} to executable')
+def make_executable(context, path):
+    mode = os.stat(path).st_mode
+    mode |= (mode & 0o444) >> 2
+    os.chmod(path, mode)
+
+
 @step('we get s3 bucket name')
 def get_s3_bucket(context):
     aws_account = t_utils.get_acc_num(DEFAULT_AWS_REGION)
