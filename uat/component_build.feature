@@ -128,6 +128,7 @@ Feature: gdk component build works
     And we verify gdk project files
     And change component name to com.example.Multi.Gradle.Kotlin
     And change build system to gradlew
+    And set ./gradlew to executable
     When we quietly run gdk component build
     Then command was successful
     And we verify component build files

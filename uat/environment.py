@@ -133,7 +133,7 @@ def before_tag(context, tag):
 
     # get fixture from registry
     func = registry_use_by_tag_fixtures.get(__tag, None)
-    if callable(fixture):
+    if callable(func):
         use_fixture(func, context, **__kvargs)
 
 
