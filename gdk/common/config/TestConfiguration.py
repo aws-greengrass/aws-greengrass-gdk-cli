@@ -29,12 +29,11 @@ class TestConfiguration:
             if release_name is not None:
                 self.gtf_version = release_name
                 self.latest_gtf_version = release_name
-                logging.info("Discovered %s as latest GTF release name.", self.gtf_version)
+                logging.debug("Discovered %s as latest GTF release name.", self.gtf_version)
             else:
-                logging.info("Unable to get the latest GTF release name. Using %s as the default value.", self.gtf_version)
-                logging.debug("GTF release name was found to be None, so using default.")
+                logging.debug("GTF release name was found to be None. Using %s as the default value.", self.gtf_version)
         except Exception as e:
-            logging.info("Unable to get the latest GTF release name. Using %s as the default value.", self.gtf_version)
+            logging.debug("Unable to get the latest GTF release name. Using %s as the default value.", self.gtf_version)
             logging.debug("Exception information for GTF release name API call: %s", str(e))
         self.gtf_version = (test_config.get("gtf_version")
                             if "gtf_version" in test_config
