@@ -53,7 +53,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license=license,
-    packages=find_packages(),
+    packages=find_packages(include=["gdk"]),
     entry_points=entry_points,
     classifiers=classifiers,
     install_requires=get_requirements(),
