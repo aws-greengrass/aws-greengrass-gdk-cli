@@ -58,14 +58,14 @@ jobs:
         run: |
           make tests_unit
       - name: Upload tests coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: unit
       - name: Integration Testing CLI
         run: |
           make tests_integration
       - name: Upload integration tests coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: integ
       - name: Configure AWS Credentials
@@ -85,7 +85,7 @@ jobs:
           make tests_uat
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'}}
       - name: Upload UAT coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: uat
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push'}}
